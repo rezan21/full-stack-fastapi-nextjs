@@ -1,0 +1,72 @@
+"use client"
+
+import Link from "next/link"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
+
+const ASSETS = {
+  full: {
+    light: "/assets/images/fastapi-logo.svg",
+    dark: "/assets/images/fastapi-logo-light.svg",
+  },
+  icon: {
+    light: "/assets/images/fastapi-icon.svg",
+    dark: "/assets/images/fastapi-icon-light.svg",
+  },
+}
+
+interface LogoProps {
+  variant?: "full" | "icon" | "responsive"
+  className?: string
+  asLink?: boolean
+}
+
+export function Logo({
+  variant = "full",
+  className,
+  asLink = true,
+}: LogoProps) {
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  const mode = mounted && resolvedTheme === "dark" ? "dark" : "light"
+  const fullLogo = ASSETS.full[mode]
+  const iconLogo = ASSETS.icon[mode]
+
+  const content =
+    variant === "responsive" ? (
+      <>
+        {/* biome-ignore lint/performance/noImgElement: static SVG asset */}
+        <img
+          src={fullLogo}
+          alt="FastAPI"
+          className={cn(
+            "h-6 w-auto group-data-[collapsible=icon]:hidden",
+            className,
+          )}
+        />
+        {/* biome-ignore lint/performance/noImgElement: static SVG asset */}
+        <img
+          src={iconLogo}
+          alt="FastAPI"
+          className={cn(
+            "size-5 hidden group-data-[collapsible=icon]:block",
+            className,
+          )}
+        />
+      </>
+    ) : (
+      // biome-ignore lint/performance/noImgElement: static SVG asset
+      <img
+        src={variant === "full" ? fullLogo : iconLogo}
+        alt="FastAPI"
+        className={cn(variant === "full" ? "h-6 w-auto" : "size-5", className)}
+      />
+    )
+
+  if (!asLink) return content
+
+  return <Link href="/">{content}</Link>
+}

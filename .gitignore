@@ -1,0 +1,57 @@
+# OS / editor
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python (backend)
+__pycache__/
+*.pyc
+app.egg-info/
+.mypy_cache/
+.coverage
+htmlcov/
+.cache/
+.venv/
+
+# Node / Next.js (frontend)
+node_modules/
+.next/
+next-env.d.ts
+dist/
+dist-ssr/
+*.local
+*.tsbuildinfo
+
+# Local env files (commit the *.env.example templates instead)
+.env
+.env.*
+!.env.example
+
+# Local AI tooling (not part of the template)
+.claude/
+.agents/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Generated
+openapi.json
+
+# Test artifacts (Playwright)
+test-results/
+playwright-report/
+blob-report/
+**/playwright/.cache/
+**/playwright/.auth/

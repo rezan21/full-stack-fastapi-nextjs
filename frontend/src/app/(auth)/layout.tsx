@@ -1,0 +1,11 @@
+import { redirect } from "next/navigation"
+import type { ReactNode } from "react"
+import { AuthLayout } from "@/components/Common/AuthLayout"
+import { getUser } from "@/lib/dal"
+
+export default async function Layout({ children }: { children: ReactNode }) {
+  const user = await getUser()
+  if (user) redirect("/")
+
+  return <AuthLayout>{children}</AuthLayout>
+}
