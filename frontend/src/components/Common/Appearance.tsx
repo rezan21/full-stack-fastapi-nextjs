@@ -61,6 +61,7 @@ export function SidebarAppearance() {
           render={
             <SidebarMenuButton
               tooltip="Appearance"
+              className="hover:bg-sidebar-accent/50"
               data-testid="theme-button"
             />
           }

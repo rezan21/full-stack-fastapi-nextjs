@@ -52,7 +52,7 @@ export function User({ user }: { user: UserPublic }) {
             render={
               <SidebarMenuButton
                 size="lg"
-                className="aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
+                className="hover:bg-sidebar-accent/50 aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
                 data-testid="user-menu"
               />
             }

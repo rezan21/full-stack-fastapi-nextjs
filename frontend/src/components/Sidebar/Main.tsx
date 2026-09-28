@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 export type NavItem = {
   icon: LucideIcon
@@ -29,19 +30,23 @@ export function Main({ items }: { items: NavItem[] }) {
   return (
     <SidebarGroup>
       <SidebarGroupContent>
-        <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                tooltip={item.title}
-                isActive={pathname === item.path}
-                render={<Link href={item.path} onClick={handleMenuClick} />}
-              >
-                <item.icon />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+        <SidebarMenu className="gap-1">
+          {items.map((item) => {
+            const isActive = pathname === item.path
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  isActive={isActive}
+                  className={cn(!isActive && "hover:bg-sidebar-accent/50")}
+                  render={<Link href={item.path} onClick={handleMenuClick} />}
+                >
+                  <item.icon />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
