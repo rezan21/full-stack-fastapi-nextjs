@@ -6,6 +6,7 @@ import {
   useTable,
 } from "@tanstack/react-table"
 import { Check, Copy } from "lucide-react"
+import type { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -19,6 +20,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import type { ItemPublic } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { ItemActionsMenu } from "./ItemActionsMenu"
+import { ITEM_COLUMNS, type ItemColumnId } from "./item-columns"
 
 function CopyId({ id }: { id: string }) {
   const [copiedText, copy] = useCopyToClipboard()
@@ -43,41 +45,37 @@ function CopyId({ id }: { id: string }) {
 const features = tableFeatures({})
 const columnHelper = createColumnHelper<typeof features, ItemPublic>()
 
-const columns = columnHelper.columns([
-  columnHelper.accessor("id", {
-    header: "ID",
-    cell: (info) => <CopyId id={info.getValue()} />,
-  }),
-  columnHelper.accessor("title", {
-    header: "Title",
-    cell: (info) => <span className="font-medium">{info.getValue()}</span>,
-  }),
-  columnHelper.accessor("description", {
-    header: "Description",
-    cell: (info) => {
-      const description = info.getValue()
-      return (
-        <span
-          className={cn(
-            "max-w-xs truncate block text-muted-foreground",
-            !description && "italic",
-          )}
-        >
-          {description || "No description"}
-        </span>
-      )
-    },
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => (
-      <div className="flex justify-end">
-        <ItemActionsMenu item={row.original} />
-      </div>
-    ),
-  }),
-])
+const renderCell: Record<ItemColumnId, (item: ItemPublic) => ReactNode> = {
+  id: (item) => <CopyId id={item.id} />,
+  title: (item) => <span className="font-medium">{item.title}</span>,
+  description: (item) => (
+    <span
+      className={cn(
+        "max-w-xs truncate block text-muted-foreground",
+        !item.description && "italic",
+      )}
+    >
+      {item.description || "No description"}
+    </span>
+  ),
+  actions: (item) => (
+    <div className="flex justify-end">
+      <ItemActionsMenu item={item} />
+    </div>
+  ),
+}
+
+const columns = columnHelper.columns(
+  ITEM_COLUMNS.map((column) =>
+    columnHelper.display({
+      id: column.id,
+      header: column.srOnlyHeader
+        ? () => <span className="sr-only">{column.header}</span>
+        : column.header,
+      cell: ({ row }) => renderCell[column.id](row.original),
+    }),
+  ),
+)
 
 export function ItemsTable({ items }: { items: ItemPublic[] }) {
   const table = useTable({

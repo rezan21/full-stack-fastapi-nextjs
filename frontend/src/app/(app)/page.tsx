@@ -8,7 +8,7 @@ export default async function Page() {
 
   return (
     <div>
-      <h1 className="text-2xl truncate max-w-sm">
+      <h1 className="text-2xl font-bold tracking-tight truncate max-w-sm">
         Hi, {user?.full_name || user?.email} 👋
       </h1>
       <p className="text-muted-foreground">

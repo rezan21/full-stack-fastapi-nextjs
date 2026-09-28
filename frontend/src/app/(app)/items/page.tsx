@@ -1,5 +1,6 @@
 import { Search } from "lucide-react"
 import type { Metadata } from "next"
+import { PageHeader } from "@/components/Common/PageHeader"
 import { AddItem } from "@/components/Items/AddItem"
 import { ItemsTable } from "@/components/Items/ItemsTable"
 import {
@@ -18,13 +19,9 @@ export default async function Page() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Items</h1>
-          <p className="text-muted-foreground">Create and manage your items</p>
-        </div>
+      <PageHeader title="Items" description="Create and manage your items">
         <AddItem />
-      </div>
+      </PageHeader>
 
       {items.data.length === 0 ? (
         <Empty>

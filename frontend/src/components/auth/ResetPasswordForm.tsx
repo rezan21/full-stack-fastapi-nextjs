@@ -61,7 +61,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       className="flex flex-col gap-6"
     >
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Reset Password</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Reset Password</h1>
       </div>
 
       <FieldGroup>
