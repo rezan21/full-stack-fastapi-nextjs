@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export COMPOSE_FILE=infra/docker-compose.yml:infra/docker-compose.dev.yml
+export COMPOSE_ENV_FILES=backend/.env
+
+trap 'echo; echo "🛑  Stopping stack..."; docker compose down' INT
+
+superuser=$(grep -E '^FIRST_SUPERUSER=' backend/.env | cut -d= -f2-)
+password=$(grep -E '^FIRST_SUPERUSER_PASSWORD=' backend/.env | cut -d= -f2-)
+
+svc_url() {
+  local port
+  port=$(docker compose port "$1" "$2" 2>/dev/null | tail -1)
+  port=${port##*:}
+  [ -z "$port" ] && return
+  [ "$port" = "80" ] && echo "http://localhost" || echo "http://localhost:$port"
+}
+
+echo "🔨  Building images..."
+docker compose build --quiet
+
+echo "⏳  Starting stack..."
+docker compose up -d --wait
+
+echo
+echo "🚀  Stack is up — press Ctrl+C to stop"
+echo "    App        → $(svc_url proxy 80)"
+echo "    API docs   → $(svc_url backend 8000)/docs"
+echo "    Adminer    → $(svc_url adminer 8080)"
+echo "    Mailpit    → $(svc_url mailpit 8025)"
+echo "    Login      → ${superuser} / ${password}"
+echo
+
+docker compose logs -f

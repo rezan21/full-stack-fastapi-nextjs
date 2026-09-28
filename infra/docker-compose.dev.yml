@@ -5,27 +5,17 @@ services:
     ports:
       - "80:80"
       - "8090:8080"
-    # Duplicate the command from docker-compose.yml to add --api.insecure=true
     command:
-      # Enable Docker in Traefik, so that it reads labels from Docker services
       - --providers.docker
-      # Do not expose all Docker services, only the ones explicitly exposed
       - --providers.docker.exposedbydefault=false
-      # Create an entrypoint "http" listening on port 80
       - --entrypoints.http.address=:80
-      # Enable the access log, with HTTP requests
-      - --accesslog
-      # Enable the Traefik log, for configurations and errors
-      - --log
-      # Enable debug logging for local development
-      - --log.level=DEBUG
-      # Enable the Dashboard and API
+      - --log.level=WARN
       - --api
-      # Enable the Dashboard and API in insecure mode for local development
       - --api.insecure=true
   db:
     ports:
       - "5432:5432"
+    command: postgres -c log_min_messages=warning
 
   adminer:
     ports:
@@ -37,7 +27,6 @@ services:
     build:
       context: ..
       dockerfile: backend/Dockerfile
-    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
     command:
       - fastapi
       - dev
@@ -70,8 +59,11 @@ services:
     ports:
       - "8025:8025"
       - "1025:1025"
+    environment:
+      MP_QUIET: "true"
 
   playwright:
+    profiles: ["test"]
     build:
       context: ..
       dockerfile: frontend/Dockerfile.playwright
@@ -88,7 +80,6 @@ services:
       - PLAYWRIGHT_BASE_URL=http://frontend:3000
       - API_URL=http://backend:8000
       - MAILPIT_HOST=http://mailpit:8025
-      # For the reports when run locally
       - PLAYWRIGHT_HTML_HOST=0.0.0.0
       - CI=${CI:-}
     volumes:

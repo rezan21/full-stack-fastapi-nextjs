@@ -39,9 +39,7 @@ async function parseError(res: Response): Promise<string> {
     if (Array.isArray(detail) && detail.length > 0) {
       return detail[0]?.msg ?? "Something went wrong."
     }
-  } catch {
-    // fall through to status text
-  }
+  } catch {}
   return res.statusText || "Something went wrong."
 }
 
