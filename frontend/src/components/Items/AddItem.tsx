@@ -15,7 +15,7 @@ export function AddItem() {
       successMessage="Item created successfully"
       trigger={(open) => (
         <Button className="my-4" onClick={open}>
-          <Plus className="mr-2" />
+          <Plus />
           Add Item
         </Button>
       )}

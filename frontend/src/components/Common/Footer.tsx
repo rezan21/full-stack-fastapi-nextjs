@@ -29,7 +29,7 @@ export function Footer() {
               aria-label={label}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="size-5" />
             </a>
           ))}
         </div>

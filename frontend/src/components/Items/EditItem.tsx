@@ -25,7 +25,7 @@ export function EditItem({
       successMessage="Item updated successfully"
       onDone={onSuccess}
       trigger={(open) => (
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={open}>
+        <DropdownMenuItem closeOnClick={false} onClick={open}>
           <Pencil />
           Edit Item
         </DropdownMenuItem>

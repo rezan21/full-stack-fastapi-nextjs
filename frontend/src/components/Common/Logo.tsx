@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
@@ -38,31 +39,46 @@ export function Logo({
   const content =
     variant === "responsive" ? (
       <>
-        {/* biome-ignore lint/performance/noImgElement: static SVG asset */}
-        <img
+        <Image
           src={fullLogo}
           alt="FastAPI"
+          width={341}
+          height={64}
+          unoptimized
           className={cn(
             "h-6 w-auto group-data-[collapsible=icon]:hidden",
             className,
           )}
         />
-        {/* biome-ignore lint/performance/noImgElement: static SVG asset */}
-        <img
+        <Image
           src={iconLogo}
           alt="FastAPI"
+          width={500}
+          height={500}
+          unoptimized
           className={cn(
             "size-5 hidden group-data-[collapsible=icon]:block",
             className,
           )}
         />
       </>
-    ) : (
-      // biome-ignore lint/performance/noImgElement: static SVG asset
-      <img
-        src={variant === "full" ? fullLogo : iconLogo}
+    ) : variant === "full" ? (
+      <Image
+        src={fullLogo}
         alt="FastAPI"
-        className={cn(variant === "full" ? "h-6 w-auto" : "size-5", className)}
+        width={341}
+        height={64}
+        unoptimized
+        className={cn("h-6 w-auto", className)}
+      />
+    ) : (
+      <Image
+        src={iconLogo}
+        alt="FastAPI"
+        width={500}
+        height={500}
+        unoptimized
+        className={cn("size-5", className)}
       />
     )
 

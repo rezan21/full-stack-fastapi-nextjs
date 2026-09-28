@@ -3,20 +3,19 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { login } from "@/actions/auth"
+import { PasswordInput } from "@/components/Common/PasswordInput"
+import { Button } from "@/components/ui/button"
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { LoadingButton } from "@/components/ui/loading-button"
-import { PasswordInput } from "@/components/ui/password-input"
+import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const formSchema = z.object({
@@ -50,73 +49,76 @@ export function LoginForm() {
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-6"
-      >
-        <div className="flex flex-col items-center gap-2 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
-        </div>
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-6"
+    >
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">Login to your account</h1>
+      </div>
 
-        <div className="grid gap-4">
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    data-testid="email-input"
-                    placeholder="user@example.com"
-                    type="email"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage className="text-xs" />
-              </FormItem>
-            )}
-          />
+      <FieldGroup>
+        <Controller
+          control={form.control}
+          name="username"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+              <Input
+                {...field}
+                id={field.name}
+                data-testid="email-input"
+                placeholder="user@example.com"
+                type="email"
+                aria-invalid={fieldState.invalid}
+              />
+              {fieldState.error && (
+                <FieldError className="text-xs" errors={[fieldState.error]} />
+              )}
+            </Field>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center">
-                  <FormLabel>Password</FormLabel>
-                  <Link
-                    href="/recover-password"
-                    className="ml-auto text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <FormControl>
-                  <PasswordInput
-                    data-testid="password-input"
-                    placeholder="Password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage className="text-xs" />
-              </FormItem>
-            )}
-          />
+        <Controller
+          control={form.control}
+          name="password"
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <div className="flex items-center">
+                <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                <Link
+                  href="/recover-password"
+                  className="ml-auto text-sm underline-offset-4 hover:underline"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+              <PasswordInput
+                {...field}
+                id={field.name}
+                data-testid="password-input"
+                placeholder="Password"
+                aria-invalid={fieldState.invalid}
+              />
+              {fieldState.error && (
+                <FieldError className="text-xs" errors={[fieldState.error]} />
+              )}
+            </Field>
+          )}
+        />
 
-          <LoadingButton type="submit" loading={form.formState.isSubmitting}>
-            Log In
-          </LoadingButton>
-        </div>
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting && <Spinner data-icon="inline-start" />}
+          Log In
+        </Button>
+      </FieldGroup>
 
-        <div className="text-center text-sm">
-          Don't have an account yet?{" "}
-          <Link href="/signup" className="underline underline-offset-4">
-            Sign up
-          </Link>
-        </div>
-      </form>
-    </Form>
+      <div className="text-center text-sm">
+        Don't have an account yet?{" "}
+        <Link href="/signup" className="underline underline-offset-4">
+          Sign up
+        </Link>
+      </div>
+    </form>
   )
 }

@@ -1,4 +1,3 @@
-// source: https://usehooks-ts.com/react-hook/use-copy-to-clipboard
 import { useCallback, useState } from "react"
 
 type CopiedValue = string | null

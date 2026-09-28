@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { LoadingButton } from "@/components/ui/loading-button"
+import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
 
 export function DeleteItem({
@@ -47,7 +47,7 @@ export function DeleteItem({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuItem
         variant="destructive"
-        onSelect={(e) => e.preventDefault()}
+        closeOnClick={false}
         onClick={() => setIsOpen(true)}
       >
         <Trash2 />
@@ -64,18 +64,21 @@ export function DeleteItem({
           </DialogHeader>
 
           <DialogFooter className="mt-4">
-            <DialogClose asChild>
-              <Button variant="outline" disabled={formState.isSubmitting}>
-                Cancel
-              </Button>
+            <DialogClose
+              render={
+                <Button variant="outline" disabled={formState.isSubmitting} />
+              }
+            >
+              Cancel
             </DialogClose>
-            <LoadingButton
+            <Button
               variant="destructive"
               type="submit"
-              loading={formState.isSubmitting}
+              disabled={formState.isSubmitting}
             >
+              {formState.isSubmitting && <Spinner data-icon="inline-start" />}
               Delete
-            </LoadingButton>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

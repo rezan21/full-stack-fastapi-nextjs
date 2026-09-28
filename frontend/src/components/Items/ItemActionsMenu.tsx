@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { ItemPublic } from "@/lib/api"
@@ -17,14 +18,14 @@ export function ItemActionsMenu({ item }: { item: ItemPublic }) {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <EllipsisVertical />
-        </Button>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+        <EllipsisVertical />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <EditItem item={item} onSuccess={() => setOpen(false)} />
-        <DeleteItem id={item.id} onSuccess={() => setOpen(false)} />
+        <DropdownMenuGroup>
+          <EditItem item={item} onSuccess={() => setOpen(false)} />
+          <DeleteItem id={item.id} onSuccess={() => setOpen(false)} />
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

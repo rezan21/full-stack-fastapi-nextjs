@@ -29,15 +29,11 @@ function CopyId({ id }: { id: string }) {
       <span className="font-mono text-xs text-muted-foreground">{id}</span>
       <Button
         variant="ghost"
-        size="icon"
-        className="size-6 opacity-0 group-hover:opacity-100 transition-opacity"
+        size="icon-xs"
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={() => copy(id)}
       >
-        {isCopied ? (
-          <Check className="size-3 text-primary" />
-        ) : (
-          <Copy className="size-3" />
-        )}
+        {isCopied ? <Check className="text-primary" /> : <Copy />}
         <span className="sr-only">Copy ID</span>
       </Button>
     </div>

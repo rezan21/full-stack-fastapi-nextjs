@@ -35,12 +35,10 @@ export function Main({ items }: { items: NavItem[] }) {
               <SidebarMenuButton
                 tooltip={item.title}
                 isActive={pathname === item.path}
-                asChild
+                render={<Link href={item.path} onClick={handleMenuClick} />}
               >
-                <Link href={item.path} onClick={handleMenuClick}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </Link>
+                <item.icon />
+                <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
