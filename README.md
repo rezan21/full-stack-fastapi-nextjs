@@ -14,17 +14,13 @@ A full-stack starter with a FastAPI + PostgreSQL backend and a Next.js 16 (App R
 
 ## Quick Start
 
-The Compose files live in `infra/`. From the project root, point Docker Compose at them (once per shell), then start the stack:
+From the project root, run:
 
 ```bash
-export COMPOSE_FILE=infra/docker-compose.yml:infra/docker-compose.dev.yml
-export COMPOSE_ENV_FILES=backend/.env
-
-docker compose run --rm backend bash scripts/prestart.sh   # migrate + seed the first superuser
-docker compose watch
+./up.sh
 ```
 
-The app is served through the Traefik proxy at <http://localhost>. Log in with the `FIRST_SUPERUSER` / `FIRST_SUPERUSER_PASSWORD` values from `.env`.
+This resets and rebuilds the stack, runs migrations, and starts it with hot reload. The app is served through the Traefik proxy at <http://localhost>; the script prints the login to use.
 
 Local URLs: API docs <http://localhost/docs> · Adminer <http://localhost:8080> · Mailpit <http://localhost:8025> · Traefik dashboard <http://localhost:8090>.
 
@@ -32,7 +28,7 @@ To iterate on one side directly instead, run `uv run fastapi dev` (from `backend
 
 ## Configuration
 
-All settings live in the root `.env` file. Change `SECRET_KEY`, `FIRST_SUPERUSER_PASSWORD`, and `POSTGRES_PASSWORD` before deploying anywhere.
+All settings live in `backend/.env`. Change `SECRET_KEY`, `FIRST_SUPERUSER_PASSWORD`, and `POSTGRES_PASSWORD` before deploying anywhere.
 
 ## Testing
 
