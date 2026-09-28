@@ -17,14 +17,21 @@ svc_url() {
   [ "$port" = "80" ] && echo "http://localhost" || echo "http://localhost:$port"
 }
 
+echo "🧹  Stopping any existing stack..."
+pkill -f "compose watch" 2>/dev/null && sleep 1 || true
+docker compose down
+
 echo "🔨  Building images..."
 docker compose build --quiet
 
 echo "⏳  Starting stack..."
 docker compose up -d --wait
 
+echo "🗃️   Running migrations..."
+docker compose run --rm backend bash scripts/prestart.sh
+
 echo
-echo "🚀  Stack is up — press Ctrl+C to stop"
+echo "🚀  Stack is up with hot reload — press Ctrl+C to stop"
 echo "    App        → $(svc_url proxy 80)"
 echo "    API docs   → $(svc_url backend 8000)/docs"
 echo "    Adminer    → $(svc_url adminer 8080)"
@@ -32,4 +39,4 @@ echo "    Mailpit    → $(svc_url mailpit 8025)"
 echo "    Login      → ${superuser} / ${password}"
 echo
 
-docker compose logs -f
+docker compose watch
