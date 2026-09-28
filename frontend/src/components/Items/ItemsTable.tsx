@@ -1,5 +1,10 @@
 "use client"
 
+import {
+  createColumnHelper,
+  tableFeatures,
+  useTable,
+} from "@tanstack/react-table"
 import { Check, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -39,44 +44,77 @@ function CopyId({ id }: { id: string }) {
   )
 }
 
+const features = tableFeatures({})
+const columnHelper = createColumnHelper<typeof features, ItemPublic>()
+
+const columns = columnHelper.columns([
+  columnHelper.accessor("id", {
+    header: "ID",
+    cell: (info) => <CopyId id={info.getValue()} />,
+  }),
+  columnHelper.accessor("title", {
+    header: "Title",
+    cell: (info) => <span className="font-medium">{info.getValue()}</span>,
+  }),
+  columnHelper.accessor("description", {
+    header: "Description",
+    cell: (info) => {
+      const description = info.getValue()
+      return (
+        <span
+          className={cn(
+            "max-w-xs truncate block text-muted-foreground",
+            !description && "italic",
+          )}
+        >
+          {description || "No description"}
+        </span>
+      )
+    },
+  }),
+  columnHelper.display({
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ({ row }) => (
+      <div className="flex justify-end">
+        <ItemActionsMenu item={row.original} />
+      </div>
+    ),
+  }),
+])
+
 export function ItemsTable({ items }: { items: ItemPublic[] }) {
+  const table = useTable({
+    features,
+    columns,
+    data: items,
+    getRowId: (item) => item.id,
+  })
+
   return (
     <div className="flex flex-col gap-4">
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead>ID</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>
-              <span className="sr-only">Actions</span>
-            </TableHead>
-          </TableRow>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder ? null : (
+                    <table.FlexRender header={header} />
+                  )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
         </TableHeader>
         <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>
-                <CopyId id={item.id} />
-              </TableCell>
-              <TableCell>
-                <span className="font-medium">{item.title}</span>
-              </TableCell>
-              <TableCell>
-                <span
-                  className={cn(
-                    "max-w-xs truncate block text-muted-foreground",
-                    !item.description && "italic",
-                  )}
-                >
-                  {item.description || "No description"}
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end">
-                  <ItemActionsMenu item={item} />
-                </div>
-              </TableCell>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.getAllCells().map((cell) => (
+                <TableCell key={cell.id}>
+                  <table.FlexRender cell={cell} />
+                </TableCell>
+              ))}
             </TableRow>
           ))}
         </TableBody>
