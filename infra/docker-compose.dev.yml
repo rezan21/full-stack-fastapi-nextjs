@@ -28,10 +28,14 @@ services:
       context: ..
       dockerfile: backend/Dockerfile
     command:
-      - fastapi
-      - dev
+      - uvicorn
+      - app.main:app
       - --host
       - "0.0.0.0"
+      - --port
+      - "8000"
+      - --reload
+      - --no-access-log
     develop:
       watch:
         - path: ../backend
@@ -51,6 +55,25 @@ services:
       SMTP_TLS: "false"
 
   frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      target: dev
+    environment:
+      NODE_ENV: "development"
+      API_URL: "http://backend:8000"
+    develop:
+      watch:
+        - action: sync
+          path: ../frontend
+          target: /app/frontend
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ../frontend/package.json
+        - action: rebuild
+          path: ../frontend/bun.lock
     ports:
       - "3000:3000"
 

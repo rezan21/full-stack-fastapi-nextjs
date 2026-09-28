@@ -5,6 +5,18 @@ COPY package.json bun.lock ./
 COPY frontend/package.json ./frontend/
 RUN bun install --frozen-lockfile
 
+# Dev server with hot reload; source is kept in sync via `docker compose watch`
+FROM oven/bun:1 AS dev
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=development
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json bun.lock ./
+COPY frontend ./frontend
+WORKDIR /app/frontend
+EXPOSE 3000
+CMD ["bun", "run", "dev"]
+
 # Build the Next.js app into a standalone server
 FROM oven/bun:1 AS builder
 WORKDIR /app
