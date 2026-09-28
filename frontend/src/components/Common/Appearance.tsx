@@ -2,6 +2,7 @@
 
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -52,7 +53,11 @@ function ThemeItems() {
 export function SidebarAppearance() {
   const { isMobile } = useSidebar()
   const { theme } = useTheme()
-  const Icon = ICON_MAP[(theme as keyof typeof ICON_MAP) ?? "system"] ?? Monitor
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const Icon = mounted
+    ? (ICON_MAP[theme as keyof typeof ICON_MAP] ?? Monitor)
+    : Monitor
 
   return (
     <SidebarMenuItem>
