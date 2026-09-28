@@ -50,6 +50,9 @@ lerna-debug.log*
 # Generated
 openapi.json
 
+# Local reference scratch (not part of this repo)
+dev/
+
 # Test artifacts (Playwright)
 test-results/
 playwright-report/

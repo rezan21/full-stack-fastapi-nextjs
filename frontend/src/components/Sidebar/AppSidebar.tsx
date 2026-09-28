@@ -1,6 +1,6 @@
 "use client"
 
-import { Briefcase, Home } from "lucide-react"
+import { Blocks, Briefcase, Home } from "lucide-react"
 import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
 import {
@@ -16,6 +16,7 @@ import { User } from "./User"
 const navItems: NavItem[] = [
   { icon: Home, title: "Dashboard", path: "/" },
   { icon: Briefcase, title: "Items", path: "/items" },
+  { icon: Blocks, title: "Showcase", path: "/showcase" },
 ]
 
 export function AppSidebar({ user }: { user: UserPublic }) {

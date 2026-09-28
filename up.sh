@@ -4,7 +4,11 @@ set -euo pipefail
 export COMPOSE_FILE=infra/docker-compose.yml:infra/docker-compose.dev.yml
 export COMPOSE_ENV_FILES=backend/.env
 
-trap 'echo; echo "🛑  Stopping stack..."; docker compose down' INT
+docker info >/dev/null 2>&1 || { echo "❌  Docker isn't running — start Docker Desktop and retry"; exit 1; }
+
+[ -f backend/.env ] || cp backend/.env.example backend/.env
+
+trap 'echo; echo "🛑  Stopping stack..."; kill "${watch_pid:-}" 2>/dev/null || true; docker compose down' INT
 
 superuser=$(grep -E '^FIRST_SUPERUSER=' backend/.env | cut -d= -f2-)
 password=$(grep -E '^FIRST_SUPERUSER_PASSWORD=' backend/.env | cut -d= -f2-)
@@ -25,7 +29,12 @@ echo "🔨  Building images..."
 docker compose build --quiet
 
 echo "⏳  Starting stack..."
-docker compose up -d --wait
+if ! docker compose up -d --wait --wait-timeout 120; then
+  echo "❌  A service didn't become healthy:"
+  docker compose ps
+  docker compose logs --tail 40
+  exit 1
+fi
 
 echo "🗃️   Running migrations..."
 docker compose run --rm backend bash scripts/prestart.sh
@@ -39,4 +48,7 @@ echo "    Mailpit    → $(svc_url mailpit 8025)"
 echo "    Login      → ${superuser} / ${password}"
 echo
 
-docker compose watch
+docker compose watch --no-up &
+watch_pid=$!
+
+docker compose logs -f --tail 0
