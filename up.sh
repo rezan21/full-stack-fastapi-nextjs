@@ -26,7 +26,11 @@ pkill -f "compose watch" 2>/dev/null && sleep 1 || true
 docker compose down
 
 echo "🔨  Building images..."
-docker compose build --quiet
+# Docker's build cache occasionally goes stale (dangling snapshot reference); retry once before failing.
+docker compose build --quiet || {
+  echo "⚠️   Build failed, retrying once..."
+  docker compose build --quiet
+}
 
 echo "⏳  Starting stack..."
 if ! docker compose up -d --wait --wait-timeout 120; then
