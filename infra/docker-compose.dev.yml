@@ -25,29 +25,29 @@ services:
     ports:
       - "8000:8000"
     build:
-      context: ..
-      dockerfile: backend/Dockerfile
+      context: ../backend
+      dockerfile: Dockerfile
     command:
-      - uvicorn
-      - app.main:app
+      - fastapi
+      - dev
       - --host
       - "0.0.0.0"
-      - --port
-      - "8000"
-      - --reload
-      - --no-access-log
+    healthcheck:
+      interval: 10m
+      start_interval: 1s
+      start_period: 30s
     develop:
       watch:
         - path: ../backend
           action: sync
-          target: /app/backend
+          target: /app
           ignore:
             - .venv
         - path: ../backend/pyproject.toml
           action: rebuild
     # TODO: remove once coverage is done locally
     volumes:
-      - ../backend/htmlcov:/app/backend/htmlcov
+      - ../backend/htmlcov:/app/htmlcov
     environment:
       FASTAPI_ENV: "development"
       SMTP_HOST: "mailpit"
@@ -56,17 +56,16 @@ services:
 
   frontend:
     build:
-      context: ..
-      dockerfile: frontend/Dockerfile
+      context: ../frontend
+      dockerfile: Dockerfile
       target: dev
     environment:
       NODE_ENV: "development"
-      API_URL: "http://backend:8000"
     develop:
       watch:
         - action: sync
           path: ../frontend
-          target: /app/frontend
+          target: /app
           ignore:
             - node_modules/
             - .next/
@@ -88,8 +87,8 @@ services:
   playwright:
     profiles: ["test"]
     build:
-      context: ..
-      dockerfile: frontend/Dockerfile.playwright
+      context: ../frontend
+      dockerfile: Dockerfile.playwright
       args:
         - NODE_ENV=production
     ipc: host
@@ -106,7 +105,7 @@ services:
       - PLAYWRIGHT_HTML_HOST=0.0.0.0
       - CI=${CI:-}
     volumes:
-      - ../frontend/blob-report:/app/frontend/blob-report
-      - ../frontend/test-results:/app/frontend/test-results
+      - ../frontend/blob-report:/app/blob-report
+      - ../frontend/test-results:/app/test-results
     ports:
       - 9323:9323
