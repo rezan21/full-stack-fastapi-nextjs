@@ -13,6 +13,7 @@ dev = [
 
 [tool.typos.files]
 extend-exclude = [
+    ".agents/",
     "uv.lock",
     "backend/uv.lock",
     "frontend/bun.lock",

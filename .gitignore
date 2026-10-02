@@ -34,9 +34,13 @@ dist-ssr/
 .env.*
 !.env.example
 
-# Local AI tooling (not part of the template)
-.claude/
-.agents/
+# AI tooling: rules, skills and .mcp.json are tracked; keep machine-local state out
+.claude/settings.local.json
+# fastapi/sqlmodel skills are venv-managed symlinks (recreate with library-skills)
+.claude/skills/fastapi
+.claude/skills/sqlmodel
+.agents/skills/fastapi
+.agents/skills/sqlmodel
 
 # Logs
 logs
