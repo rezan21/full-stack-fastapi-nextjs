@@ -10,7 +10,7 @@ This project uses shadcn/ui as the standard for all UI, going forward — no han
 ## Component-first
 
 - Before writing new UI, check `frontend/src/components/ui/` for an existing component. Don't hand-roll a `<button>`, styled `<div>`, or custom badge/alert/card/table row when a shadcn equivalent exists.
-- Missing component → `npx shadcn@latest add <name>` from `frontend/`. Don't hand-write the primitive.
+- Missing component → `bunx --bun shadcn@latest add <name>` from `frontend/`. Don't hand-write the primitive.
 - Don't edit generated files in `frontend/src/components/ui/` for one-off styling; extend via `className`/variants at the call site instead.
 
 ## Base UI, not Radix
@@ -23,7 +23,7 @@ This project uses shadcn/ui as the standard for all UI, going forward — no han
 - Semantic color tokens only (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-card`, `bg-primary`, `bg-destructive`, `border-border`, …) — never raw Tailwind colors (`bg-zinc-50`, `text-red-500`) or hex values.
 - `gap-*` on `flex`, never `space-x-*`/`space-y-*`. `size-*` when width and height match.
 - No manual `dark:` color overrides — the `.dark` class plus the CSS variables in `globals.css` already handle theming.
-- `frontend/src/app/globals.css` theme variables (`:root`, `.dark`, `@theme inline`) are managed by the shadcn CLI (`init`, `apply`). Prefer `npx shadcn@latest apply <preset>` over hand-editing those blocks, so they stay in sync with the registry.
+- `frontend/src/app/globals.css` theme variables (`:root`, `.dark`, `@theme inline`) are managed by the shadcn CLI (`init`, `apply`). Prefer `bunx --bun shadcn@latest apply <preset>` (from `frontend/`) over hand-editing those blocks, so they stay in sync with the registry.
 
 ## Composition
 

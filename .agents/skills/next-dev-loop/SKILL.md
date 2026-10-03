@@ -40,11 +40,11 @@ tell the user how to upgrade and stop. Don't fall back to grepping
 source or to a weaker probe — this skill assumes both views are live
 at the versions above.
 
-- Upgrade Next.js: `pnpm next upgrade` (or `npx next upgrade`).
+- Upgrade Next.js: `bunx next upgrade` (run in `frontend/`).
   Docs: https://nextjs.org/docs/app/getting-started/upgrading
   (version-16 guide:
   https://nextjs.org/docs/app/guides/upgrading/version-16)
-- Install or upgrade `agent-browser`: `npm i -g agent-browser@latest`.
+- Install or upgrade `agent-browser`: `bun add -g agent-browser@latest`.
   If the CLI isn't on `PATH`, install it before continuing — preflight
   expects to invoke it directly.
 
