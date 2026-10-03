@@ -94,7 +94,7 @@ export const zUpdatePassword = z.object({
 export const zUserPublic = z.object({
     created_at: z.iso.datetime().nullish(),
     email: z.email().max(255),
-    full_name: z.string().max(255).nullish(),
+    full_name: z.string().min(1).max(255),
     id: z.uuid(),
     is_active: z.boolean().optional().default(true),
     is_superuser: z.boolean().optional().default(false)
@@ -105,7 +105,7 @@ export const zUserPublic = z.object({
  */
 export const zUserRegister = z.object({
     email: z.email().max(255),
-    full_name: z.string().max(255).nullish(),
+    full_name: z.string().min(1).max(255),
     password: z.string().min(8).max(128)
 });
 
@@ -114,7 +114,7 @@ export const zUserRegister = z.object({
  */
 export const zUserUpdateMe = z.object({
     email: z.email().max(255).nullish(),
-    full_name: z.string().max(255).nullish()
+    full_name: z.string().min(1).max(255).nullish()
 });
 
 /**

@@ -2,6 +2,7 @@ import { expect, type Page, test } from "@playwright/test"
 import { firstSuperuser, firstSuperuserPassword } from "./config.ts"
 import { createUser } from "./utils/privateApi.ts"
 import { randomEmail, randomPassword } from "./utils/random"
+import { typeInto } from "./utils/type"
 import { logInUser, logOutUser } from "./utils/user"
 
 const tabs = ["My profile", "Password", "Danger zone"]
@@ -56,7 +57,7 @@ test.describe("Edit user profile", () => {
     const updatedName = "Test User 2"
 
     await page.getByRole("button", { name: "Edit" }).click()
-    await page.getByLabel("Full name").fill(updatedName)
+    await typeInto(page.getByLabel("Full name"), updatedName)
     await page.getByRole("button", { name: "Save" }).click()
 
     await expect(page.getByText("User updated successfully")).toBeVisible()
@@ -90,13 +91,36 @@ test.describe("Edit user email", () => {
     await page.getByRole("tab", { name: "My profile" }).click()
 
     await page.getByRole("button", { name: "Edit" }).click()
-    await page.getByLabel("Email").fill(updatedEmail)
+    await typeInto(page.getByLabel("Email"), updatedEmail)
     await page.getByRole("button", { name: "Save" }).click()
 
     await expect(page.getByText("User updated successfully")).toBeVisible()
     await expect(
       page.locator("form").getByText(updatedEmail, { exact: true }),
     ).toBeVisible()
+  })
+})
+
+test.describe("Full name is required", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test("Clearing the full name shows an error and does not save", async ({
+    page,
+  }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await page.goto("/settings")
+
+    await page.getByRole("button", { name: "Edit" }).click()
+    await page.getByLabel("Full name").click()
+    await page.getByLabel("Full name").press("ControlOrMeta+a")
+    await page.getByLabel("Full name").press("Backspace")
+    await page.getByRole("button", { name: "Save" }).click()
+
+    await expect(page.getByText("Full name is required")).toBeVisible()
+    await expect(page.getByText("User updated successfully")).not.toBeVisible()
   })
 })
 

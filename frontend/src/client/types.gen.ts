@@ -193,7 +193,7 @@ export type UserPublic = {
     /**
      * Full Name
      */
-    full_name?: string | null;
+    full_name: string;
     /**
      * Id
      */
@@ -219,7 +219,7 @@ export type UserRegister = {
     /**
      * Full Name
      */
-    full_name?: string | null;
+    full_name: string;
     /**
      * Password
      */

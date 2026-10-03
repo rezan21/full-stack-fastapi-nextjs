@@ -128,6 +128,7 @@ def test_login_with_bcrypt_password_upgrades_to_argon2(
 
     user = User(
         email=email,
+        full_name=random_lower_string(),
         hashed_password=bcrypt_hash,
         is_active=True,
     )
@@ -166,6 +167,7 @@ def test_login_with_argon2_password_keeps_hash(client: TestClient, db: Session) 
     # Create user with argon2 hash
     user = User(
         email=email,
+        full_name=random_lower_string(),
         hashed_password=argon2_hash,
         is_active=True,
     )

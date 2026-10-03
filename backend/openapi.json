@@ -315,16 +315,10 @@
             "type": "string"
           },
           "full_name": {
-            "anyOf": [
-              {
-                "maxLength": 255,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Full Name"
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Full Name",
+            "type": "string"
           },
           "id": {
             "format": "uuid",
@@ -344,6 +338,7 @@
         },
         "required": [
           "email",
+          "full_name",
           "id"
         ],
         "title": "UserPublic",
@@ -358,16 +353,10 @@
             "type": "string"
           },
           "full_name": {
-            "anyOf": [
-              {
-                "maxLength": 255,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Full Name"
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Full Name",
+            "type": "string"
           },
           "password": {
             "maxLength": 128,
@@ -378,7 +367,8 @@
         },
         "required": [
           "email",
-          "password"
+          "password",
+          "full_name"
         ],
         "title": "UserRegister",
         "type": "object"
@@ -402,6 +392,7 @@
             "anyOf": [
               {
                 "maxLength": 255,
+                "minLength": 1,
                 "type": "string"
               },
               {

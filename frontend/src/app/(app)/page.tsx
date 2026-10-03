@@ -9,7 +9,7 @@ export default async function Page() {
 
   return (
     <PageHeader
-      title={`Hi, ${user?.full_name || user?.email} 👋`}
+      title={`Hi, ${user?.full_name} 👋`}
       description="Welcome back, nice to see you again!"
     />
   )

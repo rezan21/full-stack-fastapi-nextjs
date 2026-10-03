@@ -22,7 +22,6 @@ import { formError } from "@/lib/form-errors"
 
 const formSchema = zUserRegister
   .extend({
-    full_name: zUserRegister.shape.full_name.unwrap().unwrap().min(1),
     confirm_password: z
       .string()
       .min(1, { message: "Password confirmation is required" }),

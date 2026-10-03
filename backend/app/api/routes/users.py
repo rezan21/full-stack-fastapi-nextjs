@@ -59,7 +59,7 @@ def update_user_me(
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
             )
-    user_data = user_in.model_dump(exclude_unset=True)
+    user_data = user_in.model_dump(exclude_unset=True, exclude_none=True)
     current_user.sqlmodel_update(user_data)
     session.add(current_user)
     session.commit()

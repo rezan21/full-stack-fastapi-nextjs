@@ -21,14 +21,14 @@ import type { UserPublic } from "@/lib/api"
 import { formError } from "@/lib/form-errors"
 
 const formSchema = zUserUpdateMe.extend({
-  full_name: zUserUpdateMe.shape.full_name.unwrap().unwrap().min(1),
+  full_name: zUserUpdateMe.shape.full_name.unwrap().unwrap(),
   email: zUserUpdateMe.shape.email.unwrap().unwrap(),
 })
 
 type FormData = z.infer<typeof formSchema>
 
 function toFormData(user: UserPublic): FormData {
-  return { full_name: user.full_name ?? "", email: user.email }
+  return { full_name: user.full_name, email: user.email }
 }
 
 export function ProfileForm({ user }: { user: UserPublic }) {
@@ -85,7 +85,7 @@ export function ProfileForm({ user }: { user: UserPublic }) {
                 <>
                   <FieldTitle>Full name</FieldTitle>
                   <p className="text-sm text-muted-foreground">
-                    {user.full_name || "Not set"}
+                    {user.full_name}
                   </p>
                 </>
               )}
