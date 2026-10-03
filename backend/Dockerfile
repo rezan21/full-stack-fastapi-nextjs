@@ -40,4 +40,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen
 
+RUN useradd --system --no-create-home app
+
+USER app
+
 CMD ["fastapi", "run", "--workers", "4"]
