@@ -12,7 +12,6 @@ dependencies = [
     "emails>=1.1.2,<2.0",
     "jinja2<4.0.0,>=3.1.4",
     "alembic<2.0.0,>=1.12.1",
-    "httpx<1.0.0,>=0.25.1",
     "psycopg[binary]>=3.3.4,<4.0.0",
     "sqlmodel>=0.0.39,<1.0.0",
     "pydantic-settings<3.0.0,>=2.2.1",
@@ -23,6 +22,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx<1.0.0,>=0.25.1",
     "pytest<10.0.0,>=7.4.3",
     "mypy<3.0.0,>=1.8.0",
     "ty>=0.0.25",

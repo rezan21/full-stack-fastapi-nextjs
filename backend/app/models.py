@@ -29,15 +29,6 @@ class UserRegister(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
 
 
-# Properties to receive via API on update, all are optional
-class UserUpdate(SQLModel):
-    email: EmailStr | None = Field(default=None, max_length=255)
-    is_active: bool | None = None
-    is_superuser: bool | None = None
-    full_name: str | None = Field(default=None, max_length=255)
-    password: str | None = Field(default=None, min_length=8, max_length=128)
-
-
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
@@ -63,11 +54,6 @@ class User(UserBase, table=True):
 class UserPublic(UserBase):
     id: uuid.UUID
     created_at: datetime | None = None
-
-
-class UsersPublic(SQLModel):
-    data: list[UserPublic]
-    count: int
 
 
 # Shared properties
@@ -117,10 +103,15 @@ class Message(SQLModel):
     message: str
 
 
+class HTTPError(SQLModel):
+    detail: str
+
+
 # JSON payload containing access token
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
+    expires_in: int
 
 
 # Contents of JWT token

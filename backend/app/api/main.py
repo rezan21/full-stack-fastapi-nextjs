@@ -11,4 +11,4 @@ api_router.include_router(items.router)
 
 
 if settings.FASTAPI_ENV == "development":
-    api_router.include_router(private.router)
+    api_router.include_router(private.router, include_in_schema=False)

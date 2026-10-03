@@ -3,7 +3,8 @@ from sqlmodel import Session
 
 from app import crud
 from app.core.config import settings
-from app.models import User, UserCreate, UserUpdate
+from app.core.security import get_password_hash
+from app.models import User, UserCreate
 from tests.utils.utils import random_email, random_lower_string
 
 
@@ -41,9 +42,8 @@ def authentication_token_from_email(
         user_in_create = UserCreate(email=email, password=password)
         user = crud.create_user(session=db, user_create=user_in_create)
     else:
-        user_in_update = UserUpdate(password=password)
-        if not user.id:
-            raise Exception("User id not set")
-        user = crud.update_user(session=db, db_user=user, user_in=user_in_update)
+        user.hashed_password = get_password_hash(password)
+        db.add(user)
+        db.commit()
 
     return user_authentication_headers(client=client, email=email, password=password)
