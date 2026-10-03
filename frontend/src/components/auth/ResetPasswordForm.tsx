@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { resetPassword } from "@/actions/auth"
+import { zNewPassword } from "@/client/zod.gen"
 import { PasswordInput } from "@/components/Common/PasswordInput"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,13 +17,11 @@ import {
 } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
+import { formError } from "@/lib/form-errors"
 
-const formSchema = z
-  .object({
-    new_password: z
-      .string()
-      .min(1, { message: "Password is required" })
-      .min(8, { message: "Password must be at least 8 characters" }),
+const formSchema = zNewPassword
+  .pick({ new_password: true })
+  .extend({
     confirm_password: z
       .string()
       .min(1, { message: "Password confirmation is required" }),
@@ -38,7 +37,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema, { error: formError }),
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: { new_password: "", confirm_password: "" },

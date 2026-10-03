@@ -29,6 +29,13 @@ repos:
         types: [text]
         files: ^frontend/
 
+      - id: local-api-client
+        name: api client up to date
+        entry: bash scripts/generate-client.sh
+        language: system
+        pass_filenames: false
+        files: ^(backend/app/|backend/openapi\.json|frontend/openapi-ts\.config\.ts|frontend/src/client/)
+
       - id: local-ruff-check
         name: ruff check
         entry: uv run --project backend ruff check --force-exclude --fix --exit-non-zero-on-fix

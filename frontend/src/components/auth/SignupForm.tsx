@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { signup } from "@/actions/auth"
+import { zUserRegister } from "@/client/zod.gen"
 import { PasswordInput } from "@/components/Common/PasswordInput"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,15 +18,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
+import { formError } from "@/lib/form-errors"
 
-const formSchema = z
-  .object({
-    email: z.email({ message: "Invalid email address" }),
-    full_name: z.string().min(1, { message: "Full Name is required" }),
-    password: z
-      .string()
-      .min(1, { message: "Password is required" })
-      .min(8, { message: "Password must be at least 8 characters" }),
+const formSchema = zUserRegister
+  .extend({
+    full_name: zUserRegister.shape.full_name.unwrap().unwrap().min(1),
     confirm_password: z
       .string()
       .min(1, { message: "Password confirmation is required" }),
@@ -41,7 +38,7 @@ export function SignupForm() {
   const router = useRouter()
   const { showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema, { error: formError }),
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {

@@ -1,8 +1,6 @@
-import { z } from "zod"
+import type { z } from "zod"
+import { zItemCreate } from "@/client/zod.gen"
 
-export const itemFormSchema = z.object({
-  title: z.string().min(1, { message: "Title is required" }),
-  description: z.string().optional(),
-})
+export const itemFormSchema = zItemCreate
 
 export type ItemFormData = z.infer<typeof itemFormSchema>

@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
+import { formError } from "@/lib/form-errors"
 import { type ItemFormData, itemFormSchema } from "@/lib/schemas"
 
 export function ItemFormDialog({
@@ -45,7 +46,7 @@ export function ItemFormDialog({
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<ItemFormData>({
-    resolver: zodResolver(itemFormSchema),
+    resolver: zodResolver(itemFormSchema, { error: formError }),
     mode: "onBlur",
     criteriaMode: "all",
     values: defaultValues,

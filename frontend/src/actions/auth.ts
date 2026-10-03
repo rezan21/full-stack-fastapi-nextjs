@@ -7,6 +7,7 @@ import {
   resetPassword as apiResetPassword,
   loginAccessToken,
   registerUser,
+  type UserRegister,
 } from "@/lib/api"
 import { createSession, deleteSession } from "@/lib/session"
 
@@ -21,8 +22,11 @@ export async function login(
   password: string,
 ): Promise<ActionResult> {
   try {
-    const { access_token } = await loginAccessToken(username, password)
-    await createSession(access_token)
+    const { access_token, expires_in } = await loginAccessToken(
+      username,
+      password,
+    )
+    await createSession(access_token, expires_in)
     return {}
   } catch (e) {
     return toError(e)
@@ -34,11 +38,7 @@ export async function logout(): Promise<void> {
   redirect("/login")
 }
 
-export async function signup(data: {
-  full_name: string
-  email: string
-  password: string
-}): Promise<ActionResult> {
+export async function signup(data: UserRegister): Promise<ActionResult> {
   try {
     await registerUser(data)
     return {}

@@ -8,6 +8,7 @@
       "!**/.next/**/*",
       "!**/node_modules/**/*",
       "!**/src/components/ui/**/*",
+      "!**/src/client/**/*",
       "!**/playwright-report",
       "!**/playwright.config.ts"
     ]

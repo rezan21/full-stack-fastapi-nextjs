@@ -1,0 +1,43 @@
+name: API Breaking Changes
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+    paths:
+      - backend/openapi.json
+
+permissions:
+  contents: read
+
+jobs:
+  oasdiff:
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'breaking-api-change') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check the base branch has a spec to compare against
+        id: base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if git cat-file -e "origin/${BASE_REF}:backend/openapi.json" 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Detect breaking changes
+        if: steps.base.outputs.exists == 'true'
+        uses: oasdiff/oasdiff-action/breaking@b9325c9e0a27ab65b0da3b766522cedec6be81dc # v0.1.18
+        with:
+          base: origin/${{ github.base_ref }}:backend/openapi.json
+          revision: HEAD:backend/openapi.json
+          fail-on: ERR
+          review: "false"
+          github-token: ""

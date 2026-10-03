@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "biome check --write --unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
     "test": "playwright test",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "generate-client": "openapi-ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",
+    "@hey-api/openapi-ts": "0.99.0",
     "@playwright/test": "1.62.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^24.9.2",

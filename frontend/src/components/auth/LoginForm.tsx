@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { login } from "@/actions/auth"
+import { zBodyLoginLoginAccessToken } from "@/client/zod.gen"
 import { PasswordInput } from "@/components/Common/PasswordInput"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,13 +18,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
+import { formError } from "@/lib/form-errors"
 
 const formSchema = z.object({
   username: z.email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(1, { message: "Password is required" })
-    .min(8, { message: "Password must be at least 8 characters" }),
+  password: zBodyLoginLoginAccessToken.shape.password.min(1),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -32,7 +31,7 @@ export function LoginForm() {
   const router = useRouter()
   const { showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema, { error: formError }),
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: { username: "", password: "" },
