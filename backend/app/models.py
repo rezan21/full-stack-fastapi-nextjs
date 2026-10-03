@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from pydantic import EmailStr
-from pydantic_core import MISSING
+from pydantic.experimental.missing_sentinel import MISSING
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
 
