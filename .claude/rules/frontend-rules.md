@@ -17,7 +17,7 @@ paths:
 
 ## Next.js
 
-- Read the framework docs (`node_modules/next/dist/docs/` or official docs) before writing Next.js-specific code; training data may be outdated.
+- Read the framework docs (`frontend/node_modules/next/dist/docs/` or official docs) before writing Next.js-specific code; training data may be outdated.
 - Be explicit about App Router vs Pages Router; never mix conventions.
 - Server Components are the default; add `"use client"` only when interactivity/hooks/browser APIs are needed.
 - Fetch data in Server Components or Route Handlers, not via client-side `useEffect`, unless polling or user-triggered refetch is required.
