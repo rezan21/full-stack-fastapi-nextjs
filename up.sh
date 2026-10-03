@@ -8,6 +8,11 @@ docker info >/dev/null 2>&1 || { echo "❌  Docker isn't running — start Docke
 
 [ -f backend/.env ] || cp backend/.env.example backend/.env
 
+if hook=$(git rev-parse --git-path hooks/pre-commit 2>/dev/null) && [ ! -f "$hook" ]; then
+  echo "🪝  Installing git hooks (prek)..."
+  uv run prek install >/dev/null
+fi
+
 trap 'echo; echo "🛑  Stopping stack..."; kill "${watch_pid:-}" 2>/dev/null || true; docker compose down' INT
 
 superuser=$(grep -E '^FIRST_SUPERUSER=' backend/.env | cut -d= -f2-)

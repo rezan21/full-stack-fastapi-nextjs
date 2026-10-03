@@ -42,6 +42,8 @@ This rewrites `backend/openapi.json` and `frontend/src/client/` (a typed SDK, Ty
 
 ## Development
 
+`./up.sh` installs the git hooks ([prek](https://github.com/j178/prek), configured in `.pre-commit-config.yaml`) on its first run. They run the same checks as the `pre-commit` workflow: formatting, spelling, Biome, ruff, mypy, ty, a fresh API client and the skill links. Run them on demand with `uv run prek run --all-files`.
+
 The FastAPI and SQLModel packages ship agent skills. `backend/.agents/skills` and `backend/.claude/skills` link to them inside `backend/.venv`, so the links resolve once `uv sync` has run in `backend/`. After a dependency or Python version change, refresh them from `backend/` with `uv run --project .. library-skills --claude --yes`; the pre-commit hook runs the same tool with `--check`.
 
 ## Testing
