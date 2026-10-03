@@ -23,7 +23,7 @@ Mechanical edits that touch no Zod API (renaming a field, fixing copy) don't nee
 ## How Zod is used in this repo
 
 - **The contract owns the field rules.** Backend models in `backend/app/models.py` generate `backend/openapi.json`, which generates `frontend/src/client/zod.gen.ts` (`bash scripts/generate-client.sh`; never edit the generated files). A length, format or required rule is changed in the backend and regenerated, not retyped in a form.
-- **Forms compose generated schemas.** A form imports a generated export (for example `zUserRegister`) and layers only rules the contract cannot express on top, such as confirm-password. Optional wrappers on generated fields are removed with `.unwrap()`.
+- **Forms compose generated schemas.** A form imports a generated export (for example `zUserRegister`) and layers only rules the contract cannot express on top, such as confirm-password (`withPasswordConfirmation` in `lib/schemas.ts`). Optional generated fields are made required with `.required()`.
 - **Messages come from one place.** `lib/form-errors.ts` words the browser's messages and is passed to each resolver as `zodResolver(schema, { error: formError })`.
 - **The SDK validates every request.** The generator runs with `validator.request: "zod"`, and `lib/api.ts` turns a failed parse into an `ApiError` with status 422. Responses are not validated.
 - **Types come from the schema.** Form types are `z.infer<typeof schema>`; API types come from the generated `types.gen.ts`. Don't declare a third copy by hand.

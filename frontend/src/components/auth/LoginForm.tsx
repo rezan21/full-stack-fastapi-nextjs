@@ -21,7 +21,7 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { formError } from "@/lib/form-errors"
 
 const formSchema = z.object({
-  username: z.email({ message: "Invalid email address" }),
+  username: z.email(),
   password: zBodyLoginLoginAccessToken.shape.password.min(1),
 })
 

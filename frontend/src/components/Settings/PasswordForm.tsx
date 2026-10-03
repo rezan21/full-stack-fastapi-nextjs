@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
-import { z } from "zod"
+import type { z } from "zod"
 import { changePassword } from "@/actions/user"
 import { zUpdatePassword } from "@/client/zod.gen"
 import { PasswordInput } from "@/components/Common/PasswordInput"
@@ -16,17 +16,9 @@ import {
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
 import { formError } from "@/lib/form-errors"
+import { withPasswordConfirmation } from "@/lib/schemas"
 
-const formSchema = zUpdatePassword
-  .extend({
-    confirm_password: z
-      .string()
-      .min(1, { message: "Password confirmation is required" }),
-  })
-  .refine((data) => data.new_password === data.confirm_password, {
-    message: "The passwords don't match",
-    path: ["confirm_password"],
-  })
+const formSchema = withPasswordConfirmation(zUpdatePassword, "new_password")
 
 type FormData = z.infer<typeof formSchema>
 
