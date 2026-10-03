@@ -4,5 +4,5 @@ set -e
 set -x
 
 FASTAPI_ENV=development coverage run -m pytest tests/
+coverage html --fail-under=0 --title "${@-coverage}"
 coverage report
-coverage html --title "${@-coverage}"
