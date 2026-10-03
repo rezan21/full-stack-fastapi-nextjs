@@ -1,8 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { deleteItem } from "@/actions/items"
 import {
@@ -15,20 +13,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
 
 export function DeleteItem({
   id,
-  onSuccess,
+  open,
+  onOpenChange,
   redirectTo,
 }: {
   id: string
-  onSuccess: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
   redirectTo?: string
 }) {
-  const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const { handleSubmit, formState } = useForm()
@@ -40,22 +38,13 @@ export function DeleteItem({
       return
     }
     showSuccessToast("The item was deleted successfully")
-    setIsOpen(false)
-    onSuccess()
+    onOpenChange(false)
     if (redirectTo) router.replace(redirectTo)
     else router.refresh()
   }
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem
-        variant="destructive"
-        closeOnClick={false}
-        onClick={() => setIsOpen(true)}
-      >
-        <Trash2 />
-        Delete Item
-      </DropdownMenuItem>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Item</AlertDialogTitle>

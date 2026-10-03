@@ -1,17 +1,17 @@
 "use client"
 
-import { Pencil } from "lucide-react"
 import { updateItem } from "@/actions/items"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import type { ItemPublic } from "@/lib/api"
 import { ItemFormDialog } from "./ItemFormDialog"
 
 export function EditItem({
   item,
-  onSuccess,
+  open,
+  onOpenChange,
 }: {
   item: ItemPublic
-  onSuccess: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   return (
     <ItemFormDialog
@@ -23,13 +23,8 @@ export function EditItem({
       }}
       action={(data) => updateItem(item.id, data)}
       successMessage="Item updated successfully"
-      onDone={onSuccess}
-      trigger={(open) => (
-        <DropdownMenuItem closeOnClick={false} onClick={open}>
-          <Pencil />
-          Edit Item
-        </DropdownMenuItem>
-      )}
+      open={open}
+      onOpenChange={onOpenChange}
     />
   )
 }

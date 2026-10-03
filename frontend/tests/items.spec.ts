@@ -6,6 +6,7 @@ import {
   randomItemTitle,
   randomPassword,
 } from "./utils/random"
+import { typeInto } from "./utils/type"
 import { logInUser } from "./utils/user"
 
 const API_BASE = `${process.env.API_URL ?? "http://localhost:8000"}/api/v1`
@@ -97,11 +98,40 @@ test.describe("Items management", () => {
       await page.getByRole("menuitem", { name: "Edit Item" }).click()
 
       const updatedTitle = randomItemTitle()
-      await page.getByLabel("Title").fill(updatedTitle)
+      const updatedDescription = randomItemDescription()
+      await typeInto(page.getByLabel("Title"), updatedTitle)
+      await typeInto(page.getByLabel("Description"), updatedDescription)
       await page.getByRole("button", { name: "Save" }).click()
 
       await expect(page.getByText("Item updated successfully")).toBeVisible()
       await expect(page.getByText(updatedTitle)).toBeVisible()
+      await expect(page.getByText(updatedDescription)).toBeVisible()
+    })
+
+    test("The edit dialog reopens with saved values and drops cancelled typing", async ({
+      page,
+    }) => {
+      const openEdit = async (title: string) => {
+        const row = page.getByRole("row").filter({ hasText: title })
+        await row.getByRole("button").last().click()
+        await page.getByRole("menuitem", { name: "Edit Item" }).click()
+      }
+
+      await openEdit(itemTitle)
+      const updatedTitle = randomItemTitle()
+      await typeInto(page.getByLabel("Title"), updatedTitle)
+      await page.getByRole("button", { name: "Save" }).click()
+      await expect(page.getByText("Item updated successfully")).toBeVisible()
+      await expect(page.getByRole("dialog")).not.toBeVisible()
+
+      await openEdit(updatedTitle)
+      await expect(page.getByLabel("Title")).toHaveValue(updatedTitle)
+      await typeInto(page.getByLabel("Title"), "discarded")
+      await page.getByRole("button", { name: "Cancel" }).click()
+      await expect(page.getByRole("dialog")).not.toBeVisible()
+
+      await openEdit(updatedTitle)
+      await expect(page.getByLabel("Title")).toHaveValue(updatedTitle)
     })
 
     test("Opening an item shows it in a sheet over the list", async ({
@@ -168,7 +198,7 @@ test.describe("Items management", () => {
       await page.getByRole("menuitem", { name: "Edit Item" }).click()
 
       const updatedTitle = randomItemTitle()
-      await page.getByLabel("Title").fill(updatedTitle)
+      await typeInto(page.getByLabel("Title"), updatedTitle)
       await page.getByRole("button", { name: "Save" }).click()
 
       await expect(page.getByText("Item updated successfully")).toBeVisible()
@@ -181,10 +211,11 @@ test.describe("Items management", () => {
       await page.getByRole("link", { name: itemTitle }).click()
       await sheet(page).getByRole("button", { name: "Item actions" }).click()
       await page.getByRole("menuitem", { name: "Delete Item" }).click()
-      await page
+      const confirm = page
         .getByRole("alertdialog")
         .getByRole("button", { name: "Delete" })
-        .click()
+      await confirm.focus()
+      await page.keyboard.press("Enter")
 
       await expect(
         page.getByText("The item was deleted successfully"),

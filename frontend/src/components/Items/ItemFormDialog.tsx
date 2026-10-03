@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { type ReactNode, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import {
@@ -26,23 +25,22 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { type ItemFormData, itemFormSchema } from "@/lib/schemas"
 
 export function ItemFormDialog({
-  trigger,
   title,
   description,
   defaultValues,
   action,
   successMessage,
-  onDone,
+  open,
+  onOpenChange,
 }: {
-  trigger: (open: () => void) => ReactNode
   title: string
   description: string
   defaultValues: ItemFormData
   action: (data: ItemFormData) => Promise<{ error?: string }>
   successMessage: string
-  onDone?: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
-  const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
@@ -50,8 +48,13 @@ export function ItemFormDialog({
     resolver: zodResolver(itemFormSchema),
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues,
+    values: defaultValues,
   })
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) form.reset()
+    onOpenChange(isOpen)
+  }
 
   const onSubmit = async (data: ItemFormData) => {
     const res = await action(data)
@@ -60,87 +63,83 @@ export function ItemFormDialog({
       return
     }
     showSuccessToast(successMessage)
-    form.reset()
-    setIsOpen(false)
-    onDone?.()
+    handleOpenChange(false)
     router.refresh()
   }
 
   return (
-    <>
-      {trigger(() => setIsOpen(true))}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>{title}</DialogTitle>
-              <DialogDescription>{description}</DialogDescription>
-            </DialogHeader>
-            <FieldGroup className="py-4">
-              <Controller
-                control={form.control}
-                name="title"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      Title <span className="text-destructive">*</span>
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id={field.name}
-                      placeholder="Title"
-                      type="text"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.error && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                control={form.control}
-                name="description"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                    <Input
-                      {...field}
-                      id={field.name}
-                      placeholder="Description"
-                      type="text"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.error && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </FieldGroup>
-
-            <DialogFooter>
-              <DialogClose
-                render={
-                  <Button
-                    variant="outline"
-                    disabled={form.formState.isSubmitting}
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+          <FieldGroup className="py-4">
+            <Controller
+              control={form.control}
+              name="title"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>
+                    Title <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id={field.name}
+                    placeholder="Title"
+                    type="text"
+                    aria-invalid={fieldState.invalid}
                   />
-                }
-              >
-                Cancel
-              </DialogClose>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && (
-                  <Spinner data-icon="inline-start" />
-                )}
-                Save
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+                  {fieldState.error && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="description"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    id={field.name}
+                    placeholder="Description"
+                    type="text"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.error && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+
+          <DialogFooter>
+            <DialogClose
+              render={
+                <Button
+                  variant="outline"
+                  disabled={form.formState.isSubmitting}
+                />
+              }
+            >
+              Cancel
+            </DialogClose>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting && (
+                <Spinner data-icon="inline-start" />
+              )}
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
