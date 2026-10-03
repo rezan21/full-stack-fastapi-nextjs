@@ -52,3 +52,11 @@ Production runs behind Traefik with automatic HTTPS (Let's Encrypt) via `infra/d
 ```bash
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.deploy.yml up -d
 ```
+
+Database migrations run automatically, in dev and in production alike: the `prestart` service runs `backend/scripts/prestart.sh` (wait for the database, `alembic upgrade head`, seed the first superuser), and the backend starts only after it succeeds. `up -d` replaces the running backend before the migration runs, so if a migration fails the backend stays down until you fix it. To keep the current version serving when a migration fails, run the migration first, so a failure stops the deploy before anything is replaced:
+
+```bash
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.deploy.yml run --rm prestart
+```
+
+Then run the `up -d` command above. In dev, run `./up.sh` again after adding a migration so the image is rebuilt with it.

@@ -21,6 +21,10 @@ services:
     ports:
       - "8080:8080"
 
+  prestart:
+    environment:
+      FASTAPI_ENV: "development"
+
   backend:
     ports:
       - "8000:8000"

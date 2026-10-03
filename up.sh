@@ -32,16 +32,13 @@ docker compose build --quiet || {
   docker compose build --quiet
 }
 
-echo "⏳  Starting stack..."
+echo "⏳  Starting stack (migrations run before the backend starts)..."
 if ! docker compose up -d --wait --wait-timeout 120; then
   echo "❌  A service didn't become healthy:"
   docker compose ps
   docker compose logs --tail 40
   exit 1
 fi
-
-echo "🗃️   Running migrations..."
-docker compose run --rm backend bash scripts/prestart.sh
 
 echo
 echo "🚀  Stack is up with hot reload — press Ctrl+C to stop"

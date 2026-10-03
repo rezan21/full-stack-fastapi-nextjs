@@ -1,5 +1,22 @@
 name: full-stack-fastapi-nextjs
 
+x-backend: &backend
+  image: backend:latest
+  build:
+    context: ../backend
+    dockerfile: Dockerfile
+  environment:
+    PROJECT_NAME: ${PROJECT_NAME:?Variable not set}
+    SECRET_KEY: ${SECRET_KEY:?Variable not set}
+    FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Variable not set}
+    FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Variable not set}
+    SMTP_HOST: ${SMTP_HOST}
+    SMTP_USER: ${SMTP_USER:-}
+    SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
+    DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Variable not set}@db:5432/app
+    SENTRY_DSN: ${SENTRY_DSN:-}
+
 services:
 
   proxy:
@@ -39,33 +56,27 @@ services:
       - traefik.http.routers.adminer-http.entrypoints=http
       - traefik.http.services.adminer.loadbalancer.server.port=8080
 
+  prestart:
+    <<: *backend
+    command: bash scripts/prestart.sh
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   backend:
-    image: backend:latest
+    <<: *backend
     depends_on:
       db:
         condition: service_healthy
         restart: true
-    environment:
-      PROJECT_NAME: ${PROJECT_NAME:?Variable not set}
-      SECRET_KEY: ${SECRET_KEY:?Variable not set}
-      FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Variable not set}
-      FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Variable not set}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Variable not set}@db:5432/app
-      SENTRY_DSN: ${SENTRY_DSN:-}
-
+      prestart:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
     labels:
       - traefik.enable=true
       - traefik.http.services.backend.loadbalancer.server.port=8000
