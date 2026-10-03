@@ -6,6 +6,7 @@ import {
   useTable,
 } from "@tanstack/react-table"
 import { Check, Copy } from "lucide-react"
+import Link from "next/link"
 import type { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -47,7 +48,11 @@ const columnHelper = createColumnHelper<typeof features, ItemPublic>()
 
 const renderCell: Record<ItemColumnId, (item: ItemPublic) => ReactNode> = {
   id: (item) => <CopyId id={item.id} />,
-  title: (item) => <span className="font-medium">{item.title}</span>,
+  title: (item) => (
+    <Link href={`/items/${item.id}`} className="font-medium hover:underline">
+      {item.title}
+    </Link>
+  ),
   description: (item) => (
     <span
       className={cn(

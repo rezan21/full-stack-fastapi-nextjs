@@ -120,6 +120,10 @@ export function resetPassword(token: string, newPassword: string) {
   })
 }
 
+export function getItem(id: string) {
+  return request<ItemPublic>(`/items/${encodeURIComponent(id)}`)
+}
+
 export function getItems() {
   return request<ItemsPublic>("/items/?skip=0&limit=100")
 }

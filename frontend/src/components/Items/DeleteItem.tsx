@@ -5,16 +5,16 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { deleteItem } from "@/actions/items"
-import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -22,9 +22,11 @@ import useCustomToast from "@/hooks/useCustomToast"
 export function DeleteItem({
   id,
   onSuccess,
+  redirectTo,
 }: {
   id: string
   onSuccess: () => void
+  redirectTo?: string
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
@@ -40,11 +42,12 @@ export function DeleteItem({
     showSuccessToast("The item was deleted successfully")
     setIsOpen(false)
     onSuccess()
-    router.refresh()
+    if (redirectTo) router.replace(redirectTo)
+    else router.refresh()
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuItem
         variant="destructive"
         closeOnClick={false}
@@ -53,35 +56,28 @@ export function DeleteItem({
         <Trash2 />
         Delete Item
       </DropdownMenuItem>
-      <DialogContent className="sm:max-w-md">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>Delete Item</DialogTitle>
-            <DialogDescription>
-              This item will be permanently deleted. Are you sure? You will not
-              be able to undo this action.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter className="mt-4">
-            <DialogClose
-              render={
-                <Button variant="outline" disabled={formState.isSubmitting} />
-              }
-            >
-              Cancel
-            </DialogClose>
-            <Button
-              variant="destructive"
-              type="submit"
-              disabled={formState.isSubmitting}
-            >
-              {formState.isSubmitting && <Spinner data-icon="inline-start" />}
-              Delete
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Item</AlertDialogTitle>
+          <AlertDialogDescription>
+            This item will be permanently deleted. Are you sure? You will not be
+            able to undo this action.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={formState.isSubmitting}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={formState.isSubmitting}
+            onClick={handleSubmit(onSubmit)}
+          >
+            {formState.isSubmitting && <Spinner data-icon="inline-start" />}
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

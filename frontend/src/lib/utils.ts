@@ -8,3 +8,12 @@ export function getInitials(name: string): string {
     .join("")
     .toUpperCase()
 }
+
+export function formatCreated(createdAt?: string | null): string | undefined {
+  if (!createdAt) return undefined
+  const date = new Date(createdAt).toLocaleDateString("en-US", {
+    dateStyle: "long",
+    timeZone: "UTC",
+  })
+  return `Created ${date}`
+}
