@@ -15,6 +15,7 @@ import {
   loginLoginAccessToken,
   loginRecoverPassword,
   loginResetPassword,
+  type PasswordRecovery,
   type UpdatePassword,
   type UserPublic,
   type UserRegister,
@@ -34,6 +35,7 @@ export type {
   ItemPublic,
   ItemsPublic,
   ItemUpdate,
+  PasswordRecovery,
   UpdatePassword,
   UserPublic,
   UserRegister,
@@ -94,8 +96,8 @@ export function registerUser(body: UserRegister) {
   return unwrap(usersRegisterUser({ body }))
 }
 
-export function recoverPassword(email: string) {
-  return unwrap(loginRecoverPassword({ path: { email } }))
+export function recoverPassword(body: PasswordRecovery) {
+  return unwrap(loginRecoverPassword({ body }))
 }
 
 export function resetPassword(token: string, newPassword: string) {

@@ -45,7 +45,7 @@ export const zItemPublic = z.object({
  */
 export const zItemUpdate = z.object({
     description: z.string().max(255).nullish(),
-    title: z.string().min(1).max(255).nullish()
+    title: z.string().min(1).max(255).optional()
 });
 
 /**
@@ -72,6 +72,13 @@ export const zNewPassword = z.object({
 });
 
 /**
+ * PasswordRecovery
+ */
+export const zPasswordRecovery = z.object({
+    email: z.email().max(255)
+});
+
+/**
  * Token
  */
 export const zToken = z.object({
@@ -84,7 +91,7 @@ export const zToken = z.object({
  * UpdatePassword
  */
 export const zUpdatePassword = z.object({
-    current_password: z.string().min(8).max(128),
+    current_password: z.string().min(1).max(128),
     new_password: z.string().min(8).max(128)
 });
 
@@ -113,8 +120,8 @@ export const zUserRegister = z.object({
  * UserUpdateMe
  */
 export const zUserUpdateMe = z.object({
-    email: z.email().max(255).nullish(),
-    full_name: z.string().min(1).max(255).nullish()
+    email: z.email().max(255).optional(),
+    full_name: z.string().min(1).max(255).optional()
 });
 
 /**
@@ -158,9 +165,7 @@ export const zItemsUpdateItemPath = z.object({
 
 export const zLoginLoginAccessTokenBody = zBodyLoginLoginAccessToken;
 
-export const zLoginRecoverPasswordPath = z.object({
-    email: z.string()
-});
+export const zLoginRecoverPasswordBody = zPasswordRecovery;
 
 export const zLoginResetPasswordBody = zNewPassword;
 

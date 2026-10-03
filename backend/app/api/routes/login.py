@@ -8,7 +8,7 @@ from app import crud
 from app.api.deps import SessionDep, error_responses
 from app.core import security
 from app.core.config import settings
-from app.models import Message, NewPassword, Token
+from app.models import Message, NewPassword, PasswordRecovery, Token
 from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
@@ -42,19 +42,19 @@ def login_access_token(
     )
 
 
-@router.post("/password-recovery/{email}")
-def recover_password(email: str, session: SessionDep) -> Message:
+@router.post("/password-recovery/")
+def recover_password(body: PasswordRecovery, session: SessionDep) -> Message:
     """
     Password Recovery
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    user = crud.get_user_by_email(session=session, email=body.email)
 
     # Always return the same response to prevent email enumeration attacks
     # Only send email if user actually exists
     if user:
-        password_reset_token = generate_password_reset_token(email=email)
+        password_reset_token = generate_password_reset_token(email=body.email)
         email_data = generate_reset_password_email(
-            email_to=user.email, email=email, token=password_reset_token
+            email_to=user.email, email=body.email, token=password_reset_token
         )
         send_email(
             email_to=user.email,

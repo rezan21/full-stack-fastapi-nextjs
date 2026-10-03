@@ -43,8 +43,9 @@ def test_recovery_password(
         patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
     ):
         r = client.post(
-            f"{settings.API_V1_STR}/password-recovery/{EMAIL_TEST_USER}",
+            f"{settings.API_V1_STR}/password-recovery/",
             headers=normal_user_token_headers,
+            json={"email": EMAIL_TEST_USER},
         )
         assert r.status_code == 200
         assert r.json() == {
@@ -57,14 +58,29 @@ def test_recovery_password_user_not_exits(
 ) -> None:
     email = "jVgQr@example.com"
     r = client.post(
-        f"{settings.API_V1_STR}/password-recovery/{email}",
+        f"{settings.API_V1_STR}/password-recovery/",
         headers=normal_user_token_headers,
+        json={"email": email},
     )
     # Should return 200 with generic message to prevent email enumeration attacks
     assert r.status_code == 200
     assert r.json() == {
         "message": "If that email is registered, we sent a password recovery link"
     }
+
+
+def test_recovery_password_accepts_a_slash_in_the_address(client: TestClient) -> None:
+    r = client.post(
+        f"{settings.API_V1_STR}/password-recovery/",
+        json={"email": "first/last@example.com"},
+    )
+    assert r.status_code == 200
+
+
+def test_recovery_password_rejects_a_malformed_email(client: TestClient) -> None:
+    for payload in ({"email": "not-an-email"}, {"email": ""}, {}):
+        r = client.post(f"{settings.API_V1_STR}/password-recovery/", json=payload)
+        assert r.status_code == 422
 
 
 def test_reset_password(client: TestClient, db: Session) -> None:

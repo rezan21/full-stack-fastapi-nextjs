@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlmodel import col, func, select
 
-from app.api.deps import AUTH_ERRORS, CurrentUser, SessionDep
+from app.api.deps import AUTH_ERRORS, CurrentUser, SessionDep, error_responses
 from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
 
 router = APIRouter(prefix="/items", tags=["items"], responses=AUTH_ERRORS)
@@ -45,7 +45,7 @@ def read_items(
     return ItemsPublic(data=items_public, count=count)
 
 
-@router.get("/{id}", response_model=ItemPublic)
+@router.get("/{id}", response_model=ItemPublic, responses=error_responses(403))
 def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
     """
     Get item by ID.
@@ -72,7 +72,7 @@ def create_item(
     return item
 
 
-@router.put("/{id}", response_model=ItemPublic)
+@router.put("/{id}", response_model=ItemPublic, responses=error_responses(403))
 def update_item(
     *,
     session: SessionDep,
@@ -96,7 +96,7 @@ def update_item(
     return item
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", responses=error_responses(403))
 def delete_item(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> Message:

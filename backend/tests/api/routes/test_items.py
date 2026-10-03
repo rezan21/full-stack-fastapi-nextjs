@@ -126,6 +126,34 @@ def test_update_item_not_enough_permissions(
     assert content["detail"] == "Not enough permissions"
 
 
+def test_update_item_rejects_a_null_title(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
+    item = create_random_item(db)
+    response = client.put(
+        f"{settings.API_V1_STR}/items/{item.id}",
+        headers=superuser_token_headers,
+        json={"title": None},
+    )
+    assert response.status_code == 422
+
+
+def test_update_item_null_description_clears_it_and_omitted_fields_stay(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
+    item = create_random_item(db)
+    title = item.title
+    response = client.put(
+        f"{settings.API_V1_STR}/items/{item.id}",
+        headers=superuser_token_headers,
+        json={"description": None},
+    )
+    assert response.status_code == 200
+    content = response.json()
+    assert content["description"] is None
+    assert content["title"] == title
+
+
 def test_delete_item(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:

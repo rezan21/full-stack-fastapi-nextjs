@@ -3,8 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
-import { z } from "zod"
+import type { z } from "zod"
 import { recoverPassword } from "@/actions/auth"
+import { zPasswordRecovery } from "@/client/zod.gen"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -15,22 +16,19 @@ import {
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
+import { formError } from "@/lib/form-errors"
 
-const formSchema = z.object({
-  email: z.email({ message: "Invalid email address" }),
-})
-
-type FormData = z.infer<typeof formSchema>
+type FormData = z.infer<typeof zPasswordRecovery>
 
 export function RecoverPasswordForm() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(zPasswordRecovery, { error: formError }),
     defaultValues: { email: "" },
   })
 
   const onSubmit = async (data: FormData) => {
-    const res = await recoverPassword(data.email)
+    const res = await recoverPassword(data)
     if (res.error) {
       showErrorToast(res.error)
       return

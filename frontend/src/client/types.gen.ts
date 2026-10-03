@@ -105,7 +105,7 @@ export type ItemUpdate = {
     /**
      * Title
      */
-    title?: string | null;
+    title?: string;
 };
 
 /**
@@ -144,6 +144,16 @@ export type NewPassword = {
      * Token
      */
     token: string;
+};
+
+/**
+ * PasswordRecovery
+ */
+export type PasswordRecovery = {
+    /**
+     * Email
+     */
+    email: string;
 };
 
 /**
@@ -233,11 +243,11 @@ export type UserUpdateMe = {
     /**
      * Email
      */
-    email?: string | null;
+    email?: string;
     /**
      * Full Name
      */
-    full_name?: string | null;
+    full_name?: string;
 };
 
 /**
@@ -294,10 +304,6 @@ export type ItemsReadItemsErrors = {
      */
     401: HttpError;
     /**
-     * Forbidden
-     */
-    403: HttpError;
-    /**
      * Not Found
      */
     404: HttpError;
@@ -334,10 +340,6 @@ export type ItemsCreateItemErrors = {
      * Unauthorized
      */
     401: HttpError;
-    /**
-     * Forbidden
-     */
-    403: HttpError;
     /**
      * Not Found
      */
@@ -527,15 +529,10 @@ export type LoginLoginAccessTokenResponses = {
 export type LoginLoginAccessTokenResponse = LoginLoginAccessTokenResponses[keyof LoginLoginAccessTokenResponses];
 
 export type LoginRecoverPasswordData = {
-    body?: never;
-    path: {
-        /**
-         * Email
-         */
-        email: string;
-    };
+    body: PasswordRecovery;
+    path?: never;
     query?: never;
-    url: '/api/v1/password-recovery/{email}';
+    url: '/api/v1/password-recovery/';
 };
 
 export type LoginRecoverPasswordErrors = {
@@ -639,10 +636,6 @@ export type UsersReadUserMeErrors = {
      */
     401: HttpError;
     /**
-     * Forbidden
-     */
-    403: HttpError;
-    /**
      * Not Found
      */
     404: HttpError;
@@ -675,10 +668,6 @@ export type UsersUpdateUserMeErrors = {
      * Unauthorized
      */
     401: HttpError;
-    /**
-     * Forbidden
-     */
-    403: HttpError;
     /**
      * Not Found
      */
@@ -720,10 +709,6 @@ export type UsersUpdatePasswordMeErrors = {
      * Unauthorized
      */
     401: HttpError;
-    /**
-     * Forbidden
-     */
-    403: HttpError;
     /**
      * Not Found
      */

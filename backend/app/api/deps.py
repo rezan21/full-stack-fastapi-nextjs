@@ -35,8 +35,9 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         token_data = TokenPayload(**payload)
     except InvalidTokenError, ValidationError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     user = session.get(User, token_data.sub)
     if not user:
@@ -53,4 +54,4 @@ def error_responses(*codes: int) -> dict[int | str, dict[str, Any]]:
     return {code: {"model": HTTPError} for code in codes}
 
 
-AUTH_ERRORS = error_responses(400, 401, 403, 404)
+AUTH_ERRORS = error_responses(400, 401, 404)

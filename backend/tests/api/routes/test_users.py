@@ -3,8 +3,9 @@ from sqlmodel import Session, select
 
 from app import crud
 from app.core.config import settings
-from app.core.security import verify_password
+from app.core.security import get_password_hash, verify_password
 from app.models import User, UserCreate
+from tests.utils.user import user_authentication_headers
 from tests.utils.utils import EMAIL_TEST_USER, random_email, random_lower_string
 
 
@@ -198,7 +199,19 @@ def test_update_user_me_rejects_empty_full_name(
     assert r.status_code == 422
 
 
-def test_update_user_me_ignores_null_full_name(
+def test_update_user_me_rejects_null_fields(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+) -> None:
+    for payload in ({"full_name": None}, {"email": None}):
+        r = client.patch(
+            f"{settings.API_V1_STR}/users/me",
+            headers=normal_user_token_headers,
+            json=payload,
+        )
+        assert r.status_code == 422
+
+
+def test_update_user_me_leaves_omitted_fields_unchanged(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
     before = client.get(
@@ -207,10 +220,59 @@ def test_update_user_me_ignores_null_full_name(
     r = client.patch(
         f"{settings.API_V1_STR}/users/me",
         headers=normal_user_token_headers,
-        json={"full_name": None},
+        json={"full_name": "Only the name"},
     )
     assert r.status_code == 200
-    assert r.json()["full_name"] == before["full_name"]
+    assert r.json()["full_name"] == "Only the name"
+    assert r.json()["email"] == before["email"]
+
+
+def test_update_password_me_accepts_a_current_password_below_the_policy(
+    client: TestClient, db: Session
+) -> None:
+    email = random_email()
+    db.add(
+        User(
+            email=email,
+            full_name=random_lower_string(),
+            hashed_password=get_password_hash("short"),
+        )
+    )
+    db.commit()
+    headers = user_authentication_headers(client=client, email=email, password="short")
+
+    r = client.patch(
+        f"{settings.API_V1_STR}/users/me/password",
+        headers=headers,
+        json={"current_password": "short", "new_password": random_lower_string()},
+    )
+    assert r.status_code == 200
+
+
+def test_update_password_me_rejects_an_empty_current_password(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    r = client.patch(
+        f"{settings.API_V1_STR}/users/me/password",
+        headers=superuser_token_headers,
+        json={"current_password": "", "new_password": random_lower_string()},
+    )
+    assert r.status_code == 422
+
+
+def test_invalid_token_is_unauthorized(client: TestClient) -> None:
+    r = client.get(
+        f"{settings.API_V1_STR}/users/me",
+        headers={"Authorization": "Bearer invalid"},
+    )
+    assert r.status_code == 401
+    assert r.headers["www-authenticate"] == "Bearer"
+    assert r.json() == {"detail": "Could not validate credentials"}
+
+
+def test_missing_token_is_unauthorized(client: TestClient) -> None:
+    r = client.get(f"{settings.API_V1_STR}/users/me")
+    assert r.status_code == 401
 
 
 def test_register_user_already_exists_error(client: TestClient) -> None:

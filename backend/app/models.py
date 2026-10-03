@@ -1,9 +1,20 @@
 import uuid
 from datetime import UTC, datetime
+from typing import Annotated
 
 from pydantic import EmailStr
+from pydantic_core import MISSING
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
+
+PASSWORD_MAX_LENGTH = 128
+
+Email = Annotated[EmailStr, Field(max_length=255)]
+FullName = Annotated[str, Field(min_length=1, max_length=255)]
+Password = Annotated[str, Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)]
+CurrentPassword = Annotated[str, Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)]
+ItemTitle = Annotated[str, Field(min_length=1, max_length=255)]
+ItemDescription = Annotated[str | None, Field(max_length=255)]
 
 
 def get_datetime_utc() -> datetime:
@@ -12,31 +23,31 @@ def get_datetime_utc() -> datetime:
 
 # Shared properties
 class UserBase(SQLModel):
-    email: EmailStr = Field(unique=True, index=True, max_length=255)
+    email: Email = Field(unique=True, index=True)
     is_active: bool = True
     is_superuser: bool = False
-    full_name: str = Field(min_length=1, max_length=255)
+    full_name: FullName
 
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
+    password: Password
 
 
 class UserRegister(SQLModel):
-    email: EmailStr = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=128)
-    full_name: str = Field(min_length=1, max_length=255)
+    email: Email
+    password: Password
+    full_name: FullName
 
 
 class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, min_length=1, max_length=255)
-    email: EmailStr | None = Field(default=None, max_length=255)
+    full_name: FullName | MISSING = MISSING  # type: ignore[valid-type]
+    email: Email | MISSING = MISSING  # type: ignore[valid-type]
 
 
 class UpdatePassword(SQLModel):
-    current_password: str = Field(min_length=8, max_length=128)
-    new_password: str = Field(min_length=8, max_length=128)
+    current_password: CurrentPassword
+    new_password: Password
 
 
 # Database model, database table inferred from class name
@@ -58,8 +69,8 @@ class UserPublic(UserBase):
 
 # Shared properties
 class ItemBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
+    title: ItemTitle
+    description: ItemDescription = None
 
 
 # Properties to receive on item creation
@@ -69,8 +80,8 @@ class ItemCreate(ItemBase):
 
 # Properties to receive on item update
 class ItemUpdate(SQLModel):
-    title: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
+    title: ItemTitle | MISSING = MISSING  # type: ignore[valid-type]
+    description: ItemDescription | MISSING = MISSING  # type: ignore[valid-type]
 
 
 # Database model, database table inferred from class name
@@ -119,6 +130,10 @@ class TokenPayload(SQLModel):
     sub: str | None = None
 
 
+class PasswordRecovery(SQLModel):
+    email: Email
+
+
 class NewPassword(SQLModel):
     token: str
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: Password

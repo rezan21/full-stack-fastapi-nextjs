@@ -21,8 +21,8 @@ import type { UserPublic } from "@/lib/api"
 import { formError } from "@/lib/form-errors"
 
 const formSchema = zUserUpdateMe.extend({
-  full_name: zUserUpdateMe.shape.full_name.unwrap().unwrap(),
-  email: zUserUpdateMe.shape.email.unwrap().unwrap(),
+  full_name: zUserUpdateMe.shape.full_name.unwrap(),
+  email: zUserUpdateMe.shape.email.unwrap(),
 })
 
 type FormData = z.infer<typeof formSchema>

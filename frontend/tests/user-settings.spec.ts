@@ -217,6 +217,16 @@ test.describe("Change password validation", () => {
     ).toBeVisible()
   })
 
+  test("An empty current password is rejected", async ({ page }) => {
+    const newPassword = randomPassword()
+
+    await page.getByTestId("new-password-input").fill(newPassword)
+    await page.getByTestId("confirm-password-input").fill(newPassword)
+    await page.getByRole("button", { name: "Update Password" }).click()
+
+    await expect(page.getByText("Current password is required")).toBeVisible()
+  })
+
   test("New password and confirmation password do not match", async ({
     page,
   }) => {

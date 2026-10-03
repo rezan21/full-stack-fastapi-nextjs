@@ -6,6 +6,7 @@ import {
   recoverPassword as apiRecoverPassword,
   resetPassword as apiResetPassword,
   loginAccessToken,
+  type PasswordRecovery,
   registerUser,
   type UserRegister,
 } from "@/lib/api"
@@ -41,9 +42,11 @@ export async function signup(data: UserRegister): Promise<ActionResult> {
   }
 }
 
-export async function recoverPassword(email: string): Promise<ActionResult> {
+export async function recoverPassword(
+  data: PasswordRecovery,
+): Promise<ActionResult> {
   try {
-    await apiRecoverPassword(email)
+    await apiRecoverPassword(data)
     return {}
   } catch (e) {
     return toError(e)
