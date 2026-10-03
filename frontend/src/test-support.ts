@@ -1,3 +1,4 @@
+import type { ItemPublic, UserPublic } from "@/client"
 import { client } from "@/client/client.gen"
 
 export const session: { token: string | undefined } = { token: "test-token" }
@@ -10,7 +11,7 @@ export const ITEM = {
   title: "A title",
   description: null,
   created_at: "2026-10-03T12:00:00Z",
-}
+} satisfies ItemPublic
 
 export const USER = {
   id: "6dfc5bca-8013-429d-996e-5b0e50de044c",
@@ -19,7 +20,7 @@ export const USER = {
   is_active: true,
   is_superuser: false,
   created_at: "2026-10-03T12:00:00Z",
-}
+} satisfies UserPublic
 
 export type RecordedRequest = {
   url: string
