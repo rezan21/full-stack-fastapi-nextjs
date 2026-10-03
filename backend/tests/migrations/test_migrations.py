@@ -14,6 +14,8 @@ from app.core.config import settings
 BACKEND = Path(__file__).parents[2]
 BEFORE_FULL_NAME_REQUIRED = "fe56fa70289e"
 FULL_NAME_REQUIRED = "a28bd8db53bb"
+ITEM_INDEXED = "6b3f593b41ce"
+ITEM_INDEX = "ix_item_owner_id_created_at"
 
 
 @pytest.fixture
@@ -49,6 +51,25 @@ def full_name_is_nullable(url: str) -> bool:
         ).scalar_one()
     engine.dispose()
     return str(nullable) == "YES"
+
+
+def item_index_columns(url: str) -> list[str]:
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        columns = connection.execute(
+            text(
+                "select a.attname from pg_index i "
+                "join pg_class c on c.oid = i.indexrelid "
+                "join pg_attribute a on a.attrelid = i.indrelid "
+                "and a.attnum = any(i.indkey) "
+                "where c.relname = :name "
+                "order by array_position(i.indkey, a.attnum)"
+            ),
+            {"name": ITEM_INDEX},
+        ).scalars()
+        result = list(columns)
+    engine.dispose()
+    return result
 
 
 def test_migrations_produce_the_schema_the_models_declare(migration_db: str) -> None:
@@ -103,3 +124,12 @@ def test_full_name_migration_backfills_missing_names(migration_db: str) -> None:
 
     command.downgrade(config, BEFORE_FULL_NAME_REQUIRED)
     assert full_name_is_nullable(migration_db)
+
+
+def test_item_index_is_created_and_dropped(migration_db: str) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, ITEM_INDEXED)
+    assert item_index_columns(migration_db) == ["owner_id", "created_at"]
+
+    command.downgrade(config, FULL_NAME_REQUIRED)
+    assert item_index_columns(migration_db) == []

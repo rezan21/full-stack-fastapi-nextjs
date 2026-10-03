@@ -4,7 +4,7 @@ from typing import Annotated
 
 from pydantic import EmailStr
 from pydantic.experimental.missing_sentinel import MISSING
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, Index
 from sqlmodel import Field, Relationship, SQLModel
 
 PASSWORD_MAX_LENGTH = 128
@@ -86,6 +86,8 @@ class ItemUpdate(SQLModel):
 
 # Database model, database table inferred from class name
 class Item(ItemBase, table=True):
+    __table_args__ = (Index("ix_item_owner_id_created_at", "owner_id", "created_at"),)
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
