@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { SESSION_COOKIE } from "@/lib/config"
 
 const publicRoutes = [
   "/login",
@@ -10,7 +11,7 @@ const publicRoutes = [
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublic = publicRoutes.includes(pathname)
-  const hasSession = request.cookies.has("access_token")
+  const hasSession = request.cookies.has(SESSION_COOKIE)
 
   if (!isPublic && !hasSession) {
     return NextResponse.redirect(new URL("/login", request.nextUrl))

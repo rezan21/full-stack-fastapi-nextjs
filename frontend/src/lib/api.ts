@@ -1,4 +1,5 @@
 import "server-only"
+import { ZodError } from "zod"
 import {
   type HttpError,
   type HttpValidationError,
@@ -25,6 +26,7 @@ import {
   usersUpdateUserMe,
 } from "@/client"
 import { client } from "@/client/client.gen"
+import { API_URL } from "@/lib/config"
 import { getToken } from "@/lib/session"
 
 export type {
@@ -41,7 +43,7 @@ export type {
 const FALLBACK_ERROR = "Something went wrong."
 
 client.setConfig({
-  baseUrl: process.env.API_URL ?? "http://localhost:8000",
+  baseUrl: API_URL,
   auth: () => getToken(),
   cache: "no-store",
 })
@@ -70,6 +72,9 @@ function errorMessage(
 async function unwrap<T>(call: Promise<Result<T>>): Promise<T> {
   const { data, error, response } = await call
   if (error === undefined) return data as T
+  if (error instanceof ZodError) {
+    throw new ApiError(error.issues[0]?.message ?? FALLBACK_ERROR, 422)
+  }
   if (!response) throw error
   throw new ApiError(
     errorMessage(error as HttpError | HttpValidationError | string, response),
@@ -104,7 +109,7 @@ export function getItem(id: string) {
 }
 
 export function getItems() {
-  return unwrap(itemsReadItems({ query: { skip: 0, limit: 100 } }))
+  return unwrap(itemsReadItems())
 }
 
 export function createItem(body: ItemCreate) {

@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
-import { firstSuperuser, firstSuperuserPassword } from "./config.ts"
-import { randomPassword } from "./utils/random.ts"
+import { SESSION_COOKIE } from "../src/lib/config"
+import { firstSuperuser, firstSuperuserPassword } from "./config"
+import { randomPassword } from "./utils/random"
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
@@ -106,11 +107,14 @@ test("Logged-out user cannot access protected routes", async ({ page }) => {
   await page.waitForURL("/login")
 })
 
-test("Redirects to /login when token is wrong", async ({ page }) => {
-  await page.goto("/settings")
-  await page.evaluate(() => {
-    localStorage.setItem("access_token", "invalid_token")
-  })
+test("Redirects to /login when token is wrong", async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  await context.addCookies([
+    { name: SESSION_COOKIE, value: "invalid_token", url: baseURL as string },
+  ])
   await page.goto("/settings")
   await page.waitForURL("/login")
   await expect(page).toHaveURL("/login")

@@ -140,35 +140,15 @@ export const zItemsReadItemsQuery = z.object({
     limit: z.int().optional().default(100)
 });
 
-/**
- * Successful Response
- */
-export const zItemsReadItemsResponse = zItemsPublic;
-
 export const zItemsCreateItemBody = zItemCreate;
-
-/**
- * Successful Response
- */
-export const zItemsCreateItemResponse = zItemPublic;
 
 export const zItemsDeleteItemPath = z.object({
     id: z.uuid()
 });
 
-/**
- * Successful Response
- */
-export const zItemsDeleteItemResponse = zMessage;
-
 export const zItemsReadItemPath = z.object({
     id: z.uuid()
 });
-
-/**
- * Successful Response
- */
-export const zItemsReadItemResponse = zItemPublic;
 
 export const zItemsUpdateItemBody = zItemUpdate;
 
@@ -176,68 +156,16 @@ export const zItemsUpdateItemPath = z.object({
     id: z.uuid()
 });
 
-/**
- * Successful Response
- */
-export const zItemsUpdateItemResponse = zItemPublic;
-
 export const zLoginLoginAccessTokenBody = zBodyLoginLoginAccessToken;
-
-/**
- * Successful Response
- */
-export const zLoginLoginAccessTokenResponse = zToken;
 
 export const zLoginRecoverPasswordPath = z.object({
     email: z.string()
 });
 
-/**
- * Successful Response
- */
-export const zLoginRecoverPasswordResponse = zMessage;
-
 export const zLoginResetPasswordBody = zNewPassword;
-
-/**
- * Successful Response
- */
-export const zLoginResetPasswordResponse = zMessage;
-
-/**
- * Successful Response
- */
-export const zUsersDeleteUserMeResponse = zMessage;
-
-/**
- * Successful Response
- */
-export const zUsersReadUserMeResponse = zUserPublic;
 
 export const zUsersUpdateUserMeBody = zUserUpdateMe;
 
-/**
- * Successful Response
- */
-export const zUsersUpdateUserMeResponse = zUserPublic;
-
 export const zUsersUpdatePasswordMeBody = zUpdatePassword;
 
-/**
- * Successful Response
- */
-export const zUsersUpdatePasswordMeResponse = zMessage;
-
 export const zUsersRegisterUserBody = zUserRegister;
-
-/**
- * Successful Response
- */
-export const zUsersRegisterUserResponse = zUserPublic;
-
-/**
- * Response Utils-Health Check
- *
- * Successful Response
- */
-export const zUtilsHealthCheckResponse = z.boolean();

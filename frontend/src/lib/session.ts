@@ -1,7 +1,6 @@
 import "server-only"
 import { cookies } from "next/headers"
-
-export const SESSION_COOKIE = "access_token"
+import { SESSION_COOKIE } from "@/lib/config"
 
 export async function getToken(): Promise<string | undefined> {
   return (await cookies()).get(SESSION_COOKIE)?.value

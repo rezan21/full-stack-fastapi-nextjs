@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
-import { createUser } from "./utils/privateApi"
+import { SESSION_COOKIE } from "../src/lib/config"
+import { createUser, deleteItemAs } from "./utils/api"
 import {
   randomEmail,
   randomItemDescription,
@@ -8,8 +9,6 @@ import {
 } from "./utils/random"
 import { typeInto } from "./utils/type"
 import { logInUser } from "./utils/user"
-
-const API_BASE = `${process.env.API_URL ?? "http://localhost:8000"}/api/v1`
 
 const sheet = (page: Page) => page.locator('[data-slot="sheet-content"]')
 
@@ -232,12 +231,9 @@ test.describe("Items management", () => {
         .getByRole("link", { name: itemTitle })
         .getAttribute("href")) as string
       const token = (await page.context().cookies()).find(
-        (cookie) => cookie.name === "access_token",
-      )?.value
-      await fetch(`${API_BASE}/items/${href.split("/").pop()}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      })
+        (cookie) => cookie.name === SESSION_COOKIE,
+      )?.value as string
+      await deleteItemAs(token, href.split("/").pop() as string)
 
       await page.getByRole("link", { name: itemTitle }).click()
 
