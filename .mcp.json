@@ -3,6 +3,13 @@
     "lanchain-mcp": {
       "type": "http",
       "url": "https://docs.langchain.com/mcp"
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ]
     }
   }
 }
