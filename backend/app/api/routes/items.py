@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import col, func, select
 
 from app.api.deps import AUTH_ERRORS, CurrentUser, SessionDep, error_responses
-from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate, Message
+from app.models import Item, ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
 
 router = APIRouter(prefix="/items", tags=["items"], responses=AUTH_ERRORS)
 
@@ -50,7 +50,7 @@ def read_items(
     return ItemsPublic(data=items_public, count=count)
 
 
-@router.get("/{id}", response_model=ItemPublic, responses=error_responses(403))
+@router.get("/{id}", response_model=ItemPublic, responses=error_responses(404))
 def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
     """
     Get item by ID.
@@ -63,7 +63,7 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
     return item
 
 
-@router.post("/", response_model=ItemPublic)
+@router.post("/", response_model=ItemPublic, status_code=201)
 def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> Any:
@@ -77,7 +77,7 @@ def create_item(
     return item
 
 
-@router.put("/{id}", response_model=ItemPublic, responses=error_responses(403))
+@router.put("/{id}", response_model=ItemPublic, responses=error_responses(404))
 def update_item(
     *,
     session: SessionDep,
@@ -101,10 +101,8 @@ def update_item(
     return item
 
 
-@router.delete("/{id}", responses=error_responses(403))
-def delete_item(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
-) -> Message:
+@router.delete("/{id}", status_code=204, responses=error_responses(404))
+def delete_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> None:
     """
     Delete an item.
     """
@@ -115,4 +113,3 @@ def delete_item(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     session.delete(item)
     session.commit()
-    return Message(message="Item deleted successfully")

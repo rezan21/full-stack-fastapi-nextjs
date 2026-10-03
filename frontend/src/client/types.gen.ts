@@ -296,17 +296,13 @@ export type ItemsReadItemsData = {
 
 export type ItemsReadItemsErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpError;
-    /**
      * Unauthorized
      */
     401: HttpError;
     /**
-     * Not Found
+     * Forbidden
      */
-    404: HttpError;
+    403: HttpError;
     /**
      * Validation Error
      */
@@ -333,17 +329,13 @@ export type ItemsCreateItemData = {
 
 export type ItemsCreateItemErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpError;
-    /**
      * Unauthorized
      */
     401: HttpError;
     /**
-     * Not Found
+     * Forbidden
      */
-    404: HttpError;
+    403: HttpError;
     /**
      * Validation Error
      */
@@ -356,7 +348,7 @@ export type ItemsCreateItemResponses = {
     /**
      * Successful Response
      */
-    200: ItemPublic;
+    201: ItemPublic;
 };
 
 export type ItemsCreateItemResponse = ItemsCreateItemResponses[keyof ItemsCreateItemResponses];
@@ -374,10 +366,6 @@ export type ItemsDeleteItemData = {
 };
 
 export type ItemsDeleteItemErrors = {
-    /**
-     * Bad Request
-     */
-    400: HttpError;
     /**
      * Unauthorized
      */
@@ -402,7 +390,7 @@ export type ItemsDeleteItemResponses = {
     /**
      * Successful Response
      */
-    200: Message;
+    204: void;
 };
 
 export type ItemsDeleteItemResponse = ItemsDeleteItemResponses[keyof ItemsDeleteItemResponses];
@@ -420,10 +408,6 @@ export type ItemsReadItemData = {
 };
 
 export type ItemsReadItemErrors = {
-    /**
-     * Bad Request
-     */
-    400: HttpError;
     /**
      * Unauthorized
      */
@@ -466,10 +450,6 @@ export type ItemsUpdateItemData = {
 };
 
 export type ItemsUpdateItemErrors = {
-    /**
-     * Bad Request
-     */
-    400: HttpError;
     /**
      * Unauthorized
      */
@@ -591,10 +571,6 @@ export type UsersDeleteUserMeData = {
 
 export type UsersDeleteUserMeErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpError;
-    /**
      * Unauthorized
      */
     401: HttpError;
@@ -602,10 +578,6 @@ export type UsersDeleteUserMeErrors = {
      * Forbidden
      */
     403: HttpError;
-    /**
-     * Not Found
-     */
-    404: HttpError;
 };
 
 export type UsersDeleteUserMeError = UsersDeleteUserMeErrors[keyof UsersDeleteUserMeErrors];
@@ -614,7 +586,7 @@ export type UsersDeleteUserMeResponses = {
     /**
      * Successful Response
      */
-    200: Message;
+    204: void;
 };
 
 export type UsersDeleteUserMeResponse = UsersDeleteUserMeResponses[keyof UsersDeleteUserMeResponses];
@@ -628,17 +600,13 @@ export type UsersReadUserMeData = {
 
 export type UsersReadUserMeErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpError;
-    /**
      * Unauthorized
      */
     401: HttpError;
     /**
-     * Not Found
+     * Forbidden
      */
-    404: HttpError;
+    403: HttpError;
 };
 
 export type UsersReadUserMeError = UsersReadUserMeErrors[keyof UsersReadUserMeErrors];
@@ -661,17 +629,13 @@ export type UsersUpdateUserMeData = {
 
 export type UsersUpdateUserMeErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpError;
-    /**
      * Unauthorized
      */
     401: HttpError;
     /**
-     * Not Found
+     * Forbidden
      */
-    404: HttpError;
+    403: HttpError;
     /**
      * Conflict
      */
@@ -710,9 +674,9 @@ export type UsersUpdatePasswordMeErrors = {
      */
     401: HttpError;
     /**
-     * Not Found
+     * Forbidden
      */
-    404: HttpError;
+    403: HttpError;
     /**
      * Validation Error
      */
@@ -754,7 +718,7 @@ export type UsersRegisterUserResponses = {
     /**
      * Successful Response
      */
-    200: UserPublic;
+    201: UserPublic;
 };
 
 export type UsersRegisterUserResponse = UsersRegisterUserResponses[keyof UsersRegisterUserResponses];

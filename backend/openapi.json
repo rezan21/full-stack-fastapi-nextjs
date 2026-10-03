@@ -498,16 +498,6 @@
             },
             "description": "Successful Response"
           },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
-          },
           "401": {
             "content": {
               "application/json": {
@@ -518,7 +508,7 @@
             },
             "description": "Unauthorized"
           },
-          "404": {
+          "403": {
             "content": {
               "application/json": {
                 "schema": {
@@ -526,7 +516,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Forbidden"
           },
           "422": {
             "content": {
@@ -563,7 +553,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {
@@ -572,16 +562,6 @@
               }
             },
             "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
           },
           "401": {
             "content": {
@@ -593,7 +573,7 @@
             },
             "description": "Unauthorized"
           },
-          "404": {
+          "403": {
             "content": {
               "application/json": {
                 "schema": {
@@ -601,7 +581,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Forbidden"
           },
           "422": {
             "content": {
@@ -642,25 +622,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Message"
-                }
-              }
-            },
+          "204": {
             "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
           },
           "401": {
             "content": {
@@ -738,16 +701,6 @@
               }
             },
             "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
           },
           "401": {
             "content": {
@@ -835,16 +788,6 @@
               }
             },
             "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
           },
           "401": {
             "content": {
@@ -1049,25 +992,8 @@
         "description": "Delete own user.",
         "operationId": "users-delete_user_me",
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Message"
-                }
-              }
-            },
+          "204": {
             "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
           },
           "401": {
             "content": {
@@ -1088,16 +1014,6 @@
               }
             },
             "description": "Forbidden"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Not Found"
           }
         },
         "security": [
@@ -1124,16 +1040,6 @@
             },
             "description": "Successful Response"
           },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
-          },
           "401": {
             "content": {
               "application/json": {
@@ -1144,7 +1050,7 @@
             },
             "description": "Unauthorized"
           },
-          "404": {
+          "403": {
             "content": {
               "application/json": {
                 "schema": {
@@ -1152,7 +1058,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Forbidden"
           }
         },
         "security": [
@@ -1189,16 +1095,6 @@
             },
             "description": "Successful Response"
           },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Bad Request"
-          },
           "401": {
             "content": {
               "application/json": {
@@ -1209,7 +1105,7 @@
             },
             "description": "Unauthorized"
           },
-          "404": {
+          "403": {
             "content": {
               "application/json": {
                 "schema": {
@@ -1217,7 +1113,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Forbidden"
           },
           "409": {
             "content": {
@@ -1296,7 +1192,7 @@
             },
             "description": "Unauthorized"
           },
-          "404": {
+          "403": {
             "content": {
               "application/json": {
                 "schema": {
@@ -1304,7 +1200,7 @@
                 }
               }
             },
-            "description": "Not Found"
+            "description": "Forbidden"
           },
           "422": {
             "content": {
@@ -1343,7 +1239,7 @@
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {

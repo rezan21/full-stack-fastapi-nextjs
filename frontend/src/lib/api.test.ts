@@ -46,7 +46,7 @@ describe("requests", () => {
   })
 
   test("post a typed body as JSON", async () => {
-    const requests = stubFetch(() => Response.json({ id: ITEM_ID }))
+    const requests = stubFetch(() => Response.json(ITEM, { status: 201 }))
     await createItem({ title: "A title", description: null })
     expect(requests[0].method).toBe("POST")
     expect(requests[0].contentType).toContain("application/json")
@@ -141,6 +141,26 @@ describe("operations", () => {
       expect(requests).toHaveLength(1)
       expect(requests[0].method).toBe(method)
       expect(requests[0].url).toBe(`${API_URL}/api/v1${path}`)
+    })
+  }
+})
+
+describe("created and deleted resources", () => {
+  test("a create returns the resource from a 201", async () => {
+    stubFetch(() => Response.json(ITEM, { status: 201 }))
+    expect(await createItem({ title: ITEM.title })).toEqual(ITEM)
+  })
+
+  const deletes: [string, () => Promise<unknown>][] = [
+    ["deleteItem", () => deleteItem(ITEM_ID)],
+    ["deleteAccount", () => deleteAccount()],
+  ]
+
+  for (const [name, call] of deletes) {
+    test(`${name} accepts a 204 with no body`, async () => {
+      const requests = stubFetch(() => new Response(null, { status: 204 }))
+      await call()
+      expect(requests).toHaveLength(1)
     })
   }
 })

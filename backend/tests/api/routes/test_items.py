@@ -1,9 +1,10 @@
 import uuid
 
 from fastapi.testclient import TestClient
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.core.config import settings
+from app.models import Item
 from tests.utils.item import create_random_item
 
 
@@ -16,7 +17,7 @@ def test_create_item(
         headers=superuser_token_headers,
         json=data,
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     content = response.json()
     assert content["title"] == data["title"]
     assert content["description"] == data["description"]
@@ -191,9 +192,9 @@ def test_delete_item(
         f"{settings.API_V1_STR}/items/{item.id}",
         headers=superuser_token_headers,
     )
-    assert response.status_code == 200
-    content = response.json()
-    assert content["message"] == "Item deleted successfully"
+    assert response.status_code == 204
+    assert response.content == b""
+    assert db.exec(select(Item).where(Item.id == item.id)).first() is None
 
 
 def test_delete_item_not_found(

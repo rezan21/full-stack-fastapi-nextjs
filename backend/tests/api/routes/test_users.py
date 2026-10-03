@@ -5,7 +5,10 @@ from app import crud
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
 from app.models import User, UserCreate
-from tests.utils.user import user_authentication_headers
+from tests.utils.user import (
+    authentication_token_from_email,
+    user_authentication_headers,
+)
 from tests.utils.utils import EMAIL_TEST_USER, random_email, random_lower_string
 
 
@@ -161,7 +164,7 @@ def test_register_user(client: TestClient, db: Session) -> None:
         f"{settings.API_V1_STR}/users/signup",
         json=data,
     )
-    assert r.status_code == 200
+    assert r.status_code == 201
     created_user = r.json()
     assert created_user["email"] == username
     assert created_user["full_name"] == full_name
@@ -270,6 +273,34 @@ def test_invalid_token_is_unauthorized(client: TestClient) -> None:
     assert r.json() == {"detail": "Could not validate credentials"}
 
 
+def test_token_for_a_user_without_an_account_is_unauthorized(
+    client: TestClient, db: Session
+) -> None:
+    email = random_email()
+    headers = authentication_token_from_email(client=client, email=email, db=db)
+    user = crud.get_user_by_email(session=db, email=email)
+    assert user
+    db.delete(user)
+    db.commit()
+    r = client.get(f"{settings.API_V1_STR}/users/me", headers=headers)
+    assert r.status_code == 401
+    assert r.headers["www-authenticate"] == "Bearer"
+    assert r.json() == {"detail": "Could not validate credentials"}
+
+
+def test_inactive_user_is_forbidden(client: TestClient, db: Session) -> None:
+    email = random_email()
+    headers = authentication_token_from_email(client=client, email=email, db=db)
+    user = crud.get_user_by_email(session=db, email=email)
+    assert user
+    user.is_active = False
+    db.add(user)
+    db.commit()
+    r = client.get(f"{settings.API_V1_STR}/users/me", headers=headers)
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Inactive user"}
+
+
 def test_missing_token_is_unauthorized(client: TestClient) -> None:
     r = client.get(f"{settings.API_V1_STR}/users/me")
     assert r.status_code == 401
@@ -313,9 +344,8 @@ def test_delete_user_me(client: TestClient, db: Session) -> None:
         f"{settings.API_V1_STR}/users/me",
         headers=headers,
     )
-    assert r.status_code == 200
-    deleted_user = r.json()
-    assert deleted_user["message"] == "User deleted successfully"
+    assert r.status_code == 204
+    assert r.content == b""
     result = db.exec(select(User).where(User.id == user_id)).first()
     assert result is None
 

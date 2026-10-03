@@ -17,7 +17,12 @@ from app.models import (
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("/signup", response_model=UserPublic, responses=error_responses(400))
+@router.post(
+    "/signup",
+    response_model=UserPublic,
+    status_code=201,
+    responses=error_responses(400),
+)
 def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     """
     Create new user without the need to be logged in.
@@ -67,7 +72,11 @@ def update_user_me(
     return current_user
 
 
-@router.patch("/me/password", response_model=Message, responses=AUTH_ERRORS)
+@router.patch(
+    "/me/password",
+    response_model=Message,
+    responses={**AUTH_ERRORS, **error_responses(400)},
+)
 def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
 ) -> Any:
@@ -88,12 +97,8 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.delete(
-    "/me",
-    response_model=Message,
-    responses={**AUTH_ERRORS, **error_responses(403)},
-)
-def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
+@router.delete("/me", status_code=204, responses=AUTH_ERRORS)
+def delete_user_me(session: SessionDep, current_user: CurrentUser) -> None:
     """
     Delete own user.
     """
@@ -103,4 +108,3 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         )
     session.delete(current_user)
     session.commit()
-    return Message(message="User deleted successfully")
