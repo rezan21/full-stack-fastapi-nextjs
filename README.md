@@ -48,7 +48,8 @@ The FastAPI and SQLModel packages ship agent skills. `backend/.agents/skills` an
 
 ## Testing
 
-- Backend: `bash scripts/test.sh` (from the project root).
+- Backend: `bash scripts/test.sh` (from the project root); it fails below 90% coverage, and also runs the migration tests against a throwaway database.
+- Frontend unit tests: `bun run test:unit` (from `frontend/`); they fail below 90% coverage of the modules they load.
 - Frontend end-to-end: `docker compose run --rm playwright bunx playwright test`.
 
 ## Deployment

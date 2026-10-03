@@ -25,6 +25,9 @@ jobs:
       - name: Install frontend dependencies
         run: bun ci
         working-directory: frontend
+      - name: Unit tests
+        run: bun run test:unit
+        working-directory: frontend
       - name: Type-check and build
         run: bun run build
         working-directory: frontend
