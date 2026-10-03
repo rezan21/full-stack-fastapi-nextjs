@@ -24,6 +24,35 @@ def test_create_item(
     assert "owner_id" in content
 
 
+def test_read_items_rejects_out_of_range_paging(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    for query in ("limit=0", "limit=-1", "limit=101", "skip=-1"):
+        response = client.get(
+            f"{settings.API_V1_STR}/items/?{query}", headers=superuser_token_headers
+        )
+        assert response.status_code == 422, query
+
+
+def test_read_items_pages_with_skip_and_limit(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
+    for _ in range(3):
+        create_random_item(db)
+    url = f"{settings.API_V1_STR}/items/"
+    count = client.get(url, headers=superuser_token_headers).json()["count"]
+
+    first = client.get(f"{url}?limit=2", headers=superuser_token_headers).json()
+    last = client.get(
+        f"{url}?skip={count - 1}&limit=2", headers=superuser_token_headers
+    )
+    beyond = client.get(f"{url}?skip={count}", headers=superuser_token_headers)
+
+    assert len(first["data"]) == 2 and first["count"] == count
+    assert len(last.json()["data"]) == 1
+    assert beyond.json()["data"] == []
+
+
 def test_read_item(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:

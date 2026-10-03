@@ -143,8 +143,8 @@ export const zHttpValidationError = z.object({
 });
 
 export const zItemsReadItemsQuery = z.object({
-    skip: z.int().optional().default(0),
-    limit: z.int().optional().default(100)
+    skip: z.int().gte(0).optional().default(0),
+    limit: z.int().gte(1).lte(100).optional().default(100)
 });
 
 export const zItemsCreateItemBody = zItemCreate;
