@@ -107,6 +107,25 @@ test("Logged-out user cannot access protected routes", async ({ page }) => {
   await page.waitForURL("/login")
 })
 
+test("Sends a logged-out visitor to /login from a path that does not exist", async ({
+  page,
+}) => {
+  await page.goto("/no-such-page")
+  await expect(page).toHaveURL("/login")
+})
+
+test("Redirects to /login from the items page when token is wrong", async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  await context.addCookies([
+    { name: SESSION_COOKIE, value: "invalid_token", url: baseURL as string },
+  ])
+  await page.goto("/items")
+  await expect(page).toHaveURL("/login")
+})
+
 test("Redirects to /login when token is wrong", async ({
   page,
   context,
