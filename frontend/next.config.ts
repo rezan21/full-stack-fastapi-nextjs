@@ -4,6 +4,7 @@ import type { NextConfig } from "next"
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(import.meta.dirname),
+  allowedDevOrigins: ["frontend"],
 }
 
 export default nextConfig
