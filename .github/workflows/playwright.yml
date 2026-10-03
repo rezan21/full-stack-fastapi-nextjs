@@ -35,8 +35,7 @@ jobs:
           changed:
             - backend/**
             - frontend/**
-            - .env
-            - compose*.yml
+            - infra/**
             - .github/workflows/playwright.yml
 
   test-playwright:
