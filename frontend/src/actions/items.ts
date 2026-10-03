@@ -1,8 +1,8 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { type ActionResult, toError } from "@/lib/action-result"
 import {
-  ApiError,
   createItem as apiCreateItem,
   deleteItem as apiDeleteItem,
   updateItem as apiUpdateItem,
@@ -10,12 +10,6 @@ import {
   type ItemUpdate,
 } from "@/lib/api"
 import { getToken } from "@/lib/session"
-
-type ActionResult = { error?: string }
-
-function toError(e: unknown): ActionResult {
-  return { error: e instanceof ApiError ? e.message : "Something went wrong." }
-}
 
 export async function createItem(data: ItemCreate): Promise<ActionResult> {
   if (!(await getToken())) return { error: "Not authenticated" }

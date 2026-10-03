@@ -1,10 +1,24 @@
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 import { firstSuperuser, firstSuperuserPassword } from "./config.ts"
 import { createUser } from "./utils/privateApi.ts"
 import { randomEmail, randomPassword } from "./utils/random"
 import { logInUser, logOutUser } from "./utils/user"
 
 const tabs = ["My profile", "Password", "Danger zone"]
+
+async function openAppearanceMenu(page: Page) {
+  await page.getByTestId("user-menu").click()
+  await page.getByTestId("theme-button").click()
+}
+
+test("Settings is reachable from the user menu", async ({ page }) => {
+  await page.goto("/")
+  await page.getByTestId("user-menu").click()
+  await page.getByRole("menuitem", { name: "Settings" }).click()
+
+  await expect(page).toHaveURL(/\/settings$/)
+  await expect(page.getByRole("tab", { name: "My profile" })).toBeVisible()
+})
 
 test("My profile tab is active by default", async ({ page }) => {
   await page.goto("/settings")
@@ -202,21 +216,59 @@ test.describe("Change password validation", () => {
   })
 })
 
-test("Appearance button is visible in sidebar", async ({ page }) => {
+test.describe("Delete account", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test("Delete own account and sign in is no longer possible", async ({
+    page,
+  }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "Danger zone" }).click()
+    await page.getByRole("button", { name: "Delete Account" }).click()
+    await page.getByRole("button", { name: "Delete", exact: true }).click()
+
+    await page.waitForURL("/login")
+
+    await page.getByTestId("email-input").fill(email)
+    await page.getByTestId("password-input").fill(password)
+    await page.getByRole("button", { name: "Log In" }).click()
+    await expect(page.getByText("Incorrect email or password")).toBeVisible()
+  })
+})
+
+test("Superuser cannot delete their own account", async ({ page }) => {
   await page.goto("/settings")
+  await page.getByRole("tab", { name: "Danger zone" }).click()
+  await page.getByRole("button", { name: "Delete Account" }).click()
+  await page.getByRole("button", { name: "Delete", exact: true }).click()
+
+  await expect(
+    page.getByText("Super users are not allowed to delete themselves"),
+  ).toBeVisible()
+})
+
+test("Appearance is in the user menu", async ({ page }) => {
+  await page.goto("/settings")
+  await page.getByTestId("user-menu").click()
   await expect(page.getByTestId("theme-button")).toBeVisible()
 })
 
 test("User can switch between theme modes", async ({ page }) => {
   await page.goto("/settings")
 
-  await page.getByTestId("theme-button").click()
+  await openAppearanceMenu(page)
   await page.getByTestId("dark-mode").click()
   await expect(page.locator("html")).toHaveClass(/dark/)
 
   await expect(page.getByTestId("dark-mode")).not.toBeVisible()
 
-  await page.getByTestId("theme-button").click()
+  await openAppearanceMenu(page)
   await page.getByTestId("light-mode").click()
   await expect(page.locator("html")).toHaveClass(/light/)
 })
@@ -224,33 +276,16 @@ test("User can switch between theme modes", async ({ page }) => {
 test("Selected mode is preserved across sessions", async ({ page }) => {
   await page.goto("/settings")
 
-  await page.getByTestId("theme-button").click()
-  if (
-    await page.evaluate(() =>
-      document.documentElement.classList.contains("dark"),
-    )
-  ) {
-    await page.getByTestId("light-mode").click()
-    await page.getByTestId("theme-button").click()
-  }
+  await openAppearanceMenu(page)
+  await page.getByTestId("light-mode").click()
+  await expect(page.locator("html")).toHaveClass(/light/)
 
-  const isLightMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("light"),
-  )
-  expect(isLightMode).toBe(true)
-
-  await page.getByTestId("theme-button").click()
+  await openAppearanceMenu(page)
   await page.getByTestId("dark-mode").click()
-  let isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
-  )
-  expect(isDarkMode).toBe(true)
+  await expect(page.locator("html")).toHaveClass(/dark/)
 
   await logOutUser(page)
   await logInUser(page, firstSuperuser, firstSuperuserPassword)
 
-  isDarkMode = await page.evaluate(() =>
-    document.documentElement.classList.contains("dark"),
-  )
-  expect(isDarkMode).toBe(true)
+  await expect(page.locator("html")).toHaveClass(/dark/)
 })

@@ -14,10 +14,15 @@ import {
   loginLoginAccessToken,
   loginRecoverPassword,
   loginResetPassword,
+  type UpdatePassword,
   type UserPublic,
   type UserRegister,
+  type UserUpdateMe,
+  usersDeleteUserMe,
   usersReadUserMe,
   usersRegisterUser,
+  usersUpdatePasswordMe,
+  usersUpdateUserMe,
 } from "@/client"
 import { client } from "@/client/client.gen"
 import { getToken } from "@/lib/session"
@@ -27,8 +32,10 @@ export type {
   ItemPublic,
   ItemsPublic,
   ItemUpdate,
+  UpdatePassword,
   UserPublic,
   UserRegister,
+  UserUpdateMe,
 }
 
 const FALLBACK_ERROR = "Something went wrong."
@@ -110,4 +117,16 @@ export function updateItem(id: string, body: ItemUpdate) {
 
 export function deleteItem(id: string) {
   return unwrap(itemsDeleteItem({ path: { id } }))
+}
+
+export function updateProfile(body: UserUpdateMe) {
+  return unwrap(usersUpdateUserMe({ body }))
+}
+
+export function changePassword(body: UpdatePassword) {
+  return unwrap(usersUpdatePasswordMe({ body }))
+}
+
+export function deleteAccount() {
+  return unwrap(usersDeleteUserMe())
 }

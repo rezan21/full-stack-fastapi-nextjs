@@ -1,7 +1,9 @@
 "use client"
 
-import { ChevronsUpDown, LogOut } from "lucide-react"
+import { ChevronsUpDown, LogOut, Settings } from "lucide-react"
+import Link from "next/link"
 import { logout } from "@/actions/auth"
+import { AppearanceSubmenu } from "@/components/Common/Appearance"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -42,7 +44,7 @@ function UserInfo({
 }
 
 export function User({ user }: { user: UserPublic }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   return (
     <SidebarMenu>
@@ -70,6 +72,17 @@ export function User({ user }: { user: UserPublic }) {
               <DropdownMenuLabel className="p-0 font-normal">
                 <UserInfo fullName={user.full_name} email={user.email} />
               </DropdownMenuLabel>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                render={<Link href="/settings" />}
+                onClick={() => isMobile && setOpenMobile(false)}
+              >
+                <Settings />
+                Settings
+              </DropdownMenuItem>
+              <AppearanceSubmenu />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

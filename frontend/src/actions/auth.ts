@@ -1,8 +1,8 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import { type ActionResult, toError } from "@/lib/action-result"
 import {
-  ApiError,
   recoverPassword as apiRecoverPassword,
   resetPassword as apiResetPassword,
   loginAccessToken,
@@ -10,12 +10,6 @@ import {
   type UserRegister,
 } from "@/lib/api"
 import { createSession, deleteSession } from "@/lib/session"
-
-type ActionResult = { error?: string }
-
-function toError(e: unknown): ActionResult {
-  return { error: e instanceof ApiError ? e.message : "Something went wrong." }
-}
 
 export async function login(
   username: string,

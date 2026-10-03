@@ -2,20 +2,17 @@
 
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar"
 
 const ICON_MAP = {
   system: Monitor,
@@ -50,40 +47,20 @@ function ThemeItems() {
   )
 }
 
-export function SidebarAppearance() {
-  const { isMobile } = useSidebar()
+export function AppearanceSubmenu() {
   const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  const Icon = mounted
-    ? (ICON_MAP[theme as keyof typeof ICON_MAP] ?? Monitor)
-    : Monitor
+  const Icon = ICON_MAP[theme as keyof typeof ICON_MAP] ?? Monitor
 
   return (
-    <SidebarMenuItem>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger
-          render={
-            <SidebarMenuButton
-              tooltip="Appearance"
-              className="hover:bg-sidebar-accent/50"
-              data-testid="theme-button"
-            />
-          }
-        >
-          <Icon className="text-muted-foreground" />
-          <span>Appearance</span>
-          <span className="sr-only">Toggle theme</span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          side={isMobile ? "top" : "right"}
-          align="end"
-          className="w-(--anchor-width) min-w-56"
-        >
-          <ThemeItems />
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </SidebarMenuItem>
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger data-testid="theme-button">
+        <Icon />
+        Appearance
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        <ThemeItems />
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   )
 }
 

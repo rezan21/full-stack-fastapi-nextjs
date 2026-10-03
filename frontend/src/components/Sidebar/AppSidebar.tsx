@@ -1,7 +1,6 @@
 "use client"
 
 import { Blocks, Briefcase, Home } from "lucide-react"
-import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
 import {
   Sidebar,
@@ -29,7 +28,6 @@ export function AppSidebar({ user }: { user: UserPublic }) {
         <Main items={navItems} />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarAppearance />
         <User user={user} />
       </SidebarFooter>
     </Sidebar>
