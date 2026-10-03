@@ -20,7 +20,7 @@ import useCustomToast from "@/hooks/useCustomToast"
 import type { UserPublic } from "@/lib/api"
 import { formError } from "@/lib/form-errors"
 
-const formSchema = zUserUpdateMe.required()
+const formSchema = zUserUpdateMe.required({ email: true, full_name: true })
 
 type FormData = z.infer<typeof formSchema>
 
