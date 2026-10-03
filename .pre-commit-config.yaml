@@ -63,3 +63,10 @@ repos:
         require_serial: true
         language: unsupported
         pass_filenames: false
+
+      - id: local-library-skills
+        name: backend skills resolve
+        entry: bash -c 'cd backend && uv run --project .. library-skills --check --claude'
+        language: system
+        pass_filenames: false
+        files: ^backend/(\.agents/|\.claude/|pyproject\.toml|uv\.lock|\.python-version)

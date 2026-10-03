@@ -38,11 +38,6 @@ dist-ssr/
 .claude/settings.local.json
 # brainstorming visual companion session files
 .superpowers/
-# fastapi/sqlmodel skills are venv-managed symlinks (recreate with library-skills)
-.claude/skills/fastapi
-.claude/skills/sqlmodel
-.agents/skills/fastapi
-.agents/skills/sqlmodel
 
 # Logs
 logs

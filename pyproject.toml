@@ -9,6 +9,7 @@ package = false
 [dependency-groups]
 dev = [
     "prek>=0.4.11,<1.0.0",
+    "library-skills>=0.0.19,<1.0.0",
 ]
 
 [tool.typos.files]

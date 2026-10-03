@@ -40,6 +40,10 @@ bash scripts/generate-client.sh
 
 This rewrites `backend/openapi.json` and `frontend/src/client/` (a typed SDK, TypeScript types and Zod schemas). The frontend calls the API only through `frontend/src/lib/api.ts`, a thin adapter over the generated SDK, so URLs, methods and payload types are never typed by hand. The backend test suite and the pre-commit hook fail when the committed files are stale, CI type-checks and builds the frontend, and pull requests that change `backend/openapi.json` are checked for breaking changes (add the `breaking-api-change` label to accept an intentional one).
 
+## Development
+
+The FastAPI and SQLModel packages ship agent skills. `backend/.agents/skills` and `backend/.claude/skills` link to them inside `backend/.venv`, so the links resolve once `uv sync` has run in `backend/`. After a dependency or Python version change, refresh them from `backend/` with `uv run --project .. library-skills --claude --yes`; the pre-commit hook runs the same tool with `--check`.
+
 ## Testing
 
 - Backend: `bash scripts/test.sh` (from the project root).
