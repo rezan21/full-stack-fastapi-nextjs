@@ -32,5 +32,8 @@ extend-ignore-re = [
     "Bump certifi ",
 ]
 
+[tool.typos.default.extend-words]
+PN = "PN"
+
 [tool.typos.default.extend-identifiers]
 alls = "alls"
