@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 60
     EMAIL_CHANGE_TOKEN_EXPIRE_MINUTES: int = 60
     SIGNUP_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+    AUTH_MAX_FAILURES: int = 5
+    AUTH_LOCK_MINUTES: int = 15
 
     @computed_field  # type: ignore[prop-decorator]
     @property

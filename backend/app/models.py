@@ -81,6 +81,15 @@ class User(UserBase, table=True):
     items: list[Item] = Relationship(back_populates="owner", cascade_delete=True)
 
 
+class AuthThrottle(SQLModel, table=True):
+    __tablename__ = "auth_throttle"
+
+    key: str = Field(primary_key=True, max_length=64)
+    failures: int = 0
+    last_failure_at: datetime = Field(default_factory=get_datetime_utc, index=True)
+    locked_until: datetime | None = None
+
+
 class UserPublic(SQLModel):
     id: uuid.UUID
     email: str

@@ -62,13 +62,40 @@ test("Log in with invalid email", async ({ page }) => {
 })
 
 test("Log in with invalid password", async ({ page }) => {
-  const password = randomPassword()
+  const email = randomEmail()
+  await createUser({ email, password: randomPassword() })
 
   await page.goto("/login")
-  await fillForm(page, firstSuperuser, password)
+  await fillForm(page, email, randomPassword())
   await page.getByRole("button", { name: "Log In" }).click()
 
   await expect(page.getByText("Incorrect email or password")).toBeVisible()
+})
+
+test("Repeated wrong passwords lock the account for a while", async ({
+  page,
+}) => {
+  const email = randomEmail()
+  const password = randomPassword()
+  await createUser({ email, password })
+  const submit = async (attempt: string) => {
+    await fillForm(page, email, attempt)
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          new URL(response.url()).pathname === "/login",
+      ),
+      page.getByRole("button", { name: "Log In" }).click(),
+    ])
+  }
+
+  await page.goto("/login")
+  for (let wrong = 0; wrong < 5; wrong++) await submit(randomPassword())
+  await submit(password)
+
+  await expect(page.getByText(/Too many failed attempts/)).toBeVisible()
+  await expect(page).toHaveURL(/\/login$/)
 })
 
 test("Successful log out", async ({ page }) => {

@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from math import ceil
 from typing import Annotated, Any
 
 import jwt
@@ -8,10 +9,11 @@ from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel import Session
 
-from app.core import security
+from app.core import security, throttle
 from app.core.config import settings
 from app.core.db import engine
 from app.models import HTTPError, TokenPayload, User
+from app.utils import describe_duration
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -35,6 +37,28 @@ def invalid_credentials() -> HTTPException:
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+def ensure_not_locked(session: Session, email: str) -> None:
+    """Raise a 429 while the account is locked after too many failed attempts."""
+    try:
+        throttle.check(session, email)
+    except throttle.TooManyAttempts as error:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many failed attempts. Try again in {describe_duration(ceil(error.retry_after / 60))}.",
+            headers={"Retry-After": str(error.retry_after)},
+        )
+
+
+def require_current_password(session: Session, user: User, password: str) -> None:
+    """Raise unless the password is the user's, counting failures against the account."""
+    ensure_not_locked(session, user.email)
+    verified, _ = security.verify_password(password, user.hashed_password)
+    if not verified:
+        throttle.record_failure(session, user.email)
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    throttle.clear(session, user.email)
 
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:

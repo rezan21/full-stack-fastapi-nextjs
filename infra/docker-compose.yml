@@ -96,6 +96,7 @@ services:
       - traefik.http.middlewares.auth-ratelimit.ratelimit.average=10
       - traefik.http.middlewares.auth-ratelimit.ratelimit.period=1m
       - traefik.http.middlewares.auth-ratelimit.ratelimit.burst=10
+      - traefik.http.middlewares.auth-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6subnet=64
       - traefik.http.routers.backend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`) || Path(`/api/v1/users/me/password`) || (Path(`/api/v1/users/me`) && Method(`DELETE`)))
       - traefik.http.routers.backend-auth-http.entrypoints=http
       - traefik.http.routers.backend-auth-http.middlewares=auth-ratelimit

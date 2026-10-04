@@ -505,6 +505,10 @@ export type LoginLoginAccessTokenErrors = {
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Too Many Requests
+     */
+    429: HttpError;
 };
 
 export type LoginLoginAccessTokenError = LoginLoginAccessTokenErrors[keyof LoginLoginAccessTokenErrors];
@@ -654,6 +658,10 @@ export type UsersDeleteUserMeErrors = {
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Too Many Requests
+     */
+    429: HttpError;
 };
 
 export type UsersDeleteUserMeError = UsersDeleteUserMeErrors[keyof UsersDeleteUserMeErrors];
@@ -753,6 +761,10 @@ export type UsersRequestEmailChangeErrors = {
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Too Many Requests
+     */
+    429: HttpError;
 };
 
 export type UsersRequestEmailChangeError = UsersRequestEmailChangeErrors[keyof UsersRequestEmailChangeErrors];
@@ -790,6 +802,10 @@ export type UsersUpdatePasswordMeErrors = {
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Too Many Requests
+     */
+    429: HttpError;
 };
 
 export type UsersUpdatePasswordMeError = UsersUpdatePasswordMeErrors[keyof UsersUpdatePasswordMeErrors];

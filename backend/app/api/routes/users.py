@@ -3,9 +3,15 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from app import crud
-from app.api.deps import AUTH_ERRORS, CurrentUser, SessionDep, error_responses
+from app.api.deps import (
+    AUTH_ERRORS,
+    CurrentUser,
+    SessionDep,
+    error_responses,
+    require_current_password,
+)
 from app.core import security
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash
 from app.models import (
     AccountDeletion,
     EmailChange,
@@ -81,7 +87,7 @@ def update_user_me(
     return current_user
 
 
-@router.post("/me/email", responses={**AUTH_ERRORS, **error_responses(400)})
+@router.post("/me/email", responses={**AUTH_ERRORS, **error_responses(400, 429)})
 def request_email_change(
     *,
     session: SessionDep,
@@ -90,9 +96,7 @@ def request_email_change(
     background_tasks: BackgroundTasks,
 ) -> Message:
     """Request the link that confirms a new email address."""
-    verified, _ = verify_password(body.current_password, current_user.hashed_password)
-    if not verified:
-        raise HTTPException(status_code=400, detail="Incorrect password")
+    require_current_password(session, current_user, body.current_password)
     background_tasks.add_task(
         send_email_change_requested_notice,
         email_to=current_user.email,
@@ -136,15 +140,13 @@ def confirm_email_change(
 @router.patch(
     "/me/password",
     response_model=Token,
-    responses={**AUTH_ERRORS, **error_responses(400)},
+    responses={**AUTH_ERRORS, **error_responses(400, 429)},
 )
 def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
 ) -> Any:
     """Update own password."""
-    verified, _ = verify_password(body.current_password, current_user.hashed_password)
-    if not verified:
-        raise HTTPException(status_code=400, detail="Incorrect password")
+    require_current_password(session, current_user, body.current_password)
     if body.current_password == body.new_password:
         raise HTTPException(
             status_code=400, detail="New password cannot be the same as the current one"
@@ -158,15 +160,13 @@ def update_password_me(
 
 
 @router.delete(
-    "/me", status_code=204, responses={**AUTH_ERRORS, **error_responses(400)}
+    "/me", status_code=204, responses={**AUTH_ERRORS, **error_responses(400, 429)}
 )
 def delete_user_me(
     session: SessionDep, body: AccountDeletion, current_user: CurrentUser
 ) -> None:
     """Delete own user."""
-    verified, _ = verify_password(body.current_password, current_user.hashed_password)
-    if not verified:
-        raise HTTPException(status_code=400, detail="Incorrect password")
+    require_current_password(session, current_user, body.current_password)
     if current_user.is_superuser:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"

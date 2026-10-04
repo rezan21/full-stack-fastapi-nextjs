@@ -28,7 +28,7 @@ To iterate on one side directly instead, run `uv run fastapi dev` (from `backend
 
 ## Configuration
 
-All settings live in `backend/.env`. Change `SECRET_KEY` (at least 32 characters), `FIRST_SUPERUSER_PASSWORD`, `POSTGRES_PASSWORD` (the database administrator) and `APP_DB_PASSWORD` (the limited `app` role the backend connects as) before deploying anywhere; outside development a short or placeholder value stops the backend from starting. The `dbsetup` service creates or updates the `app` role and makes it the owner of the `app` database on every start, so the backend never connects as the superuser and an existing database volume is converted the first time it runs. The API docs are served only in development.
+All settings live in `backend/.env`. Change `SECRET_KEY` (at least 32 characters), `FIRST_SUPERUSER_PASSWORD`, `POSTGRES_PASSWORD` (the database administrator) and `APP_DB_PASSWORD` (the limited `app` role the backend connects as) before deploying anywhere; outside development a short or placeholder value stops the backend from starting. The `dbsetup` service creates or updates the `app` role and makes it the owner of the `app` database on every start, so the backend never connects as the superuser and an existing database volume is converted the first time it runs. After `AUTH_MAX_FAILURES` (5) wrong passwords within `AUTH_LOCK_MINUTES` (15) an account answers 429 for that long, whatever the client address; a correct password or a password reset clears the count. The API docs are served only in development.
 
 ## API contract
 

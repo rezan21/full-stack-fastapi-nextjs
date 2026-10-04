@@ -6,7 +6,7 @@ from sqlmodel import Session, delete
 
 from app.core.db import engine, init_db
 from app.main import app
-from app.models import Item, User
+from app.models import AuthThrottle, Item, User
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import EMAIL_TEST_USER, get_superuser_token_headers
 
@@ -21,6 +21,7 @@ def db() -> Generator[Session]:
         session.execute(statement)
         statement = delete(User)
         session.execute(statement)
+        session.execute(delete(AuthThrottle))
         session.commit()
 
 
