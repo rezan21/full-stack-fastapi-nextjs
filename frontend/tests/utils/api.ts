@@ -1,14 +1,17 @@
+import { request } from "@playwright/test"
 import {
   itemsCreateItem,
   itemsDeleteItem,
+  usersCompleteSignup,
   usersRegisterUser,
 } from "../../src/client"
 import { client } from "../../src/client/client.gen"
 import { API_URL } from "../../src/lib/config"
+import { emailedToken, waitForEmailHtml } from "./mailpit"
 
 client.setConfig({ baseUrl: API_URL })
 
-// Registers a user through the API.
+// Signs a user up through the API with the emailed link.
 export async function createUser({
   email,
   password,
@@ -16,8 +19,17 @@ export async function createUser({
   email: string
   password: string
 }) {
-  const { data } = await usersRegisterUser({
-    body: { email, password, full_name: "Test User" },
+  await usersRegisterUser({
+    body: { email, full_name: "Test User" },
+    throwOnError: true,
+  })
+  const context = await request.newContext()
+  const html = await waitForEmailHtml({
+    request: context,
+    query: `to:${email}`,
+  }).finally(() => context.dispose())
+  const { data } = await usersCompleteSignup({
+    body: { token: emailedToken(html), new_password: password },
     throwOnError: true,
   })
   return data

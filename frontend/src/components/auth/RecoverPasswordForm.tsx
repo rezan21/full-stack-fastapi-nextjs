@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import type { z } from "zod"
 import { recoverPassword } from "@/actions/auth"
@@ -22,7 +23,8 @@ type FormData = z.infer<typeof zPasswordRecovery>
 
 // Password recovery form.
 export function RecoverPasswordForm() {
-  const { showSuccessToast, showErrorToast } = useCustomToast()
+  const router = useRouter()
+  const { showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
     resolver: zodResolver(zPasswordRecovery, { error: formError }),
     defaultValues: { email: "" },
@@ -34,8 +36,7 @@ export function RecoverPasswordForm() {
       showErrorToast(res.error)
       return
     }
-    showSuccessToast("Password recovery email sent successfully")
-    form.reset()
+    router.replace("/recover-password/sent")
   }
 
   return (

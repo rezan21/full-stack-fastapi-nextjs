@@ -29,6 +29,17 @@ test("Continue button is visible", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Continue" })).toBeVisible()
 })
 
+test("Any email lands on the same confirmation page", async ({ page }) => {
+  await page.goto("/recover-password")
+  await page.getByTestId("email-input").fill(randomEmail())
+  await page.getByRole("button", { name: "Continue" }).click()
+
+  await expect(page).toHaveURL("/recover-password/sent")
+  await expect(
+    page.getByText("If an account exists for that email"),
+  ).toBeVisible()
+})
+
 test("User can reset password successfully using the link", async ({
   page,
   request,
@@ -47,7 +58,7 @@ test("User can reset password successfully using the link", async ({
 
   const emailHtml = await waitForEmailHtml({
     request,
-    query: `to:${email}`,
+    query: `to:${email} subject:"Password recovery"`,
   })
 
   expect(emailHtml).toContain(resetPath)
@@ -91,7 +102,7 @@ test("Weak new password validation", async ({ page, request }) => {
 
   const emailHtml = await waitForEmailHtml({
     request,
-    query: `to:${email}`,
+    query: `to:${email} subject:"Password recovery"`,
   })
 
   expect(emailHtml).toContain(resetPath)

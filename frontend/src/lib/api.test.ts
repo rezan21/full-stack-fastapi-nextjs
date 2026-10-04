@@ -5,6 +5,8 @@ import { ITEM, resetServer, stubFetch } from "@/test-support"
 const {
   ApiError,
   changePassword,
+  completeSignup,
+  confirmEmailChange,
   createItem,
   deleteAccount,
   deleteItem,
@@ -14,6 +16,7 @@ const {
   loginAccessToken,
   recoverPassword,
   registerUser,
+  requestEmailChange,
   resetPassword,
   updateItem,
   updateProfile,
@@ -122,14 +125,27 @@ describe("operations", () => {
     ],
     [
       "registerUser",
-      () =>
-        registerUser({
-          email: "user@example.com",
-          password: "password123",
-          full_name: "A User",
-        }),
+      () => registerUser({ email: "user@example.com", full_name: "A User" }),
       "POST",
       "/users/signup",
+    ],
+    [
+      "completeSignup",
+      () => completeSignup("a-token", "password123"),
+      "POST",
+      "/users/signup/complete",
+    ],
+    [
+      "requestEmailChange",
+      () => requestEmailChange({ email: "new@example.com" }),
+      "POST",
+      "/users/me/email",
+    ],
+    [
+      "confirmEmailChange",
+      () => confirmEmailChange("a-token"),
+      "POST",
+      "/users/confirm-email",
     ],
     [
       "resetPassword",

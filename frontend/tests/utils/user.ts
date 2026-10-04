@@ -1,7 +1,8 @@
 import { expect, type Page } from "@playwright/test"
 import { SESSION_COOKIE } from "../../src/lib/config"
+import { emailedToken, waitForEmailHtml } from "./mailpit"
 
-// Signs up a user through the UI.
+// Signs up a user through the UI with the emailed link.
 export async function signUpNewUser(
   page: Page,
   name: string,
@@ -12,10 +13,18 @@ export async function signUpNewUser(
 
   await page.getByTestId("full-name-input").fill(name)
   await page.getByTestId("email-input").fill(email)
-  await page.getByTestId("password-input").fill(password)
-  await page.getByTestId("confirm-password-input").fill(password)
   await page.getByRole("button", { name: "Sign Up" }).click()
-  await page.goto("/login")
+  await page.waitForURL("/signup/sent")
+
+  const html = await waitForEmailHtml({
+    request: page.context().request,
+    query: `to:${email}`,
+  })
+  await page.goto(`/signup/complete?token=${emailedToken(html)}`)
+  await page.getByTestId("new-password-input").fill(password)
+  await page.getByTestId("confirm-password-input").fill(password)
+  await page.getByRole("button", { name: "Create Account" }).click()
+  await page.waitForURL("/login")
 }
 
 // Logs a user in through the UI.

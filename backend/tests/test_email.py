@@ -1,3 +1,4 @@
+import socket
 from unittest.mock import patch
 
 import pytest
@@ -23,10 +24,14 @@ def smtp_options(monkeypatch: pytest.MonkeyPatch, **overrides: object) -> dict:
     return message_class.return_value.send.call_args.kwargs["smtp"]
 
 
-def test_a_plain_connection_sets_only_the_host_and_port(
+def test_a_plain_connection_has_no_tls_ssl_or_credentials(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert smtp_options(monkeypatch) == {"host": "smtp.example.com", "port": 587}
+    assert smtp_options(monkeypatch) == {
+        "host": "smtp.example.com",
+        "port": 587,
+        "fail_silently": False,
+    }
 
 
 def test_tls_is_used_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -45,3 +50,20 @@ def test_credentials_are_sent_when_configured(monkeypatch: pytest.MonkeyPatch) -
 
     assert options["user"] == "user"
     assert options["password"] == "secret"
+
+
+def test_a_refused_connection_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        closed_port = probe.getsockname()[1]
+    for name, value in {
+        "SMTP_HOST": "127.0.0.1",
+        "EMAILS_FROM_EMAIL": "from@example.com",
+        "SMTP_PORT": closed_port,
+        "SMTP_TLS": False,
+        "SMTP_SSL": False,
+    }.items():
+        monkeypatch.setattr(settings, name, value)
+
+    with pytest.raises(OSError):
+        send_email(email_to="to@example.com", subject="Hi", html_content="<p>Hi</p>")

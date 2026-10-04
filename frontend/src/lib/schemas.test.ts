@@ -1,20 +1,15 @@
 import { describe, expect, test } from "bun:test"
-import { zNewPassword, zUserRegister } from "@/client/zod.gen"
+import { zNewPassword } from "@/client/zod.gen"
 import { formError } from "@/lib/form-errors"
 import { withPasswordConfirmation } from "@/lib/schemas"
 
-const signup = withPasswordConfirmation(zUserRegister, "password")
 const reset = withPasswordConfirmation(
   zNewPassword.pick({ new_password: true }),
   "new_password",
 )
-const valid = {
-  email: "user@example.com",
-  password: "password123",
-  full_name: "A User",
-}
+const valid = { new_password: "password123" }
 
-function messages(schema: typeof signup | typeof reset, value: object) {
+function messages(schema: typeof reset, value: object) {
   const result = schema.safeParse(value, { error: formError })
   return result.success
     ? []
@@ -24,27 +19,24 @@ function messages(schema: typeof signup | typeof reset, value: object) {
 describe("withPasswordConfirmation", () => {
   test("accepts matching passwords and keeps the contract's rules", () => {
     expect(
-      signup.safeParse({ ...valid, confirm_password: "password123" }).success,
+      reset.safeParse({ ...valid, confirm_password: "password123" }).success,
     ).toBe(true)
     expect(
-      messages(signup, {
-        ...valid,
-        password: "short",
-        confirm_password: "short",
-      }),
-    ).toEqual([["password", "Password must be at least 8 characters"]])
+      messages(reset, { new_password: "short", confirm_password: "short" }),
+    ).toEqual([["new_password", "New password must be at least 8 characters"]])
   })
 
   test("reports a mismatch on the confirmation field", () => {
     expect(
-      messages(signup, { ...valid, confirm_password: "something else" }),
+      messages(reset, { ...valid, confirm_password: "something else" }),
     ).toEqual([["confirm_password", "The passwords don't match"]])
   })
 
   test("reports an empty confirmation as required", () => {
-    expect(messages(signup, { ...valid, confirm_password: "" })).toContainEqual(
-      ["confirm_password", "Password confirmation is required"],
-    )
+    expect(messages(reset, { ...valid, confirm_password: "" })).toContainEqual([
+      "confirm_password",
+      "Password confirmation is required",
+    ])
   })
 
   test("compares whichever field it is given", () => {

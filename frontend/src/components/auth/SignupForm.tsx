@@ -7,7 +7,6 @@ import { Controller, useForm } from "react-hook-form"
 import type { z } from "zod"
 import { signup } from "@/actions/auth"
 import { zUserRegister } from "@/client/zod.gen"
-import { PasswordInput } from "@/components/Common/PasswordInput"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -19,39 +18,27 @@ import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
 import { formError } from "@/lib/form-errors"
-import { withPasswordConfirmation } from "@/lib/schemas"
 
-const formSchema = withPasswordConfirmation(zUserRegister, "password")
-
-type FormData = z.infer<typeof formSchema>
+type FormData = z.infer<typeof zUserRegister>
 
 // Sign-up form.
 export function SignupForm() {
   const router = useRouter()
   const { showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema, { error: formError }),
+    resolver: zodResolver(zUserRegister, { error: formError }),
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      email: "",
-      full_name: "",
-      password: "",
-      confirm_password: "",
-    },
+    defaultValues: { email: "", full_name: "" },
   })
 
   const onSubmit = async (data: FormData) => {
-    const res = await signup({
-      full_name: data.full_name,
-      email: data.email,
-      password: data.password,
-    })
+    const res = await signup(data)
     if (res.error) {
       showErrorToast(res.error)
       return
     }
-    router.push("/login")
+    router.replace("/signup/sent")
   }
 
   return (
@@ -95,42 +82,6 @@ export function SignupForm() {
                 data-testid="email-input"
                 placeholder="user@example.com"
                 type="email"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          control={form.control}
-          name="password"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-              <PasswordInput
-                {...field}
-                id={field.name}
-                data-testid="password-input"
-                placeholder="Password"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          control={form.control}
-          name="confirm_password"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Confirm Password</FieldLabel>
-              <PasswordInput
-                {...field}
-                id={field.name}
-                data-testid="confirm-password-input"
-                placeholder="Confirm Password"
                 aria-invalid={fieldState.invalid}
               />
               {fieldState.error && <FieldError errors={[fieldState.error]} />}

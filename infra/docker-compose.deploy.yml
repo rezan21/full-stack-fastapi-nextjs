@@ -39,7 +39,7 @@ services:
       - traefik.http.routers.backend-https.entrypoints=https
       - traefik.http.routers.backend-https.tls=true
       - traefik.http.routers.backend-https.tls.certresolver=le
-      - traefik.http.routers.backend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`))
+      - traefik.http.routers.backend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`))
       - traefik.http.routers.backend-auth-https.entrypoints=https
       - traefik.http.routers.backend-auth-https.middlewares=auth-ratelimit
       - traefik.http.routers.backend-auth-https.priority=1000
@@ -53,7 +53,7 @@ services:
       - traefik.http.routers.frontend-https.entrypoints=https
       - traefik.http.routers.frontend-https.tls=true
       - traefik.http.routers.frontend-https.tls.certresolver=le
-      - traefik.http.routers.frontend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/recover-password`) || Path(`/reset-password`))
+      - traefik.http.routers.frontend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`))
       - traefik.http.routers.frontend-auth-https.entrypoints=https
       - traefik.http.routers.frontend-auth-https.middlewares=auth-ratelimit
       - traefik.http.routers.frontend-auth-https.priority=1000

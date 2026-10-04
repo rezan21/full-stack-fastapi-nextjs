@@ -45,3 +45,10 @@ export async function waitForEmailHtml({
 
   throw new Error(`Timeout while trying to get the latest email for "${query}"`)
 }
+
+// Returns the token in the link an email carries.
+export function emailedToken(html: string) {
+  const token = html.match(/\?token=([^"&\s<]+)/)?.[1]
+  if (!token) throw new Error("The email carries no token link")
+  return token
+}

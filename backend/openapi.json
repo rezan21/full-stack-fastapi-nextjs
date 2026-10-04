@@ -60,6 +60,34 @@
         "title": "Body_login-login_access_token",
         "type": "object"
       },
+      "EmailChange": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 255,
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "EmailChange",
+        "type": "object"
+      },
+      "EmailChangeConfirm": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "EmailChangeConfirm",
+        "type": "object"
+      },
       "HTTPError": {
         "properties": {
           "detail": {
@@ -365,17 +393,10 @@
             "minLength": 1,
             "title": "Full Name",
             "type": "string"
-          },
-          "password": {
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Password",
-            "type": "string"
           }
         },
         "required": [
           "email",
-          "password",
           "full_name"
         ],
         "title": "UserRegister",
@@ -383,12 +404,6 @@
       },
       "UserUpdateMe": {
         "properties": {
-          "email": {
-            "format": "email",
-            "maxLength": 255,
-            "title": "Email",
-            "type": "string"
-          },
           "full_name": {
             "maxLength": 255,
             "minLength": 1,
@@ -987,6 +1002,58 @@
         ]
       }
     },
+    "/api/v1/users/confirm-email": {
+      "post": {
+        "description": "Apply a confirmed email change.",
+        "operationId": "users-confirm_email_change",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Email Change",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/api/v1/users/me": {
       "delete": {
         "description": "Delete own user.",
@@ -1115,16 +1182,6 @@
             },
             "description": "Forbidden"
           },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPError"
-                }
-              }
-            },
-            "description": "Conflict"
-          },
           "422": {
             "content": {
               "application/json": {
@@ -1142,6 +1199,73 @@
           }
         ],
         "summary": "Update User Me",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/email": {
+      "post": {
+        "description": "Request the link that confirms a new email address.",
+        "operationId": "users-request_email_change",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Request Email Change",
         "tags": [
           "users"
         ]
@@ -1226,13 +1350,55 @@
     },
     "/api/v1/users/signup": {
       "post": {
-        "description": "Create new user without the need to be logged in.",
+        "description": "Request the link that completes a sign-up.",
         "operationId": "users-register_user",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register User",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/signup/complete": {
+      "post": {
+        "description": "Create the user a sign-up link was sent for.",
+        "operationId": "users-complete_signup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewPassword"
               }
             }
           },
@@ -1270,7 +1436,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Register User",
+        "summary": "Complete Signup",
         "tags": [
           "users"
         ]

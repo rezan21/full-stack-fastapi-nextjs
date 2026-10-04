@@ -4,13 +4,20 @@ import {
   cookieWrites,
   Redirect,
   resetServer,
+  revalidated,
   session,
   stubFetch,
 } from "@/test-support"
 
-const { login, logout, recoverPassword, resetPassword, signup } = await import(
-  "@/actions/auth"
-)
+const {
+  completeSignup,
+  confirmEmailChange,
+  login,
+  logout,
+  recoverPassword,
+  resetPassword,
+  signup,
+} = await import("@/actions/auth")
 
 const failure = () =>
   Response.json({ detail: "Nope, not that." }, { status: 400 })
@@ -51,22 +58,56 @@ describe("logout", () => {
 })
 
 describe("signup", () => {
-  const data = {
-    email: "new@example.com",
-    full_name: "New User",
-    password: "password123",
-  }
+  const data = { email: "new@example.com", full_name: "New User" }
 
-  test("registers the user", async () => {
-    const requests = stubFetch(() => Response.json({}, { status: 201 }))
+  test("requests the sign-up link", async () => {
+    const requests = stubFetch(() => Response.json({ message: "sent" }))
     expect(await signup(data)).toEqual({})
     expect(requests[0]).toMatchObject({ method: "POST" })
+    expect(requests[0].url).toBe(`${API_URL}/api/v1/users/signup`)
     expect(JSON.parse(requests[0].body)).toEqual(data)
   })
 
-  test("returns the error when registration fails", async () => {
+  test("returns the error when the request fails", async () => {
     stubFetch(failure)
     expect(await signup(data)).toEqual({ error: "Nope, not that." })
+  })
+})
+
+describe("completeSignup", () => {
+  test("creates the user with the token and the chosen password", async () => {
+    const requests = stubFetch(() => Response.json({}, { status: 201 }))
+    expect(await completeSignup("a-token", "password123")).toEqual({})
+    expect(requests[0].url).toBe(`${API_URL}/api/v1/users/signup/complete`)
+    expect(JSON.parse(requests[0].body)).toEqual({
+      token: "a-token",
+      new_password: "password123",
+    })
+  })
+
+  test("returns the error when the token is rejected", async () => {
+    stubFetch(failure)
+    expect(await completeSignup("a-token", "password123")).toEqual({
+      error: "Nope, not that.",
+    })
+  })
+})
+
+describe("confirmEmailChange", () => {
+  test("applies the change and refreshes the layout so the new email shows", async () => {
+    const requests = stubFetch(() => Response.json({ message: "done" }))
+    expect(await confirmEmailChange("a-token")).toEqual({})
+    expect(requests[0].url).toBe(`${API_URL}/api/v1/users/confirm-email`)
+    expect(JSON.parse(requests[0].body)).toEqual({ token: "a-token" })
+    expect(revalidated).toEqual([["/", "layout"]])
+  })
+
+  test("returns the error and refreshes nothing when the token is rejected", async () => {
+    stubFetch(failure)
+    expect(await confirmEmailChange("a-token")).toEqual({
+      error: "Nope, not that.",
+    })
+    expect(revalidated).toHaveLength(0)
   })
 })
 

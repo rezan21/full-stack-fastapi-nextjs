@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -15,6 +16,9 @@ from app.core.config import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+SIGNUP_AUDIENCE = "signup"
+EMAIL_CHANGE_AUDIENCE = "email-change"
 
 
 @dataclass
@@ -46,7 +50,11 @@ def send_email(
         html=html_content,
         mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
     )
-    smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
+    smtp_options: dict[str, Any] = {
+        "host": settings.SMTP_HOST,
+        "port": settings.SMTP_PORT,
+        "fail_silently": False,
+    }
     if settings.SMTP_TLS:
         smtp_options["tls"] = True
     elif settings.SMTP_SSL:
@@ -99,6 +107,105 @@ def generate_password_reset_token(email: str, hashed_password: str) -> str:
         algorithm=security.ALGORITHM,
     )
     return encoded_jwt
+
+
+def send_password_recovery_email(
+    *, email_to: str, email: str, hashed_password: str
+) -> None:
+    """Send the password recovery email."""
+    try:
+        token = generate_password_reset_token(
+            email=email, hashed_password=hashed_password
+        )
+        email_data = generate_reset_password_email(
+            email_to=email_to, email=email, token=token
+        )
+        send_email(
+            email_to=email_to,
+            subject=email_data.subject,
+            html_content=email_data.html_content,
+        )
+    except Exception:
+        logger.exception("Failed to send the password recovery email")
+
+
+def generate_email_token(*, audience: str, claims: dict[str, str]) -> str:
+    """Create a signed, expiring token for an emailed link."""
+    now = datetime.now(UTC)
+    return jwt.encode(
+        {
+            **claims,
+            "aud": audience,
+            "nbf": now,
+            "exp": now + timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS),
+        },
+        settings.SECRET_KEY,
+        algorithm=security.ALGORITHM,
+    )
+
+
+def verify_email_token(token: str, *, audience: str) -> dict[str, Any] | None:
+    """Return the claims of a valid token for the audience, otherwise None."""
+    try:
+        return jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[security.ALGORITHM],
+            audience=audience,
+        )
+    except InvalidTokenError:
+        return None
+
+
+def send_confirmation_email(
+    *, email_to: str, subject: str, message: str, path: str, token: str
+) -> None:
+    """Send an email with a link that confirms the address."""
+    try:
+        html_content = render_email_template(
+            template_name="confirm_email.html",
+            context={
+                "project_name": settings.PROJECT_NAME,
+                "username": email_to,
+                "message": message,
+                "valid_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
+                "link": f"{settings.FRONTEND_HOST}{path}?token={token}",
+            },
+        )
+        send_email(email_to=email_to, subject=subject, html_content=html_content)
+    except Exception:
+        logger.exception("Failed to send the confirmation email")
+
+
+def send_signup_email(*, email_to: str, full_name: str) -> None:
+    """Send the link that completes a sign-up."""
+    token = generate_email_token(
+        audience=SIGNUP_AUDIENCE, claims={"sub": email_to, "name": full_name}
+    )
+    send_confirmation_email(
+        email_to=email_to,
+        subject=f"{settings.PROJECT_NAME} - Confirm your email",
+        message=f"Confirm your email address to finish creating your {settings.PROJECT_NAME} account:",
+        path="/signup/complete",
+        token=token,
+    )
+
+
+def send_email_change_email(
+    *, email_to: str, user_id: uuid.UUID, current_email: str
+) -> None:
+    """Send the link that confirms a new email address."""
+    token = generate_email_token(
+        audience=EMAIL_CHANGE_AUDIENCE,
+        claims={"sub": str(user_id), "email": email_to, "from": current_email},
+    )
+    send_confirmation_email(
+        email_to=email_to,
+        subject=f"{settings.PROJECT_NAME} - Confirm your new email",
+        message=f"Confirm this address to use it for your {settings.PROJECT_NAME} account:",
+        path="/confirm-email",
+        token=token,
+    )
 
 
 def verify_password_reset_token(token: str) -> tuple[str, str] | None:

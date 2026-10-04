@@ -34,13 +34,19 @@ class UserCreate(UserBase):
 
 class UserRegister(SQLModel):
     email: Email
-    password: Password
     full_name: FullName
 
 
 class UserUpdateMe(SQLModel):
     full_name: FullName | MISSING = MISSING  # type: ignore[valid-type]
-    email: Email | MISSING = MISSING  # type: ignore[valid-type]
+
+
+class EmailChange(SQLModel):
+    email: Email
+
+
+class EmailChangeConfirm(SQLModel):
+    token: str
 
 
 class UpdatePassword(SQLModel):

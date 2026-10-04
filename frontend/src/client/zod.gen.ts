@@ -15,6 +15,20 @@ export const zBodyLoginLoginAccessToken = z.object({
 });
 
 /**
+ * EmailChange
+ */
+export const zEmailChange = z.object({
+    email: z.email().max(255)
+});
+
+/**
+ * EmailChangeConfirm
+ */
+export const zEmailChangeConfirm = z.object({
+    token: z.string()
+});
+
+/**
  * HTTPError
  */
 export const zHttpError = z.object({
@@ -112,15 +126,13 @@ export const zUserPublic = z.object({
  */
 export const zUserRegister = z.object({
     email: z.email().max(255),
-    full_name: z.string().min(1).max(255),
-    password: z.string().min(8).max(128)
+    full_name: z.string().min(1).max(255)
 });
 
 /**
  * UserUpdateMe
  */
 export const zUserUpdateMe = z.object({
-    email: z.email().max(255).optional(),
     full_name: z.string().min(1).max(255).optional()
 });
 
@@ -169,8 +181,14 @@ export const zLoginRecoverPasswordBody = zPasswordRecovery;
 
 export const zLoginResetPasswordBody = zNewPassword;
 
+export const zUsersConfirmEmailChangeBody = zEmailChangeConfirm;
+
 export const zUsersUpdateUserMeBody = zUserUpdateMe;
+
+export const zUsersRequestEmailChangeBody = zEmailChange;
 
 export const zUsersUpdatePasswordMeBody = zUpdatePassword;
 
 export const zUsersRegisterUserBody = zUserRegister;
+
+export const zUsersCompleteSignupBody = zNewPassword;

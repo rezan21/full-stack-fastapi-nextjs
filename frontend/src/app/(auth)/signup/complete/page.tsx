@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { SetPasswordForm } from "@/components/auth/SetPasswordForm"
 
-export const metadata: Metadata = { title: "Reset Password - FastAPI Template" }
+export const metadata: Metadata = { title: "Set Password - FastAPI Template" }
 
-// Reset password page.
+// Sign-up completion page.
 export default async function Page({
   searchParams,
 }: {
@@ -13,5 +13,5 @@ export default async function Page({
   const { token } = await searchParams
   if (!token) redirect("/login")
 
-  return <SetPasswordForm token={token} variant="reset" />
+  return <SetPasswordForm token={token} variant="signup" />
 }

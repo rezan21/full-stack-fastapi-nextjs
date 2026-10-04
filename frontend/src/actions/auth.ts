@@ -1,8 +1,11 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { type ActionResult, toError } from "@/lib/action-result"
 import {
+  completeSignup as apiCompleteSignup,
+  confirmEmailChange as apiConfirmEmailChange,
   recoverPassword as apiRecoverPassword,
   resetPassword as apiResetPassword,
   loginAccessToken,
@@ -35,7 +38,7 @@ export async function logout(): Promise<void> {
   redirect("/login")
 }
 
-// Registers a new user.
+// Requests the link that completes a sign-up.
 export async function signup(data: UserRegister): Promise<ActionResult> {
   try {
     await registerUser(data)
@@ -43,6 +46,30 @@ export async function signup(data: UserRegister): Promise<ActionResult> {
   } catch (e) {
     return toError(e)
   }
+}
+
+// Creates the user a sign-up link was sent for.
+export async function completeSignup(
+  token: string,
+  password: string,
+): Promise<ActionResult> {
+  try {
+    await apiCompleteSignup(token, password)
+    return {}
+  } catch (e) {
+    return toError(e)
+  }
+}
+
+// Applies a confirmed email change.
+export async function confirmEmailChange(token: string): Promise<ActionResult> {
+  try {
+    await apiConfirmEmailChange(token)
+  } catch (e) {
+    return toError(e)
+  }
+  revalidatePath("/", "layout")
+  return {}
 }
 
 // Starts a password recovery.

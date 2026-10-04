@@ -1,6 +1,7 @@
 import "server-only"
 import { ZodError } from "zod"
 import {
+  type EmailChange,
   type HttpError,
   type HttpValidationError,
   type ItemCreate,
@@ -20,9 +21,12 @@ import {
   type UserPublic,
   type UserRegister,
   type UserUpdateMe,
+  usersCompleteSignup,
+  usersConfirmEmailChange,
   usersDeleteUserMe,
   usersReadUserMe,
   usersRegisterUser,
+  usersRequestEmailChange,
   usersUpdatePasswordMe,
   usersUpdateUserMe,
 } from "@/client"
@@ -31,6 +35,7 @@ import { API_URL, ITEMS_PAGE_SIZE } from "@/lib/config"
 import { getToken } from "@/lib/session"
 
 export type {
+  EmailChange,
   ItemCreate,
   ItemPublic,
   ItemsPublic,
@@ -98,6 +103,16 @@ export function registerUser(body: UserRegister) {
   return unwrap(usersRegisterUser({ body }))
 }
 
+export function completeSignup(token: string, newPassword: string) {
+  return unwrap(
+    usersCompleteSignup({ body: { token, new_password: newPassword } }),
+  )
+}
+
+export function confirmEmailChange(token: string) {
+  return unwrap(usersConfirmEmailChange({ body: { token } }))
+}
+
 export function recoverPassword(body: PasswordRecovery) {
   return unwrap(loginRecoverPassword({ body }))
 }
@@ -135,6 +150,10 @@ export function deleteItem(id: string) {
 
 export function updateProfile(body: UserUpdateMe) {
   return unwrap(usersUpdateUserMe({ body }))
+}
+
+export function requestEmailChange(body: EmailChange) {
+  return unwrap(usersRequestEmailChange({ body }))
 }
 
 export function changePassword(body: UpdatePassword) {

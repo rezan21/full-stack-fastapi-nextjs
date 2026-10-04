@@ -35,6 +35,26 @@ export type BodyLoginLoginAccessToken = {
 };
 
 /**
+ * EmailChange
+ */
+export type EmailChange = {
+    /**
+     * Email
+     */
+    email: string;
+};
+
+/**
+ * EmailChangeConfirm
+ */
+export type EmailChangeConfirm = {
+    /**
+     * Token
+     */
+    token: string;
+};
+
+/**
  * HTTPError
  */
 export type HttpError = {
@@ -230,20 +250,12 @@ export type UserRegister = {
      * Full Name
      */
     full_name: string;
-    /**
-     * Password
-     */
-    password: string;
 };
 
 /**
  * UserUpdateMe
  */
 export type UserUpdateMe = {
-    /**
-     * Email
-     */
-    email?: string;
     /**
      * Full Name
      */
@@ -562,6 +574,35 @@ export type LoginResetPasswordResponses = {
 
 export type LoginResetPasswordResponse = LoginResetPasswordResponses[keyof LoginResetPasswordResponses];
 
+export type UsersConfirmEmailChangeData = {
+    body: EmailChangeConfirm;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/confirm-email';
+};
+
+export type UsersConfirmEmailChangeErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersConfirmEmailChangeError = UsersConfirmEmailChangeErrors[keyof UsersConfirmEmailChangeErrors];
+
+export type UsersConfirmEmailChangeResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type UsersConfirmEmailChangeResponse = UsersConfirmEmailChangeResponses[keyof UsersConfirmEmailChangeResponses];
+
 export type UsersDeleteUserMeData = {
     body?: never;
     path?: never;
@@ -637,10 +678,6 @@ export type UsersUpdateUserMeErrors = {
      */
     403: HttpError;
     /**
-     * Conflict
-     */
-    409: HttpError;
-    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -656,6 +693,39 @@ export type UsersUpdateUserMeResponses = {
 };
 
 export type UsersUpdateUserMeResponse = UsersUpdateUserMeResponses[keyof UsersUpdateUserMeResponses];
+
+export type UsersRequestEmailChangeData = {
+    body: EmailChange;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me/email';
+};
+
+export type UsersRequestEmailChangeErrors = {
+    /**
+     * Unauthorized
+     */
+    401: HttpError;
+    /**
+     * Forbidden
+     */
+    403: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersRequestEmailChangeError = UsersRequestEmailChangeErrors[keyof UsersRequestEmailChangeErrors];
+
+export type UsersRequestEmailChangeResponses = {
+    /**
+     * Successful Response
+     */
+    200: Message;
+};
+
+export type UsersRequestEmailChangeResponse = UsersRequestEmailChangeResponses[keyof UsersRequestEmailChangeResponses];
 
 export type UsersUpdatePasswordMeData = {
     body: UpdatePassword;
@@ -703,10 +773,6 @@ export type UsersRegisterUserData = {
 
 export type UsersRegisterUserErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpError;
-    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -718,10 +784,39 @@ export type UsersRegisterUserResponses = {
     /**
      * Successful Response
      */
-    201: UserPublic;
+    200: Message;
 };
 
 export type UsersRegisterUserResponse = UsersRegisterUserResponses[keyof UsersRegisterUserResponses];
+
+export type UsersCompleteSignupData = {
+    body: NewPassword;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/signup/complete';
+};
+
+export type UsersCompleteSignupErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UsersCompleteSignupError = UsersCompleteSignupErrors[keyof UsersCompleteSignupErrors];
+
+export type UsersCompleteSignupResponses = {
+    /**
+     * Successful Response
+     */
+    201: UserPublic;
+};
+
+export type UsersCompleteSignupResponse = UsersCompleteSignupResponses[keyof UsersCompleteSignupResponses];
 
 export type UtilsHealthCheckData = {
     body?: never;

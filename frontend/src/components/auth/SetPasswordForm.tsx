@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import type { z } from "zod"
-import { resetPassword } from "@/actions/auth"
+import { completeSignup, resetPassword } from "@/actions/auth"
 import { zNewPassword } from "@/client/zod.gen"
 import { PasswordInput } from "@/components/Common/PasswordInput"
 import { Button } from "@/components/ui/button"
@@ -27,8 +27,30 @@ const formSchema = withPasswordConfirmation(
 
 type FormData = z.infer<typeof formSchema>
 
-// Password reset form.
-export function ResetPasswordForm({ token }: { token: string }) {
+const VARIANTS = {
+  reset: {
+    title: "Reset Password",
+    submit: "Reset Password",
+    success: "Password updated successfully",
+    action: resetPassword,
+  },
+  signup: {
+    title: "Set your password",
+    submit: "Create Account",
+    success: "Account created successfully",
+    action: completeSignup,
+  },
+}
+
+// Form that sets a password from an emailed link.
+export function SetPasswordForm({
+  token,
+  variant,
+}: {
+  token: string
+  variant: keyof typeof VARIANTS
+}) {
+  const { title, submit, success, action } = VARIANTS[variant]
   const router = useRouter()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
@@ -39,12 +61,12 @@ export function ResetPasswordForm({ token }: { token: string }) {
   })
 
   const onSubmit = async (data: FormData) => {
-    const res = await resetPassword(token, data.new_password)
+    const res = await action(token, data.new_password)
     if (res.error) {
       showErrorToast(res.error)
       return
     }
-    showSuccessToast("Password updated successfully")
+    showSuccessToast(success)
     form.reset()
     router.push("/login")
   }
@@ -55,7 +77,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       className="flex flex-col gap-6"
     >
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Reset Password</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       </div>
 
       <FieldGroup>
@@ -101,7 +123,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting && <Spinner data-icon="inline-start" />}
-          Reset Password
+          {submit}
         </Button>
       </FieldGroup>
 

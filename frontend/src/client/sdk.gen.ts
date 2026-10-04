@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckErrors, UtilsHealthCheckResponses } from './types.gen';
-import { zItemsCreateItemBody, zItemsDeleteItemPath, zItemsReadItemPath, zItemsReadItemsQuery, zItemsUpdateItemBody, zItemsUpdateItemPath, zLoginLoginAccessTokenBody, zLoginRecoverPasswordBody, zLoginResetPasswordBody, zUsersRegisterUserBody, zUsersUpdatePasswordMeBody, zUsersUpdateUserMeBody } from './zod.gen';
+import type { ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersCompleteSignupData, UsersCompleteSignupErrors, UsersCompleteSignupResponses, UsersConfirmEmailChangeData, UsersConfirmEmailChangeErrors, UsersConfirmEmailChangeResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersRequestEmailChangeData, UsersRequestEmailChangeErrors, UsersRequestEmailChangeResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckErrors, UtilsHealthCheckResponses } from './types.gen';
+import { zItemsCreateItemBody, zItemsDeleteItemPath, zItemsReadItemPath, zItemsReadItemsQuery, zItemsUpdateItemBody, zItemsUpdateItemPath, zLoginLoginAccessTokenBody, zLoginRecoverPasswordBody, zLoginResetPasswordBody, zUsersCompleteSignupBody, zUsersConfirmEmailChangeBody, zUsersRegisterUserBody, zUsersRequestEmailChangeBody, zUsersUpdatePasswordMeBody, zUsersUpdateUserMeBody } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -168,6 +168,25 @@ export const loginResetPassword = <ThrowOnError extends boolean = false>(options
 });
 
 /**
+ * Confirm Email Change
+ *
+ * Apply a confirmed email change.
+ */
+export const usersConfirmEmailChange = <ThrowOnError extends boolean = false>(options: Options<UsersConfirmEmailChangeData, ThrowOnError>): RequestResult<UsersConfirmEmailChangeResponses, UsersConfirmEmailChangeErrors, ThrowOnError> => (options.client ?? client).post<UsersConfirmEmailChangeResponses, UsersConfirmEmailChangeErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zUsersConfirmEmailChangeBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    url: '/api/v1/users/confirm-email',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Delete User Me
  *
  * Delete own user.
@@ -220,6 +239,26 @@ export const usersUpdateUserMe = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
+ * Request Email Change
+ *
+ * Request the link that confirms a new email address.
+ */
+export const usersRequestEmailChange = <ThrowOnError extends boolean = false>(options: Options<UsersRequestEmailChangeData, ThrowOnError>): RequestResult<UsersRequestEmailChangeResponses, UsersRequestEmailChangeErrors, ThrowOnError> => (options.client ?? client).post<UsersRequestEmailChangeResponses, UsersRequestEmailChangeErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zUsersRequestEmailChangeBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/users/me/email',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Update Password Me
  *
  * Update own password.
@@ -242,7 +281,7 @@ export const usersUpdatePasswordMe = <ThrowOnError extends boolean = false>(opti
 /**
  * Register User
  *
- * Create new user without the need to be logged in.
+ * Request the link that completes a sign-up.
  */
 export const usersRegisterUser = <ThrowOnError extends boolean = false>(options: Options<UsersRegisterUserData, ThrowOnError>): RequestResult<UsersRegisterUserResponses, UsersRegisterUserErrors, ThrowOnError> => (options.client ?? client).post<UsersRegisterUserResponses, UsersRegisterUserErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -251,6 +290,25 @@ export const usersRegisterUser = <ThrowOnError extends boolean = false>(options:
         query: z.never().optional()
     }).parseAsync(data),
     url: '/api/v1/users/signup',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Complete Signup
+ *
+ * Create the user a sign-up link was sent for.
+ */
+export const usersCompleteSignup = <ThrowOnError extends boolean = false>(options: Options<UsersCompleteSignupData, ThrowOnError>): RequestResult<UsersCompleteSignupResponses, UsersCompleteSignupErrors, ThrowOnError> => (options.client ?? client).post<UsersCompleteSignupResponses, UsersCompleteSignupErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zUsersCompleteSignupBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    url: '/api/v1/users/signup/complete',
     ...options,
     headers: {
         'Content-Type': 'application/json',

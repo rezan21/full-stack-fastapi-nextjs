@@ -6,7 +6,9 @@ import { type ActionResult, toError } from "@/lib/action-result"
 import {
   changePassword as apiChangePassword,
   deleteAccount as apiDeleteAccount,
+  requestEmailChange as apiRequestEmailChange,
   updateProfile as apiUpdateProfile,
+  type EmailChange,
   type UpdatePassword,
   type UserUpdateMe,
 } from "@/lib/api"
@@ -22,6 +24,17 @@ export async function updateProfile(data: UserUpdateMe): Promise<ActionResult> {
   }
   revalidatePath("/", "layout")
   return {}
+}
+
+// Requests the link that confirms a new email address.
+export async function changeEmail(data: EmailChange): Promise<ActionResult> {
+  if (!(await getToken())) return { error: "Not authenticated" }
+  try {
+    await apiRequestEmailChange(data)
+    return {}
+  } catch (e) {
+    return toError(e)
+  }
 }
 
 // Changes the current user's password.

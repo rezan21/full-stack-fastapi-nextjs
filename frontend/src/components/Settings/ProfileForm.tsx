@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import type { z } from "zod"
-import { updateProfile } from "@/actions/user"
-import { zUserUpdateMe } from "@/client/zod.gen"
+import { changeEmail, updateProfile } from "@/actions/user"
+import { zEmailChange, zUserUpdateMe } from "@/client/zod.gen"
 import { Button } from "@/components/ui/button"
 import {
   Field,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -20,7 +21,9 @@ import useCustomToast from "@/hooks/useCustomToast"
 import type { UserPublic } from "@/lib/api"
 import { formError } from "@/lib/form-errors"
 
-const formSchema = zUserUpdateMe.required({ email: true, full_name: true })
+const formSchema = zUserUpdateMe
+  .required({ full_name: true })
+  .extend({ email: zEmailChange.shape.email })
 
 type FormData = z.infer<typeof formSchema>
 
@@ -46,12 +49,21 @@ export function ProfileForm({ user }: { user: UserPublic }) {
   }
 
   const onSubmit = async (data: FormData) => {
-    const res = await updateProfile(data)
+    const res = await updateProfile({ full_name: data.full_name })
     if (res.error) {
       showErrorToast(res.error)
       return
     }
-    showSuccessToast("User updated successfully")
+    if (data.email !== user.email) {
+      const emailRes = await changeEmail({ email: data.email })
+      if (emailRes.error) {
+        showErrorToast(emailRes.error)
+        return
+      }
+      showSuccessToast("Check your new email to confirm the change")
+    } else {
+      showSuccessToast("User updated successfully")
+    }
     setIsEditing(false)
   }
 
@@ -107,6 +119,10 @@ export function ProfileForm({ user }: { user: UserPublic }) {
                     type="email"
                     aria-invalid={fieldState.invalid}
                   />
+                  <FieldDescription>
+                    A new address only takes effect once you confirm it from the
+                    link we send there.
+                  </FieldDescription>
                   {fieldState.error && (
                     <FieldError errors={[fieldState.error]} />
                   )}

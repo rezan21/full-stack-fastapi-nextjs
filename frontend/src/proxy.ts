@@ -4,7 +4,11 @@ import { SESSION_COOKIE } from "@/lib/config"
 const publicRoutes = [
   "/login",
   "/signup",
+  "/signup/sent",
+  "/signup/complete",
+  "/confirm-email",
   "/recover-password",
+  "/recover-password/sent",
   "/reset-password",
 ]
 

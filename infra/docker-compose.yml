@@ -10,10 +10,13 @@ x-backend: &backend
     SECRET_KEY: ${SECRET_KEY:?Variable not set}
     FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Variable not set}
     FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Variable not set}
-    SMTP_HOST: ${SMTP_HOST}
-    SMTP_USER: ${SMTP_USER:-}
-    SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-    EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
+    SMTP_HOST: ${SMTP_HOST:?Variable not set}
+    SMTP_PORT: ${SMTP_PORT:?Variable not set}
+    SMTP_TLS: ${SMTP_TLS:?Variable not set}
+    SMTP_SSL: ${SMTP_SSL:?Variable not set}
+    SMTP_USER: ${SMTP_USER?Variable not set}
+    SMTP_PASSWORD: ${SMTP_PASSWORD?Variable not set}
+    EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL:?Variable not set}
     DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Variable not set}@db:5432/app
     SENTRY_DSN: ${SENTRY_DSN:-}
 
@@ -85,7 +88,7 @@ services:
       - traefik.http.middlewares.auth-ratelimit.ratelimit.average=10
       - traefik.http.middlewares.auth-ratelimit.ratelimit.period=1m
       - traefik.http.middlewares.auth-ratelimit.ratelimit.burst=10
-      - traefik.http.routers.backend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`))
+      - traefik.http.routers.backend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`))
       - traefik.http.routers.backend-auth-http.entrypoints=http
       - traefik.http.routers.backend-auth-http.middlewares=auth-ratelimit
       - traefik.http.routers.backend-auth-http.priority=1000
@@ -104,7 +107,7 @@ services:
       - traefik.http.services.frontend.loadbalancer.server.port=3000
       - traefik.http.routers.frontend-http.rule=Host(`${DOMAIN:-localhost}`)
       - traefik.http.routers.frontend-http.entrypoints=http
-      - traefik.http.routers.frontend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/recover-password`) || Path(`/reset-password`))
+      - traefik.http.routers.frontend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`))
       - traefik.http.routers.frontend-auth-http.entrypoints=http
       - traefik.http.routers.frontend-auth-http.middlewares=auth-ratelimit
       - traefik.http.routers.frontend-auth-http.priority=1000

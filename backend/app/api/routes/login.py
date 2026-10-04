@@ -2,7 +2,7 @@ import hmac
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
@@ -11,10 +11,8 @@ from app.core import security
 from app.core.config import settings
 from app.models import Message, NewPassword, PasswordRecovery, Token
 from app.utils import (
-    generate_password_reset_token,
-    generate_reset_password_email,
     password_fingerprint,
-    send_email,
+    send_password_recovery_email,
     verify_password_reset_token,
 )
 
@@ -43,21 +41,18 @@ def login_access_token(
 
 
 @router.post("/password-recovery")
-def recover_password(body: PasswordRecovery, session: SessionDep) -> Message:
+def recover_password(
+    body: PasswordRecovery, session: SessionDep, background_tasks: BackgroundTasks
+) -> Message:
     """Password Recovery"""
     user = crud.get_user_by_email(session=session, email=body.email)
 
     if user:
-        password_reset_token = generate_password_reset_token(
-            email=body.email, hashed_password=user.hashed_password
-        )
-        email_data = generate_reset_password_email(
-            email_to=user.email, email=body.email, token=password_reset_token
-        )
-        send_email(
+        background_tasks.add_task(
+            send_password_recovery_email,
             email_to=user.email,
-            subject=email_data.subject,
-            html_content=email_data.html_content,
+            email=body.email,
+            hashed_password=user.hashed_password,
         )
     return Message(
         message="If that email is registered, we sent a password recovery link"

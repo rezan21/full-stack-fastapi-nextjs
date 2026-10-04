@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import jwt
+import pytest
 from fastapi.testclient import TestClient
 from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlmodel import Session
@@ -68,6 +69,52 @@ def test_recovery_password_user_not_exits(
     assert r.json() == {
         "message": "If that email is registered, we sent a password recovery link"
     }
+
+
+@pytest.mark.usefixtures("normal_user_token_headers")
+def test_recovery_password_sends_the_email_to_a_registered_user(
+    client: TestClient,
+) -> None:
+    with patch("app.utils.send_email") as send:
+        r = client.post(
+            f"{settings.API_V1_STR}/password-recovery",
+            json={"email": EMAIL_TEST_USER},
+        )
+    assert r.status_code == 200
+    send.assert_called_once()
+    assert send.call_args.kwargs["email_to"] == EMAIL_TEST_USER
+
+
+def test_recovery_password_sends_nothing_for_an_unknown_email(
+    client: TestClient,
+) -> None:
+    with patch("app.utils.send_email") as send:
+        r = client.post(
+            f"{settings.API_V1_STR}/password-recovery",
+            json={"email": random_email()},
+        )
+    assert r.status_code == 200
+    send.assert_not_called()
+
+
+@pytest.mark.usefixtures("normal_user_token_headers")
+def test_recovery_password_response_does_not_reveal_a_failed_send(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    url = f"{settings.API_V1_STR}/password-recovery"
+    unknown = client.post(url, json={"email": random_email()})
+
+    with (
+        caplog.at_level("ERROR"),
+        patch("app.core.config.settings.SMTP_HOST", None),
+    ):
+        registered = client.post(url, json={"email": EMAIL_TEST_USER})
+
+    assert (registered.status_code, registered.json()) == (
+        unknown.status_code,
+        unknown.json(),
+    )
+    assert "Failed to send the password recovery email" in caplog.text
 
 
 def test_recovery_password_accepts_a_slash_in_the_address(client: TestClient) -> None:

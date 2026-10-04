@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test"
 import { firstSuperuser, firstSuperuserPassword } from "./config"
 import { createUser } from "./utils/api"
+import { emailedToken, waitForEmailHtml } from "./utils/mailpit"
 import { randomEmail, randomPassword } from "./utils/random"
 import { typeInto } from "./utils/type"
 import { logInUser, logOutUser } from "./utils/user"
@@ -80,7 +81,10 @@ test.describe("Edit user profile", () => {
 test.describe("Edit user email", () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test("Edit user email with a valid email", async ({ page }) => {
+  test("A new email takes effect only once its link is confirmed", async ({
+    page,
+    request,
+  }) => {
     const email = randomEmail()
     const password = randomPassword()
     const updatedEmail = randomEmail()
@@ -94,9 +98,73 @@ test.describe("Edit user email", () => {
     await typeInto(page.getByLabel("Email"), updatedEmail)
     await page.getByRole("button", { name: "Save" }).click()
 
-    await expect(page.getByText("User updated successfully")).toBeVisible()
+    await expect(
+      page.getByText("Check your new email to confirm the change"),
+    ).toBeVisible()
+    await expect(
+      page.locator("form").getByText(email, { exact: true }),
+    ).toBeVisible()
+
+    const html = await waitForEmailHtml({
+      request,
+      query: `to:${updatedEmail}`,
+    })
+    await page.goto(`/confirm-email?token=${emailedToken(html)}`)
+    await page.getByRole("button", { name: "Confirm email" }).click()
+
+    await expect(page).toHaveURL(/\/settings$/)
+    await page.getByRole("tab", { name: "My profile" }).click()
     await expect(
       page.locator("form").getByText(updatedEmail, { exact: true }),
+    ).toBeVisible()
+  })
+
+  test("An email change link works once", async ({ page, request }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    const updatedEmail = randomEmail()
+
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "My profile" }).click()
+    await page.getByRole("button", { name: "Edit" }).click()
+    await typeInto(page.getByLabel("Email"), updatedEmail)
+    await page.getByRole("button", { name: "Save" }).click()
+
+    const html = await waitForEmailHtml({
+      request,
+      query: `to:${updatedEmail}`,
+    })
+    const link = `/confirm-email?token=${emailedToken(html)}`
+    await page.goto(link)
+    await page.getByRole("button", { name: "Confirm email" }).click()
+    await expect(page).toHaveURL(/\/settings$/)
+
+    await page.goto(link)
+    await page.getByRole("button", { name: "Confirm email" }).click()
+
+    await expect(page.getByText("Invalid token")).toBeVisible()
+  })
+
+  test("An address already in use gets the same confirmation", async ({
+    page,
+  }) => {
+    const email = randomEmail()
+    const taken = randomEmail()
+    const password = randomPassword()
+
+    await createUser({ email: taken, password })
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "My profile" }).click()
+    await page.getByRole("button", { name: "Edit" }).click()
+    await typeInto(page.getByLabel("Email"), taken)
+    await page.getByRole("button", { name: "Save" }).click()
+
+    await expect(
+      page.getByText("Check your new email to confirm the change"),
     ).toBeVisible()
   })
 })

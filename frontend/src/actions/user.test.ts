@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test"
+import { API_URL } from "@/lib/config"
 import {
   Redirect,
   resetServer,
@@ -8,9 +9,8 @@ import {
   USER,
 } from "@/test-support"
 
-const { changePassword, deleteAccount, updateProfile } = await import(
-  "@/actions/user"
-)
+const { changeEmail, changePassword, deleteAccount, updateProfile } =
+  await import("@/actions/user")
 
 const failure = () => Response.json({ detail: "Not allowed." }, { status: 400 })
 
@@ -18,6 +18,7 @@ beforeEach(resetServer)
 
 const cases = [
   ["updateProfile", () => updateProfile({ full_name: "New Name" })],
+  ["changeEmail", () => changeEmail({ email: "new@example.com" })],
   [
     "changePassword",
     () =>
@@ -50,6 +51,21 @@ describe("updateProfile", () => {
     stubFetch(() => Response.json(USER))
     expect(await updateProfile({ full_name: "New Name" })).toEqual({})
     expect(revalidated).toEqual([["/", "layout"]])
+  })
+})
+
+describe("changeEmail", () => {
+  test("requests the link that confirms the new address", async () => {
+    const requests = stubFetch(() => Response.json({ message: "sent" }))
+    expect(await changeEmail({ email: "new@example.com" })).toEqual({})
+    expect(requests[0].url).toBe(`${API_URL}/api/v1/users/me/email`)
+    expect(JSON.parse(requests[0].body)).toEqual({ email: "new@example.com" })
+  })
+
+  test("does not refresh the layout, since nothing changes yet", async () => {
+    stubFetch(() => Response.json({ message: "sent" }))
+    await changeEmail({ email: "new@example.com" })
+    expect(revalidated).toHaveLength(0)
   })
 })
 

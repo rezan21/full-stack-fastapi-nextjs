@@ -18,9 +18,15 @@ function visit(path: string, session?: string) {
 const passesThrough = (response: Response) =>
   response.headers.get("x-middleware-next") === "1"
 
-const publicRoutes = readdirSync(AUTH_DIR)
-  .filter((name) => statSync(join(AUTH_DIR, name)).isDirectory())
-  .map((name) => `/${name}`)
+function routesIn(dir: string, base = ""): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    if (!statSync(join(dir, name)).isDirectory()) return []
+    const route = `${base}/${name}`
+    return [route, ...routesIn(join(dir, name), route)]
+  })
+}
+
+const publicRoutes = [...routesIn(AUTH_DIR), "/confirm-email"]
 
 describe("proxy", () => {
   test("lets every page of the (auth) route group through without a session", () => {
