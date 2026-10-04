@@ -65,6 +65,8 @@ problems = []
 for path in subprocess.check_output(["git", "ls-files"], text=True).splitlines():
     if not CHECKED_FILES.search(path) or VENDORED.match(path):
         continue
+    if not pathlib.Path(path).exists():
+        continue
     text = pathlib.Path(path).read_text()
     # comments
     problems += [

@@ -1,6 +1,6 @@
 // Fails on comments that span more than one line.
 import { execFileSync } from "node:child_process"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import ts from "typescript"
 
 const CHECKED_FILES =
@@ -33,7 +33,7 @@ function comments(file: string, text: string): ts.CommentRange[] {
 
 const problems: string[] = []
 for (const file of files) {
-  if (!CHECKED_FILES.test(file)) continue
+  if (!CHECKED_FILES.test(file) || !existsSync(`${root}/${file}`)) continue
   const text = readFileSync(`${root}/${file}`, "utf8")
   const lineAt = (pos: number) => text.slice(0, pos).split("\n").length
   const report = (pos: number, size: number) =>
