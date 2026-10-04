@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from app import crud
 from app.api.deps import (
@@ -65,7 +66,11 @@ def complete_signup(session: SessionDep, body: NewPassword) -> Any:
     user_create = UserCreate(
         email=claims["sub"], full_name=claims["name"], password=body.new_password
     )
-    return crud.create_user(session=session, user_create=user_create)
+    try:
+        return crud.create_user(session=session, user_create=user_create)
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="Invalid token")
 
 
 @router.get("/me", response_model=UserPublic, responses=AUTH_ERRORS)
@@ -130,7 +135,11 @@ def confirm_email_change(
     user.email = claims["email"]
     crud.revoke_tokens(user)
     session.add(user)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="Invalid token")
     background_tasks.add_task(
         send_email_changed_notice, email_to=previous_email, new_email=user.email
     )

@@ -3,10 +3,10 @@ import { readdirSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { NextRequest } from "next/server"
 import { SESSION_COOKIE } from "@/lib/config"
-import { proxy } from "@/proxy"
+import { config, proxy } from "@/proxy"
 
 const ORIGIN = "http://localhost:3000"
-const AUTH_DIR = join(import.meta.dir, "app", "(auth)")
+const AUTH_DIR = join(import.meta.dir, "app", "(product)", "(auth)")
 
 function visit(path: string, session?: string) {
   const headers: Record<string, string> = session
@@ -26,9 +26,21 @@ function routesIn(dir: string, base = ""): string[] {
   })
 }
 
-const publicRoutes = [...routesIn(AUTH_DIR), "/", "/confirm-email"]
+const publicRoutes = [...routesIn(AUTH_DIR), "/confirm-email"]
+
+const covered = (path: string) =>
+  new RegExp(`^${config.matcher[0]}$`).test(path)
 
 describe("proxy", () => {
+  test("leaves the cached landing page and static files alone", () => {
+    for (const path of ["/", "/_next/static/chunk.js", "/api/x"]) {
+      expect(covered(path), path).toBe(false)
+    }
+    for (const path of ["/login", "/dashboard", "/no-such-page"]) {
+      expect(covered(path), path).toBe(true)
+    }
+  })
+
   test("lets every page of the (auth) route group through without a session", () => {
     expect(publicRoutes.length).toBeGreaterThan(0)
     for (const path of publicRoutes) {

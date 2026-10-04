@@ -14,7 +14,7 @@ services:
       - --api.insecure=true
   db:
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     command: postgres -c log_min_messages=warning
 
   adminer:

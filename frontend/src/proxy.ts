@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { SESSION_COOKIE } from "@/lib/config"
+import { contentSecurityPolicy } from "@/lib/csp"
 
 const publicRoutes = [
-  "/",
   "/login",
   "/signup",
   "/signup/sent",
@@ -12,22 +12,6 @@ const publicRoutes = [
   "/recover-password/sent",
   "/reset-password",
 ]
-
-// Builds the Content-Security-Policy that allows only scripts carrying the nonce.
-function contentSecurityPolicy(nonce: string) {
-  const dev = process.env.NODE_ENV === "development"
-  return [
-    "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
-    "font-src 'self'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-  ].join("; ")
-}
 
 // Guards the routes that require a session and sets the Content-Security-Policy.
 export function proxy(request: NextRequest) {
@@ -40,7 +24,9 @@ export function proxy(request: NextRequest) {
   }
 
   const nonce = btoa(crypto.randomUUID())
-  const policy = contentSecurityPolicy(nonce)
+  const policy = contentSecurityPolicy(
+    `'self' 'nonce-${nonce}' 'strict-dynamic'`,
+  )
   const headers = new Headers(request.headers)
   headers.set("x-nonce", nonce)
   headers.set("Content-Security-Policy", policy)
@@ -50,5 +36,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).+)"],
 }

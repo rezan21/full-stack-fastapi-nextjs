@@ -2,23 +2,17 @@ import Link from "next/link"
 import { Footer } from "@/components/common/Footer"
 import { Logo } from "@/components/common/Logo"
 import { Button } from "@/components/ui/button"
-import { getToken } from "@/lib/session"
 
 // Landing page.
-export default async function Page() {
-  const signedIn = Boolean(await getToken())
-
+export default function Page() {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="flex h-16 items-center justify-between border-b px-6">
         <Link href="/">
           <Logo />
         </Link>
-        <Button
-          render={<Link href={signedIn ? "/dashboard" : "/login"} />}
-          nativeButton={false}
-        >
-          {signedIn ? "Dashboard" : "Log in"}
+        <Button render={<Link href="/login" />} nativeButton={false}>
+          Log in
         </Button>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">

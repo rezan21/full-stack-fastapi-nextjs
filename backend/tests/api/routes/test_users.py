@@ -757,3 +757,44 @@ def test_emails_are_stored_and_matched_in_lowercase(client: TestClient) -> None:
     with patch("app.utils.send_email") as send:
         client.post(f"{settings.API_V1_STR}/password-recovery", json={"email": mixed})
     assert len(sent_to(send, address)) == 1
+
+
+def test_completing_a_signup_that_loses_the_race_answers_400(
+    client: TestClient, db: Session
+) -> None:
+    taken, _, _ = user_with_headers(client, db)
+
+    with patch("app.api.routes.users.crud.get_user_by_email", return_value=None):
+        r = client.post(
+            f"{settings.API_V1_STR}/users/signup/complete",
+            json={
+                "token": signup_token(taken.email),
+                "new_password": random_lower_string(),
+            },
+        )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Invalid token"
+
+
+def test_confirming_an_email_change_that_loses_the_race_answers_400(
+    client: TestClient, db: Session
+) -> None:
+    user, _, _ = user_with_headers(client, db)
+    taken, _, _ = user_with_headers(client, db)
+    original_email, original_version = user.email, user.token_version
+    token = generate_email_token(
+        audience=EMAIL_CHANGE_AUDIENCE,
+        claims={"sub": str(user.id), "email": taken.email, "from": user.email},
+        expires_in=timedelta(hours=1),
+    )
+
+    with patch("app.api.routes.users.crud.get_user_by_email", return_value=None):
+        r = client.post(
+            f"{settings.API_V1_STR}/users/confirm-email", json={"token": token}
+        )
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "Invalid token"
+    db.refresh(user)
+    assert (user.email, user.token_version) == (original_email, original_version)

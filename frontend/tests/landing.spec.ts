@@ -7,20 +7,17 @@ test.describe("signed out", () => {
     await page.goto("/")
 
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Dashboard" })).toHaveCount(0)
     await page.getByRole("button", { name: "Log in" }).click()
 
     await expect(page).toHaveURL(/\/login$/)
   })
 })
 
-test("The landing page offers the dashboard to a signed-in user", async ({
+test("A signed-in visitor who follows the login lands on the dashboard", async ({
   page,
 }) => {
   await page.goto("/")
-
-  await expect(page.getByRole("button", { name: "Log in" })).toHaveCount(0)
-  await page.getByRole("button", { name: "Dashboard" }).click()
+  await page.getByRole("button", { name: "Log in" }).click()
 
   await expect(page).toHaveURL(/\/dashboard$/)
 })
