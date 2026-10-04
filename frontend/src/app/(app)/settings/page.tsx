@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
-import { PageHeader } from "@/components/Common/PageHeader"
-import { DeleteAccount } from "@/components/Settings/DeleteAccount"
-import { PasswordForm } from "@/components/Settings/PasswordForm"
-import { ProfileForm } from "@/components/Settings/ProfileForm"
+import { PageHeader } from "@/components/common/PageHeader"
+import { DeleteAccount } from "@/components/settings/DeleteAccount"
+import { PasswordForm } from "@/components/settings/PasswordForm"
+import { ProfileForm } from "@/components/settings/ProfileForm"
 import {
   Card,
   CardContent,

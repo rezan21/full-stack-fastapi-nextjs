@@ -29,6 +29,42 @@ def test_get_access_token(client: TestClient) -> None:
     assert tokens["expires_in"] == settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
 
+def test_login_ignores_the_oauth_fields_a_client_may_send(client: TestClient) -> None:
+    login_data = {
+        "username": settings.FIRST_SUPERUSER,
+        "password": settings.FIRST_SUPERUSER_PASSWORD,
+        "grant_type": "password",
+        "scope": "",
+        "client_id": "unused",
+    }
+    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    assert r.status_code == 200
+
+
+def test_login_username_is_case_insensitive(client: TestClient) -> None:
+    login_data = {
+        "username": settings.FIRST_SUPERUSER.upper(),
+        "password": settings.FIRST_SUPERUSER_PASSWORD,
+    }
+    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    assert r.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "login_data",
+    [
+        {"username": "not-an-email", "password": "x"},
+        {"username": settings.FIRST_SUPERUSER, "password": ""},
+        {"username": settings.FIRST_SUPERUSER},
+    ],
+)
+def test_login_rejects_credentials_the_contract_rejects(
+    client: TestClient, login_data: dict[str, str]
+) -> None:
+    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    assert r.status_code == 422
+
+
 def test_get_access_token_incorrect_password(client: TestClient) -> None:
     login_data = {
         "username": settings.FIRST_SUPERUSER,
@@ -117,12 +153,15 @@ def test_recovery_password_response_does_not_reveal_a_failed_send(
     assert "Failed to send the password recovery email" in caplog.text
 
 
-def test_recovery_password_accepts_a_slash_in_the_address(client: TestClient) -> None:
-    r = client.post(
-        f"{settings.API_V1_STR}/password-recovery",
-        json={"email": "first/last@example.com"},
-    )
-    assert r.status_code == 200
+@pytest.mark.parametrize(
+    "email",
+    ["first/last@example.com", "üser@example.com", "user@localhost", "a..b@x.com"],
+)
+def test_recovery_password_rejects_an_address_the_contract_rejects(
+    client: TestClient, email: str
+) -> None:
+    r = client.post(f"{settings.API_V1_STR}/password-recovery", json={"email": email})
+    assert r.status_code == 422
 
 
 def test_recovery_password_rejects_a_malformed_email(client: TestClient) -> None:

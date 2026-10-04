@@ -3,20 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { recoverPassword } from "@/actions/auth"
 import { zPasswordRecovery } from "@/client/zod.gen"
+import { FormField } from "@/components/common/FormField"
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 import { formError } from "@/lib/form-errors"
 
 type FormData = z.infer<typeof zPasswordRecovery>
@@ -49,24 +45,16 @@ export function RecoverPasswordForm() {
       </div>
 
       <FieldGroup>
-        <Controller
-          control={form.control}
-          name="email"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                data-testid="email-input"
-                placeholder="user@example.com"
-                type="email"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && <FieldError errors={[fieldState.error]} />}
-            </Field>
+        <FormField control={form.control} name="email" label="Email">
+          {(field) => (
+            <Input
+              {...field}
+              data-testid="email-input"
+              placeholder="user@example.com"
+              type="email"
+            />
           )}
-        />
+        </FormField>
 
         <Button
           type="submit"

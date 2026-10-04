@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { ConfirmEmailForm } from "@/components/auth/ConfirmEmailForm"
-import { AuthLayout } from "@/components/Common/AuthLayout"
+import { AuthLayout } from "@/components/common/AuthLayout"
 
 export const metadata: Metadata = { title: "Confirm Email - FastAPI Template" }
 

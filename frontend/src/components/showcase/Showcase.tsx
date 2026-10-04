@@ -111,7 +111,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 
 const colorTokens: {
   name: string
@@ -448,17 +448,14 @@ export function Showcase() {
 
             <Field orientation="horizontal">
               <Checkbox id="showcase-marketing" defaultChecked />
-              <FieldLabel htmlFor="showcase-marketing" className="font-normal">
+              <FieldLabel htmlFor="showcase-marketing">
                 Email me about updates
               </FieldLabel>
             </Field>
 
             <Field orientation="horizontal">
               <Switch id="showcase-notifications" defaultChecked />
-              <FieldLabel
-                htmlFor="showcase-notifications"
-                className="font-normal"
-              >
+              <FieldLabel htmlFor="showcase-notifications">
                 Push notifications
               </FieldLabel>
             </Field>
@@ -468,21 +465,11 @@ export function Showcase() {
               <RadioGroup defaultValue="pro">
                 <Field orientation="horizontal">
                   <RadioGroupItem value="free" id="showcase-plan-free" />
-                  <FieldLabel
-                    htmlFor="showcase-plan-free"
-                    className="font-normal"
-                  >
-                    Free
-                  </FieldLabel>
+                  <FieldLabel htmlFor="showcase-plan-free">Free</FieldLabel>
                 </Field>
                 <Field orientation="horizontal">
                   <RadioGroupItem value="pro" id="showcase-plan-pro" />
-                  <FieldLabel
-                    htmlFor="showcase-plan-pro"
-                    className="font-normal"
-                  >
-                    Pro
-                  </FieldLabel>
+                  <FieldLabel htmlFor="showcase-plan-pro">Pro</FieldLabel>
                 </Field>
               </RadioGroup>
             </Field>
@@ -667,10 +654,12 @@ export function Showcase() {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  <Trash2 />
-                  Delete
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem variant="destructive">
+                    <Trash2 />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </CardContent>
@@ -690,14 +679,20 @@ export function Showcase() {
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
-              <TabsContent value="overview" className="text-muted-foreground">
-                A summary view of the current workspace.
+              <TabsContent value="overview">
+                <p className="text-muted-foreground">
+                  A summary view of the current workspace.
+                </p>
               </TabsContent>
-              <TabsContent value="analytics" className="text-muted-foreground">
-                Usage trends and key metrics over time.
+              <TabsContent value="analytics">
+                <p className="text-muted-foreground">
+                  Usage trends and key metrics over time.
+                </p>
               </TabsContent>
-              <TabsContent value="settings" className="text-muted-foreground">
-                Workspace preferences and integrations.
+              <TabsContent value="settings">
+                <p className="text-muted-foreground">
+                  Workspace preferences and integrations.
+                </p>
               </TabsContent>
             </Tabs>
 
@@ -750,9 +745,13 @@ export function Showcase() {
               <TableBody>
                 {teamMembers.map((member) => (
                   <TableRow key={member.name}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {member.role}
+                    <TableCell>
+                      <span className="font-medium">{member.name}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-muted-foreground">
+                        {member.role}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge

@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { type ActionResult, toError } from "@/lib/action-result"
+import { type ActionResult, authenticated } from "@/lib/action-result"
 import {
   createItem as apiCreateItem,
   deleteItem as apiDeleteItem,
@@ -9,18 +9,13 @@ import {
   type ItemCreate,
   type ItemUpdate,
 } from "@/lib/api"
-import { getToken } from "@/lib/session"
 
 // Creates an item.
 export async function createItem(data: ItemCreate): Promise<ActionResult> {
-  if (!(await getToken())) return { error: "Not authenticated" }
-  try {
+  return authenticated(async () => {
     await apiCreateItem(data)
-    revalidatePath("/items")
-    return {}
-  } catch (e) {
-    return toError(e)
-  }
+    revalidatePath("/items", "layout")
+  })
 }
 
 // Updates an item.
@@ -28,24 +23,16 @@ export async function updateItem(
   id: string,
   data: ItemUpdate,
 ): Promise<ActionResult> {
-  if (!(await getToken())) return { error: "Not authenticated" }
-  try {
+  return authenticated(async () => {
     await apiUpdateItem(id, data)
-    revalidatePath("/items")
-    return {}
-  } catch (e) {
-    return toError(e)
-  }
+    revalidatePath("/items", "layout")
+  })
 }
 
 // Deletes an item.
 export async function deleteItem(id: string): Promise<ActionResult> {
-  if (!(await getToken())) return { error: "Not authenticated" }
-  try {
+  return authenticated(async () => {
     await apiDeleteItem(id)
-    revalidatePath("/items")
-    return {}
-  } catch (e) {
-    return toError(e)
-  }
+    revalidatePath("/items", "layout")
+  })
 }

@@ -1,8 +1,8 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useRouter } from "next/navigation"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
+import { FormField } from "@/components/common/FormField"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,15 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 import { formError } from "@/lib/form-errors"
 import { type ItemFormData, itemFormSchema } from "@/lib/schemas"
 
@@ -43,7 +38,6 @@ export function ItemFormDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const router = useRouter()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<ItemFormData>({
@@ -66,7 +60,6 @@ export function ItemFormDialog({
     }
     showSuccessToast(successMessage)
     handleOpenChange(false)
-    router.refresh()
   }
 
   return (
@@ -78,48 +71,32 @@ export function ItemFormDialog({
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <FieldGroup className="py-4">
-            <Controller
+            <FormField
               control={form.control}
               name="title"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>
-                    Title <span className="text-destructive">*</span>
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    placeholder="Title"
-                    type="text"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.error && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+              label={
+                <>
+                  Title <span className="text-destructive">*</span>
+                </>
+              }
+            >
+              {(field) => <Input {...field} placeholder="Title" type="text" />}
+            </FormField>
 
-            <Controller
+            <FormField
               control={form.control}
               name="description"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    id={field.name}
-                    placeholder="Description"
-                    type="text"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.error && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
+              label="Description"
+            >
+              {(field) => (
+                <Input
+                  {...field}
+                  value={field.value ?? ""}
+                  placeholder="Description"
+                  type="text"
+                />
               )}
-            />
+            </FormField>
           </FieldGroup>
 
           <DialogFooter>

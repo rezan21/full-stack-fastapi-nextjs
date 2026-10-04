@@ -1,7 +1,6 @@
 """Add cascade delete relationships"""
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
 
 
 revision = '1a31ce608336'

@@ -1,22 +1,12 @@
 ---
 paths:
   - "frontend/**/*"
-  - "**/*.{ts,tsx,js,jsx,css}"
 ---
 
 # Next.js / React / Full-Stack Rules
 
-## Agent Behaviour
-
-- State assumptions before acting; do not silently guess on ambiguous requirements.
-- Minimise scope: touch only files the task requires, no drive-by refactors.
-- Deletion is valid: remove code the change makes obsolete, don't leave it "for safety."
-- No speculative abstraction; solve the problem in front of you, not a hypothetical future one.
-- Verify claims: run test/build/lint before saying something works.
-
 ## Next.js
 
-- Read the framework docs (`frontend/node_modules/next/dist/docs/` or official docs) before writing Next.js-specific code; training data may be outdated.
 - Be explicit about App Router vs Pages Router; never mix conventions.
 - Server Components are the default; add `"use client"` only when interactivity/hooks/browser APIs are needed.
 - Fetch data in Server Components or Route Handlers, not via client-side `useEffect`, unless polling or user-triggered refetch is required.
@@ -35,18 +25,29 @@ paths:
 
 ## Reusable Components
 
+- Reusable components are those in `components/common/` and `components/ui/`; feature components (`items/`, `settings/`, `auth/`, …) may call Server Actions and know their routes.
 - Extract to a shared location only after use in two or more places, not on first write.
-- Components take data/callbacks as props; they don't fetch, mutate, or know about routes.
+- Reusable components take data/callbacks as props; they don't fetch, mutate, or know about routes.
 - No implicit coupling via shared mutable state between reusable components; use explicit props/context contracts.
 - Control variants via a constrained prop (enum/`cva`-style), not open strings or scattered conditional classes.
 - Never copy-paste a component with small tweaks; add a prop or composition slot instead.
+- Form fields use `FormField` (`components/common/FormField.tsx`), not a hand-written `Controller`.
+
+## Naming & Exports
+
+- Directories under `frontend/src` are lowercase, and a component directory groups by feature (`components/items`), not by component.
+- Component files are PascalCase and named after the component they export (`ItemsTable.tsx`). The shadcn-vendored `components/ui/` keeps the registry's kebab-case.
+- Hook files in `hooks/` are kebab-case `use-*.ts`, matching the shadcn-generated `use-mobile.ts`; the exported function is camelCase (`useCustomToast`).
+- Every other module (`lib/`, `actions/`, scripts, tests) is kebab-case.
+- Named exports only. Default exports are for files Next.js or a tool requires (`app/` route files, `*.config.*`). Biome fails a stray default export or a file name that breaks these cases; directory casing is not machine-checked.
 
 ## Business Logic & Data
 
 - Components render; business rules live in plain functions outside the component.
-- Data access (fetch, DB queries, Server Action bodies) lives in `lib/`/`services/`, never inline in components.
+- Data access (fetch, SDK calls) lives in `lib/`, never inline in components. Server Actions live in `actions/` and stay thin: they call `lib/` through `authenticated()` or `attempt()` and revalidate, nothing more.
 - Derived data is computed in a named function/hook, not inline via nested ternaries or chained `.filter().map()`.
-- Custom hooks are the boundary between components and the outside world (API clients, stores).
+- Components reach the server through Server Components (reads) and Server Actions (writes); custom hooks wrap browser-only APIs such as the clipboard, media queries and toasts.
+- Every authenticated Server Action runs inside `authenticated()` and every public one inside `attempt()` (`lib/action-result.ts`), so the session guard and the error-to-result conversion are written once.
 - Don't duplicate server-side validation on the client; share a schema (e.g. Zod) or defer to the server.
 - More than one or two `useEffect` blocks per component signals logic that should move to a hook.
 

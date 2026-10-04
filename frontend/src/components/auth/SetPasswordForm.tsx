@@ -3,20 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { completeSignup, resetPassword } from "@/actions/auth"
 import { zNewPassword } from "@/client/zod.gen"
-import { PasswordInput } from "@/components/Common/PasswordInput"
+import { FormField } from "@/components/common/FormField"
+import { PasswordInput } from "@/components/common/PasswordInput"
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { FieldGroup } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 import { formError } from "@/lib/form-errors"
 import { withPasswordConfirmation } from "@/lib/schemas"
 
@@ -81,41 +77,33 @@ export function SetPasswordForm({
       </div>
 
       <FieldGroup>
-        <Controller
+        <FormField
           control={form.control}
           name="new_password"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>New Password</FieldLabel>
-              <PasswordInput
-                {...field}
-                id={field.name}
-                data-testid="new-password-input"
-                placeholder="New Password"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && <FieldError errors={[fieldState.error]} />}
-            </Field>
+          label="New Password"
+        >
+          {(field) => (
+            <PasswordInput
+              {...field}
+              data-testid="new-password-input"
+              placeholder="New Password"
+            />
           )}
-        />
+        </FormField>
 
-        <Controller
+        <FormField
           control={form.control}
           name="confirm_password"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Confirm Password</FieldLabel>
-              <PasswordInput
-                {...field}
-                id={field.name}
-                data-testid="confirm-password-input"
-                placeholder="Confirm Password"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && <FieldError errors={[fieldState.error]} />}
-            </Field>
+          label="Confirm Password"
+        >
+          {(field) => (
+            <PasswordInput
+              {...field}
+              data-testid="confirm-password-input"
+              placeholder="Confirm Password"
+            />
           )}
-        />
+        </FormField>
 
         <Button
           type="submit"

@@ -1,7 +1,6 @@
 """Add created_at to User and Item"""
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
 
 
 revision = 'fe56fa70289e'

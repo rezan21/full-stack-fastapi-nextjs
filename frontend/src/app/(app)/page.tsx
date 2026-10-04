@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { PageHeader } from "@/components/Common/PageHeader"
+import { PageHeader } from "@/components/common/PageHeader"
 import { getUser } from "@/lib/dal"
 
 export const metadata: Metadata = { title: "Dashboard - FastAPI Template" }

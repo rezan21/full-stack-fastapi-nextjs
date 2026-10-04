@@ -28,7 +28,7 @@ To iterate on one side directly instead, run `uv run fastapi dev` (from `backend
 
 ## Configuration
 
-All settings live in `backend/.env`. Change `SECRET_KEY` (at least 32 characters), `FIRST_SUPERUSER_PASSWORD`, and `POSTGRES_PASSWORD` before deploying anywhere; outside development a short or placeholder value stops the backend from starting. The API docs are served only in development.
+All settings live in `backend/.env`. Change `SECRET_KEY` (at least 32 characters), `FIRST_SUPERUSER_PASSWORD`, `POSTGRES_PASSWORD` (the database administrator) and `APP_DB_PASSWORD` (the limited `app` role the backend connects as) before deploying anywhere; outside development a short or placeholder value stops the backend from starting. The `dbsetup` service creates or updates the `app` role and makes it the owner of the `app` database on every start, so the backend never connects as the superuser and an existing database volume is converted the first time it runs. The API docs are served only in development.
 
 ## API contract
 
@@ -42,7 +42,7 @@ This rewrites `backend/openapi.json` and `frontend/src/client/` (a typed SDK, Ty
 
 ## Development
 
-`./up.sh` installs the git hooks ([prek](https://github.com/j178/prek), configured in `.pre-commit-config.yaml`) on its first run. They run the same checks as the `pre-commit` workflow: formatting, spelling, Biome, ruff, mypy, ty, a fresh API client and the skill links. Run them on demand with `uv run prek run --all-files`.
+`./up.sh` and `bun install` (in `frontend/`) install the git hooks ([prek](https://github.com/j178/prek), configured in `.pre-commit-config.yaml`) when they are missing; `bash scripts/install-hooks.sh` does it on its own. They run the same checks as the `pre-commit` workflow: formatting, spelling, Biome, ruff, mypy, ty, a fresh API client and the skill links. Run them on demand with `uv run prek run --all-files`.
 
 The FastAPI and SQLModel packages ship agent skills. `backend/.agents/skills` and `backend/.claude/skills` link to them inside `backend/.venv`, so the links resolve once `uv sync` has run in `backend/`. After a dependency or Python version change, refresh them from `backend/` with `uv run --project .. library-skills --claude --yes`; the pre-commit hook runs the same tool with `--check`.
 
@@ -59,6 +59,8 @@ Production runs behind Traefik with automatic HTTPS (Let's Encrypt) via `infra/d
 ```bash
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.deploy.yml up -d
 ```
+
+Behind a CDN or load balancer, set `TRUSTED_PROXIES` to its address ranges (comma-separated CIDRs) and `PROXY_HOPS` to the number of proxies in front of Traefik (1 for a single CDN). Traefik then takes the client address for the rate limit from `X-Forwarded-For`; without them it uses the connecting address, which behind a CDN is the CDN's. Let the origin accept connections from the CDN only, because a client that connects directly shares one rate-limit budget with every other direct client. Adminer is part of the dev stack only and is never deployed. Traefik sends HSTS on every HTTPS response.
 
 Database migrations run automatically, in dev and in production alike: the `prestart` service runs `backend/scripts/prestart.sh` (wait for the database, `alembic upgrade head`, seed the first superuser), and the backend starts only after it succeeds. `up -d` replaces the running backend before the migration runs, so if a migration fails the backend stays down until you fix it. To keep the current version serving when a migration fails, run the migration first, so a failure stops the deploy before anything is replaced:
 

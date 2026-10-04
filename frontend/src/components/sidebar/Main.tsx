@@ -11,7 +11,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { cn } from "@/lib/utils"
 
 export type NavItem = {
   icon: LucideIcon
@@ -42,7 +41,6 @@ export function Main({ items }: { items: NavItem[] }) {
                 <SidebarMenuButton
                   tooltip={item.title}
                   isActive={isActive}
-                  className={cn(!isActive && "hover:bg-sidebar-accent/50")}
                   render={<Link href={item.path} onClick={handleMenuClick} />}
                 >
                   <item.icon />

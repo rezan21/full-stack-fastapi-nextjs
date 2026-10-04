@@ -2,7 +2,6 @@ import warnings
 from typing import Literal, Self
 
 from pydantic import (
-    EmailStr,
     HttpUrl,
     PostgresDsn,
     computed_field,
@@ -10,6 +9,8 @@ from pydantic import (
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.models import Email
 
 MIN_SECRET_LENGTH = 32
 
@@ -45,7 +46,7 @@ class Settings(BaseSettings):
     SMTP_HOST: str | None = None
     SMTP_USER: str | None = None
     SMTP_PASSWORD: str | None = None
-    EMAILS_FROM_EMAIL: EmailStr | None = None
+    EMAILS_FROM_EMAIL: Email | None = None
     EMAILS_FROM_NAME: str | None = None
 
     @model_validator(mode="after")
@@ -63,7 +64,7 @@ class Settings(BaseSettings):
     def emails_enabled(self) -> bool:
         return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
 
-    FIRST_SUPERUSER: EmailStr
+    FIRST_SUPERUSER: Email
     FIRST_SUPERUSER_PASSWORD: str
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:

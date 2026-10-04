@@ -36,9 +36,19 @@ describe("formError", () => {
     )
   })
 
+  test("calls a value that fails a pattern an invalid field", () => {
+    const schema = z.object({ email: z.string().regex(/@/) })
+    expect(messageFor(schema, { email: "nope" })).toBe("Invalid email")
+  })
+
+  test("names the login username as the email it holds", () => {
+    const schema = z.object({ username: z.string().regex(/@/) })
+    expect(messageFor(schema, { username: "nope" })).toBe("Invalid email")
+  })
+
   test("leaves every other issue to the default message", () => {
-    expect(messageFor(z.object({ email: z.email() }), { email: "nope" })).toBe(
-      "Invalid email address",
+    expect(messageFor(z.object({ id: z.uuid() }), { id: "nope" })).toBe(
+      "Invalid UUID",
     )
   })
 })

@@ -58,7 +58,7 @@ export const USER = {
   created_at: "2026-10-03T12:00:00Z",
 } satisfies UserPublic
 
-export type RecordedRequest = {
+type RecordedRequest = {
   url: string
   method: string
   authorization: string | null

@@ -1,4 +1,4 @@
-import { ItemSheet } from "@/components/Items/ItemSheet"
+import { ItemSheet } from "@/components/items/ItemSheet"
 
 // Shown when an item can't be found.
 export default function NotFound() {

@@ -74,7 +74,7 @@ test.describe("Edit user profile", () => {
     await page.getByLabel("Email").fill("")
     await page.locator("body").click()
 
-    await expect(page.getByText("Invalid email address")).toBeVisible()
+    await expect(page.getByText("Invalid email")).toBeVisible()
   })
 })
 
@@ -343,6 +343,28 @@ test.describe("Sessions after a security change", () => {
 
     await otherPage.goto("/settings")
     await expect(otherPage).toHaveURL(/\/login$/)
+    await other.close()
+  })
+
+  test("An action from a session another device ended goes to the login page", async ({
+    page,
+    browser,
+  }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    const other = await browser.newContext()
+    const otherPage = await other.newPage()
+    await logInUser(otherPage, email, password)
+    await logInUser(page, email, password)
+    await page.goto("/settings")
+
+    await logOutUser(otherPage)
+    await page.getByRole("button", { name: "Edit" }).click()
+    await typeInto(page.getByLabel("Full name"), "Someone Else")
+    await page.getByRole("button", { name: "Save" }).click()
+
+    await expect(page).toHaveURL(/\/login$/)
     await other.close()
   })
 })

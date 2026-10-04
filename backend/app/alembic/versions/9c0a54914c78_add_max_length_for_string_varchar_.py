@@ -1,7 +1,6 @@
 """Add max length for string(varchar) fields in User and Items models"""
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
 
 
 revision = '9c0a54914c78'

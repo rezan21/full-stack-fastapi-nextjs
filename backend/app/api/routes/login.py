@@ -1,13 +1,12 @@
 import hmac
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException
 
 from app import crud
 from app.api.deps import AUTH_ERRORS, CurrentUser, SessionDep, error_responses
 from app.core import security
-from app.models import Message, NewPassword, PasswordRecovery, Token
+from app.models import Credentials, Message, NewPassword, PasswordRecovery, Token
 from app.utils import (
     password_fingerprint,
     send_password_recovery_email,
@@ -19,7 +18,7 @@ router = APIRouter(tags=["login"])
 
 @router.post("/login/access-token", responses=error_responses(400))
 def login_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    session: SessionDep, form_data: Annotated[Credentials, Form()]
 ) -> Token:
     """OAuth2 compatible token login, get an access token for future requests"""
     user = crud.authenticate(

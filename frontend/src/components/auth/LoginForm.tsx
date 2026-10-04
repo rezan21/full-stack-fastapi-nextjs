@@ -3,36 +3,27 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Controller, useForm } from "react-hook-form"
-import { z } from "zod"
+import { useForm } from "react-hook-form"
+import type { z } from "zod"
 import { login } from "@/actions/auth"
-import { zBodyLoginLoginAccessToken } from "@/client/zod.gen"
-import { PasswordInput } from "@/components/Common/PasswordInput"
+import { zCredentials } from "@/client/zod.gen"
+import { FormField } from "@/components/common/FormField"
+import { PasswordInput } from "@/components/common/PasswordInput"
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 import { formError } from "@/lib/form-errors"
 
-const formSchema = z.object({
-  username: z.email(),
-  password: zBodyLoginLoginAccessToken.shape.password.min(1),
-})
-
-type FormData = z.infer<typeof formSchema>
+type FormData = z.infer<typeof zCredentials>
 
 // Login form.
 export function LoginForm() {
   const router = useRouter()
   const { showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema, { error: formError }),
+    resolver: zodResolver(zCredentials, { error: formError }),
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: { username: "", password: "" },
@@ -60,54 +51,38 @@ export function LoginForm() {
       </div>
 
       <FieldGroup>
-        <Controller
-          control={form.control}
-          name="username"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                data-testid="email-input"
-                placeholder="user@example.com"
-                type="email"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && (
-                <FieldError className="text-xs" errors={[fieldState.error]} />
-              )}
-            </Field>
+        <FormField control={form.control} name="username" label="Email">
+          {(field) => (
+            <Input
+              {...field}
+              data-testid="email-input"
+              placeholder="user@example.com"
+              type="email"
+            />
           )}
-        />
+        </FormField>
 
-        <Controller
+        <FormField
           control={form.control}
           name="password"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <div className="flex items-center">
-                <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                <Link
-                  href="/recover-password"
-                  className="ml-auto text-sm underline-offset-4 hover:underline"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-              <PasswordInput
-                {...field}
-                id={field.name}
-                data-testid="password-input"
-                placeholder="Password"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && (
-                <FieldError className="text-xs" errors={[fieldState.error]} />
-              )}
-            </Field>
+          label="Password"
+          labelAside={
+            <Link
+              href="/recover-password"
+              className="ml-auto text-sm underline-offset-4 hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          }
+        >
+          {(field) => (
+            <PasswordInput
+              {...field}
+              data-testid="password-input"
+              placeholder="Password"
+            />
           )}
-        />
+        </FormField>
 
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Spinner data-icon="inline-start" />}

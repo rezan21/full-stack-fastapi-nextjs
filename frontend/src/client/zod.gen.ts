@@ -10,15 +10,11 @@ export const zAccountDeletion = z.object({
 });
 
 /**
- * Body_login-login_access_token
+ * Credentials
  */
-export const zBodyLoginLoginAccessToken = z.object({
-    client_id: z.string().nullish(),
-    client_secret: z.string().nullish(),
-    grant_type: z.string().regex(/^password$/).nullish(),
-    password: z.string(),
-    scope: z.string().optional().default(''),
-    username: z.string()
+export const zCredentials = z.object({
+    password: z.string().min(1).max(128),
+    username: z.string().max(255).regex(/^[A-Za-z0-9_'+-]+(\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/)
 });
 
 /**
@@ -26,7 +22,7 @@ export const zBodyLoginLoginAccessToken = z.object({
  */
 export const zEmailChange = z.object({
     current_password: z.string().min(1).max(128),
-    email: z.email().max(255)
+    email: z.string().max(255).regex(/^[A-Za-z0-9_'+-]+(\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/)
 });
 
 /**
@@ -55,11 +51,11 @@ export const zItemCreate = z.object({
  * ItemPublic
  */
 export const zItemPublic = z.object({
-    created_at: z.iso.datetime().nullish(),
-    description: z.string().max(255).nullish(),
+    created_at: z.iso.datetime(),
+    description: z.string().nullable(),
     id: z.uuid(),
     owner_id: z.uuid(),
-    title: z.string().min(1).max(255)
+    title: z.string()
 });
 
 /**
@@ -97,7 +93,7 @@ export const zNewPassword = z.object({
  * PasswordRecovery
  */
 export const zPasswordRecovery = z.object({
-    email: z.email().max(255)
+    email: z.string().max(255).regex(/^[A-Za-z0-9_'+-]+(\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/)
 });
 
 /**
@@ -106,7 +102,7 @@ export const zPasswordRecovery = z.object({
 export const zToken = z.object({
     access_token: z.string(),
     expires_in: z.int(),
-    token_type: z.string().optional().default('bearer')
+    token_type: z.string()
 });
 
 /**
@@ -121,19 +117,19 @@ export const zUpdatePassword = z.object({
  * UserPublic
  */
 export const zUserPublic = z.object({
-    created_at: z.iso.datetime().nullish(),
-    email: z.email().max(255),
-    full_name: z.string().min(1).max(255),
+    created_at: z.iso.datetime(),
+    email: z.string(),
+    full_name: z.string(),
     id: z.uuid(),
-    is_active: z.boolean().optional().default(true),
-    is_superuser: z.boolean().optional().default(false)
+    is_active: z.boolean(),
+    is_superuser: z.boolean()
 });
 
 /**
  * UserRegister
  */
 export const zUserRegister = z.object({
-    email: z.email().max(255),
+    email: z.string().max(255).regex(/^[A-Za-z0-9_'+-]+(\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/),
     full_name: z.string().min(1).max(255)
 });
 
@@ -183,7 +179,7 @@ export const zItemsUpdateItemPath = z.object({
     id: z.uuid()
 });
 
-export const zLoginLoginAccessTokenBody = zBodyLoginLoginAccessToken;
+export const zLoginLoginAccessTokenBody = zCredentials;
 
 export const zLoginRecoverPasswordBody = zPasswordRecovery;
 

@@ -5,13 +5,13 @@ paths:
 
 # shadcn/ui Rules
 
-This project uses shadcn/ui as the standard for all UI, going forward — no hand-rolled markup where a shadcn component already exists. Base UI primitives (`base-nova` style), `lucide-react` icons. Invoke the `shadcn` skill for anything shadcn-related.
+This project uses shadcn/ui as the standard for all UI, going forward — no hand-rolled markup where a shadcn component already exists. Base UI primitives (`base-nova` style), `lucide-react` icons. Invoke the `shadcn` skill for anything shadcn-related; it is the authority, and this file only adds project facts to it.
 
 ## Component-first
 
 - Before writing new UI, check `frontend/src/components/ui/` for an existing component. Don't hand-roll a `<button>`, styled `<div>`, or custom badge/alert/card/table row when a shadcn equivalent exists.
 - Missing component → `bunx --bun shadcn@latest add <name>` from `frontend/`. Don't hand-write the primitive.
-- Don't edit generated files in `frontend/src/components/ui/` for one-off styling; extend via `className`/variants at the call site instead.
+- Don't edit generated files in `frontend/src/components/ui/` for one-off styling; use the component's variants and a layout-only `className` at the call site.
 
 ## Base UI, not Radix
 

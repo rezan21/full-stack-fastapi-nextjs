@@ -5,7 +5,7 @@ import { useState } from "react"
 import { confirmEmailChange } from "@/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 
 // Email change confirmation form.
 export function ConfirmEmailForm({ token }: { token: string }) {

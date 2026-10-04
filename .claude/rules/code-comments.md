@@ -8,7 +8,7 @@ paths:
 
 ## Comments & Doc strings — default to none
 
-Default to no code comments or docstrings. The code itself should be readable. The vendored `frontend/src/components/ui/` and the generated `frontend/src/client/` are out of scope.
+Default to no code comments or docstrings. The code itself should be readable. The vendored `frontend/src/components/ui/` and the generated `frontend/src/client/` are out of scope, and so is boilerplate a tool writes into a file, such as the banner comments `alembic revision --autogenerate` puts in a new migration.
 Most comments mask a design problem. Before writing one, dissolve the need:
 
 <!-- prettier-ignore -->
@@ -28,7 +28,7 @@ Most comments mask a design problem. Before writing one, dissolve the need:
 Default to **no comment**, with four narrow, mechanical exceptions:
 
 - A function or method may carry a single-line summary of what it does, directly above its signature; in Python the one-line docstring is that summary. Apply this consistently within a file: if most functions there already have one, an outlier without one is a gap, not restraint. Test functions need none: the test name is the summary. A script that is run directly (a shell script, or a file under a `scripts/` directory) carries a one-line summary of what it does at the top, after any shebang.
-- A Dockerfile build stage (`FROM ... AS <name>`) may carry a single-line comment describing that stage's purpose.
+- A Dockerfile build stage (`FROM ... AS <name>`) may carry a single-line comment describing that stage's purpose; in a single-stage Dockerfile each step or group of related steps may carry one the same way.
 - Each hook in `.pre-commit-config.yaml` carries a one-line comment saying what it does.
 - A function or render block long enough to have several distinct sections — logic or markup — may label each with one short comment (e.g. `// validate state`, `// upsert user`, `{/* playlists */}`) — a label, not a narration of what each line does.
 

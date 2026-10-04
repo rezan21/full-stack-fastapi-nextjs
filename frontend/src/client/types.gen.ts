@@ -15,29 +15,13 @@ export type AccountDeletion = {
 };
 
 /**
- * Body_login-login_access_token
+ * Credentials
  */
-export type BodyLoginLoginAccessToken = {
-    /**
-     * Client Id
-     */
-    client_id?: string | null;
-    /**
-     * Client Secret
-     */
-    client_secret?: string | null;
-    /**
-     * Grant Type
-     */
-    grant_type?: string | null;
+export type Credentials = {
     /**
      * Password
      */
     password: string;
-    /**
-     * Scope
-     */
-    scope?: string;
     /**
      * Username
      */
@@ -109,11 +93,11 @@ export type ItemPublic = {
     /**
      * Created At
      */
-    created_at?: string | null;
+    created_at: string;
     /**
      * Description
      */
-    description?: string | null;
+    description: string | null;
     /**
      * Id
      */
@@ -205,7 +189,7 @@ export type Token = {
     /**
      * Token Type
      */
-    token_type?: string;
+    token_type: string;
 };
 
 /**
@@ -229,7 +213,7 @@ export type UserPublic = {
     /**
      * Created At
      */
-    created_at?: string | null;
+    created_at: string;
     /**
      * Email
      */
@@ -245,11 +229,11 @@ export type UserPublic = {
     /**
      * Is Active
      */
-    is_active?: boolean;
+    is_active: boolean;
     /**
      * Is Superuser
      */
-    is_superuser?: boolean;
+    is_superuser: boolean;
 };
 
 /**
@@ -506,7 +490,7 @@ export type ItemsUpdateItemResponses = {
 export type ItemsUpdateItemResponse = ItemsUpdateItemResponses[keyof ItemsUpdateItemResponses];
 
 export type LoginLoginAccessTokenData = {
-    body: BodyLoginLoginAccessToken;
+    body: Credentials;
     path?: never;
     query?: never;
     url: '/api/v1/login/access-token';

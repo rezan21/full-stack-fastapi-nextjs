@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useState } from "react"
 
 type CopiedValue = string | null
 
@@ -8,7 +8,7 @@ type CopyFn = (text: string) => Promise<boolean>
 export function useCopyToClipboard(): [CopiedValue, CopyFn] {
   const [copiedText, setCopiedText] = useState<CopiedValue>(null)
 
-  const copy: CopyFn = useCallback(async (text) => {
+  const copy: CopyFn = async (text) => {
     if (!navigator?.clipboard) {
       console.warn("Clipboard not supported")
       return false
@@ -26,7 +26,7 @@ export function useCopyToClipboard(): [CopiedValue, CopyFn] {
       setCopiedText(null)
       return false
     }
-  }, [])
+  }
 
   return [copiedText, copy]
 }

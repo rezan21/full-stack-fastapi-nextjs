@@ -79,7 +79,7 @@ test("Sign up with invalid email", async ({ page }) => {
   await fillForm(page, "Playwright Test", "invalid-email")
   await page.getByRole("button", { name: "Sign Up" }).click()
 
-  await expect(page.getByText("Invalid email address")).toBeVisible()
+  await expect(page.getByText("Invalid email")).toBeVisible()
 })
 
 test("Sign up with an existing email looks the same", async ({ page }) => {
@@ -111,7 +111,7 @@ test("Sign up with missing email", async ({ page }) => {
   await fillForm(page, "Test User", "")
   await page.getByRole("button", { name: "Sign Up" }).click()
 
-  await expect(page.getByText("Invalid email address")).toBeVisible()
+  await expect(page.getByText("Invalid email")).toBeVisible()
 })
 
 test("The emailed link creates an account that can log in", async ({

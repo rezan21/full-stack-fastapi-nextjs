@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useTransition } from "react"
 import { deleteItem } from "@/actions/items"
 import {
   AlertDialog,
@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 
 // Dialog for deleting an item.
 export function DeleteItem({
@@ -30,19 +30,19 @@ export function DeleteItem({
 }) {
   const router = useRouter()
   const { showSuccessToast, showErrorToast } = useCustomToast()
-  const { handleSubmit, formState } = useForm()
+  const [isPending, startTransition] = useTransition()
 
-  const onSubmit = async () => {
-    const res = await deleteItem(id)
-    if (res.error) {
-      showErrorToast(res.error)
-      return
-    }
-    showSuccessToast("The item was deleted successfully")
-    onOpenChange(false)
-    if (redirectTo) router.replace(redirectTo)
-    else router.refresh()
-  }
+  const onConfirm = () =>
+    startTransition(async () => {
+      const res = await deleteItem(id)
+      if (res.error) {
+        showErrorToast(res.error)
+        return
+      }
+      showSuccessToast("The item was deleted successfully")
+      onOpenChange(false)
+      if (redirectTo) router.replace(redirectTo)
+    })
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -55,15 +55,13 @@ export function DeleteItem({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={formState.isSubmitting}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={formState.isSubmitting}
-            onClick={handleSubmit(onSubmit)}
+            disabled={isPending}
+            onClick={onConfirm}
           >
-            {formState.isSubmitting && <Spinner data-icon="inline-start" />}
+            {isPending && <Spinner data-icon="inline-start" />}
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>

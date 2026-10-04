@@ -4,14 +4,15 @@ import { cache } from "react"
 import { ApiError, getCurrentUser, getItem, type UserPublic } from "@/lib/api"
 import { getToken } from "@/lib/session"
 
-// Returns the current user, or null when there is none.
+// Returns the current user, or null when there is no valid session.
 export const getUser = cache(async (): Promise<UserPublic | null> => {
   const token = await getToken()
   if (!token) return null
   try {
     return await getCurrentUser()
-  } catch {
-    return null
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) return null
+    throw e
   }
 })
 

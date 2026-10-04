@@ -3,20 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { signup } from "@/actions/auth"
 import { zUserRegister } from "@/client/zod.gen"
+import { FormField } from "@/components/common/FormField"
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 import { formError } from "@/lib/form-errors"
 
 type FormData = z.infer<typeof zUserRegister>
@@ -51,43 +47,27 @@ export function SignupForm() {
       </div>
 
       <FieldGroup>
-        <Controller
-          control={form.control}
-          name="full_name"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                data-testid="full-name-input"
-                placeholder="User"
-                type="text"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && <FieldError errors={[fieldState.error]} />}
-            </Field>
+        <FormField control={form.control} name="full_name" label="Full Name">
+          {(field) => (
+            <Input
+              {...field}
+              data-testid="full-name-input"
+              placeholder="User"
+              type="text"
+            />
           )}
-        />
+        </FormField>
 
-        <Controller
-          control={form.control}
-          name="email"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-              <Input
-                {...field}
-                id={field.name}
-                data-testid="email-input"
-                placeholder="user@example.com"
-                type="email"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.error && <FieldError errors={[fieldState.error]} />}
-            </Field>
+        <FormField control={form.control} name="email" label="Email">
+          {(field) => (
+            <Input
+              {...field}
+              data-testid="email-input"
+              placeholder="user@example.com"
+              type="email"
+            />
           )}
-        />
+        </FormField>
 
         <Button
           type="submit"

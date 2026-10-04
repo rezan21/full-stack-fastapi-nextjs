@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
-import { AuthLayout } from "@/components/Common/AuthLayout"
+import { AuthLayout } from "@/components/common/AuthLayout"
 import { getUser } from "@/lib/dal"
 
 // Layout for the authentication pages.

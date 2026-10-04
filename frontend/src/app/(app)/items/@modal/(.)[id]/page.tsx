@@ -1,6 +1,6 @@
-import { ItemActionsMenu } from "@/components/Items/ItemActionsMenu"
-import { ItemDescription } from "@/components/Items/ItemDescription"
-import { ItemSheet } from "@/components/Items/ItemSheet"
+import { ItemActionsMenu } from "@/components/items/ItemActionsMenu"
+import { ItemDescription } from "@/components/items/ItemDescription"
+import { ItemSheet } from "@/components/items/ItemSheet"
 import { loadItem } from "@/lib/dal"
 import { formatCreated } from "@/lib/utils"
 

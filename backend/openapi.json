@@ -16,54 +16,17 @@
         "title": "AccountDeletion",
         "type": "object"
       },
-      "Body_login-login_access_token": {
+      "Credentials": {
         "properties": {
-          "client_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Id"
-          },
-          "client_secret": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "format": "password",
-            "title": "Client Secret"
-          },
-          "grant_type": {
-            "anyOf": [
-              {
-                "pattern": "^password$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grant Type"
-          },
           "password": {
-            "format": "password",
+            "maxLength": 128,
+            "minLength": 1,
             "title": "Password",
             "type": "string"
           },
-          "scope": {
-            "default": "",
-            "title": "Scope",
-            "type": "string"
-          },
           "username": {
+            "maxLength": 255,
+            "pattern": "^[A-Za-z0-9_'+-]+(\\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
             "title": "Username",
             "type": "string"
           }
@@ -72,7 +35,7 @@
           "username",
           "password"
         ],
-        "title": "Body_login-login_access_token",
+        "title": "Credentials",
         "type": "object"
       },
       "EmailChange": {
@@ -84,8 +47,8 @@
             "type": "string"
           },
           "email": {
-            "format": "email",
             "maxLength": 255,
+            "pattern": "^[A-Za-z0-9_'+-]+(\\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
             "title": "Email",
             "type": "string"
           }
@@ -166,21 +129,13 @@
       "ItemPublic": {
         "properties": {
           "created_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
           },
           "description": {
             "anyOf": [
               {
-                "maxLength": 255,
                 "type": "string"
               },
               {
@@ -200,16 +155,16 @@
             "type": "string"
           },
           "title": {
-            "maxLength": 255,
-            "minLength": 1,
             "title": "Title",
             "type": "string"
           }
         },
         "required": [
-          "title",
           "id",
-          "owner_id"
+          "owner_id",
+          "title",
+          "description",
+          "created_at"
         ],
         "title": "ItemPublic",
         "type": "object"
@@ -295,8 +250,8 @@
       "PasswordRecovery": {
         "properties": {
           "email": {
-            "format": "email",
             "maxLength": 255,
+            "pattern": "^[A-Za-z0-9_'+-]+(\\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
             "title": "Email",
             "type": "string"
           }
@@ -318,13 +273,13 @@
             "type": "integer"
           },
           "token_type": {
-            "default": "bearer",
             "title": "Token Type",
             "type": "string"
           }
         },
         "required": [
           "access_token",
+          "token_type",
           "expires_in"
         ],
         "title": "Token",
@@ -355,26 +310,15 @@
       "UserPublic": {
         "properties": {
           "created_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
           },
           "email": {
-            "format": "email",
-            "maxLength": 255,
             "title": "Email",
             "type": "string"
           },
           "full_name": {
-            "maxLength": 255,
-            "minLength": 1,
             "title": "Full Name",
             "type": "string"
           },
@@ -384,20 +328,21 @@
             "type": "string"
           },
           "is_active": {
-            "default": true,
             "title": "Is Active",
             "type": "boolean"
           },
           "is_superuser": {
-            "default": false,
             "title": "Is Superuser",
             "type": "boolean"
           }
         },
         "required": [
+          "id",
           "email",
           "full_name",
-          "id"
+          "is_active",
+          "is_superuser",
+          "created_at"
         ],
         "title": "UserPublic",
         "type": "object"
@@ -405,8 +350,8 @@
       "UserRegister": {
         "properties": {
           "email": {
-            "format": "email",
             "maxLength": 255,
+            "pattern": "^[A-Za-z0-9_'+-]+(\\.[A-Za-z0-9_'+-]+)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$",
             "title": "Email",
             "type": "string"
           },
@@ -886,7 +831,7 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/Body_login-login_access_token"
+                "$ref": "#/components/schemas/Credentials"
               }
             }
           },

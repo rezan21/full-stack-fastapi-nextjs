@@ -3,7 +3,7 @@
 import { ChevronsUpDown, LogOut, Settings } from "lucide-react"
 import Link from "next/link"
 import { logout } from "@/actions/auth"
-import { AppearanceSubmenu } from "@/components/Common/Appearance"
+import { AppearanceSubmenu } from "@/components/common/Appearance"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -54,13 +54,7 @@ export function User({ user }: { user: UserPublic }) {
         <DropdownMenu>
           {/* trigger */}
           <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                size="lg"
-                className="hover:bg-sidebar-accent/50 aria-expanded:bg-sidebar-accent aria-expanded:text-sidebar-accent-foreground"
-                data-testid="user-menu"
-              />
-            }
+            render={<SidebarMenuButton size="lg" data-testid="user-menu" />}
           >
             <UserInfo fullName={user.full_name} email={user.email} />
             <ChevronsUpDown className="ml-auto text-muted-foreground" />
@@ -73,7 +67,7 @@ export function User({ user }: { user: UserPublic }) {
           >
             {/* identity */}
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="p-0 font-normal">
+              <DropdownMenuLabel className="p-0">
                 <UserInfo fullName={user.full_name} email={user.email} />
               </DropdownMenuLabel>
             </DropdownMenuGroup>

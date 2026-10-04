@@ -57,7 +57,6 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },
-    { name = "email-validator" },
     { name = "emails" },
     { name = "fastapi", extra = ["standard-no-fastapi-cloud-cli"] },
     { name = "jinja2" },
@@ -78,6 +77,7 @@ dev = [
     { name = "httpx" },
     { name = "mypy" },
     { name = "pytest" },
+    { name = "python-dotenv" },
     { name = "ruff" },
     { name = "ty" },
 ]
@@ -85,7 +85,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.12.1,<2.0.0" },
-    { name = "email-validator", specifier = ">=2.1.0.post1,<3.0.0.0" },
     { name = "emails", specifier = ">=1.1.2,<2.0" },
     { name = "fastapi", extras = ["standard-no-fastapi-cloud-cli"], specifier = ">=0.141.1,<1.0.0" },
     { name = "jinja2", specifier = ">=3.1.4,<4.0.0" },
@@ -106,6 +105,7 @@ dev = [
     { name = "httpx", specifier = ">=0.25.1,<1.0.0" },
     { name = "mypy", specifier = ">=1.8.0,<3.0.0" },
     { name = "pytest", specifier = ">=7.4.3,<10.0.0" },
+    { name = "python-dotenv", specifier = ">=1.2.3" },
     { name = "ruff", specifier = ">=0.2.2,<1.0.0" },
     { name = "ty", specifier = ">=0.0.25" },
 ]

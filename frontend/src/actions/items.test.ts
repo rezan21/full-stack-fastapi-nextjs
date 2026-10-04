@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test"
 import { API_URL } from "@/lib/config"
 import {
   ITEM,
+  Redirect,
   resetServer,
   revalidated,
   session,
@@ -11,6 +12,8 @@ import {
 const { createItem, deleteItem, updateItem } = await import("@/actions/items")
 
 const failure = () => Response.json({ detail: "Not yours." }, { status: 403 })
+const rejectedSession = () =>
+  Response.json({ detail: "Could not validate credentials" }, { status: 401 })
 
 beforeEach(resetServer)
 
@@ -22,11 +25,17 @@ const cases = [
 
 for (const [name, run] of cases) {
   describe(name, () => {
-    test("asks nothing of the API without a session", async () => {
+    test("sends a visitor without a session to login and asks nothing of the API", async () => {
       session.token = undefined
       const requests = stubFetch(() => Response.json(ITEM))
-      expect(await run()).toEqual({ error: "Not authenticated" })
+      await expect(run()).rejects.toEqual(new Redirect("/login"))
       expect(requests).toHaveLength(0)
+    })
+
+    test("ends a session the API rejects and goes to login", async () => {
+      stubFetch(rejectedSession)
+      await expect(run()).rejects.toEqual(new Redirect("/login"))
+      expect(session.token).toBeUndefined()
     })
 
     test("returns the API error and leaves the list alone", async () => {
@@ -38,7 +47,7 @@ for (const [name, run] of cases) {
     test("refreshes the items list after it succeeds", async () => {
       stubFetch(() => new Response(JSON.stringify(ITEM), { status: 200 }))
       expect(await run()).toEqual({})
-      expect(revalidated).toEqual([["/items", undefined]])
+      expect(revalidated).toEqual([["/items", "layout"]])
     })
   })
 }

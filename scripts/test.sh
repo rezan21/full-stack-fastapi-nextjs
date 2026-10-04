@@ -9,6 +9,7 @@ export COMPOSE_ENV_FILES=backend/.env
 
 docker compose down -v --remove-orphans
 docker compose up -d db mailpit
+docker compose run --rm dbsetup
 (cd backend && uv run bash scripts/prestart.sh)
 (cd backend && uv run bash scripts/tests-start.sh "$@")
 docker compose down -v --remove-orphans

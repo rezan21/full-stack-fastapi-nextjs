@@ -32,10 +32,34 @@
         "noNonNullAssertion": "off",
         "noParameterAssign": "error",
         "useSelfClosingElements": "error",
-        "noUselessElse": "error"
+        "noUselessElse": "error",
+        "noDefaultExport": "error",
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": { "filenameCases": ["kebab-case"] }
+        }
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/src/app/**", "**/*.config.{ts,mjs}"],
+      "linter": { "rules": { "style": { "noDefaultExport": "off" } } }
+    },
+    {
+      "includes": ["**/src/components/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": { "filenameCases": ["PascalCase"] }
+            }
+          }
+        }
+      }
+    }
+  ],
   "formatter": {
     "indentStyle": "space"
   },

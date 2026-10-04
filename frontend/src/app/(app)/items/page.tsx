@@ -1,10 +1,10 @@
 import { Search } from "lucide-react"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
-import { PageHeader } from "@/components/Common/PageHeader"
-import { AddItem } from "@/components/Items/AddItem"
-import { ItemsPagination } from "@/components/Items/ItemsPagination"
-import { ItemsTable } from "@/components/Items/ItemsTable"
+import { PageHeader } from "@/components/common/PageHeader"
+import { AddItem } from "@/components/items/AddItem"
+import { ItemsPagination } from "@/components/items/ItemsPagination"
+import { ItemsTable } from "@/components/items/ItemsTable"
 import {
   Empty,
   EmptyDescription,

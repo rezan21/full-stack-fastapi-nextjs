@@ -1,5 +1,5 @@
-import { PageHeader } from "@/components/Common/PageHeader"
-import PendingItems from "@/components/Pending/PendingItems"
+import { PageHeader } from "@/components/common/PageHeader"
+import { PendingItems } from "@/components/pending/PendingItems"
 
 // Loading state for the items page.
 export default function Loading() {

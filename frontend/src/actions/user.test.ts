@@ -43,11 +43,22 @@ const cases = [
 
 for (const [name, run] of cases) {
   describe(name, () => {
-    test("asks nothing of the API without a session", async () => {
+    test("sends a visitor without a session to login and asks nothing of the API", async () => {
       session.token = undefined
       const requests = stubFetch(() => Response.json(USER))
-      expect(await run()).toEqual({ error: "Not authenticated" })
+      await expect(run()).rejects.toEqual(new Redirect("/login"))
       expect(requests).toHaveLength(0)
+    })
+
+    test("ends a session the API rejects and goes to login", async () => {
+      stubFetch(() =>
+        Response.json(
+          { detail: "Could not validate credentials" },
+          { status: 401 },
+        ),
+      )
+      await expect(run()).rejects.toEqual(new Redirect("/login"))
+      expect(session.token).toBeUndefined()
     })
 
     test("returns the API error", async () => {

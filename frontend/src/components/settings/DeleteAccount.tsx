@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { deleteAccount } from "@/actions/user"
-import { PasswordInput } from "@/components/Common/PasswordInput"
+import { PasswordInput } from "@/components/common/PasswordInput"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
-import useCustomToast from "@/hooks/useCustomToast"
+import { useCustomToast } from "@/hooks/use-custom-toast"
 
 // Account deletion control.
 export function DeleteAccount() {

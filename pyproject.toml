@@ -19,17 +19,8 @@ extend-exclude = [
     "backend/uv.lock",
     "frontend/bun.lock",
     "packages/react-email/bun.lock",
-    "backend/coverage/",
     "backend/htmlcov/",
     "frontend/public/assets/images/",
-]
-
-[tool.typos.default]
-extend-ignore-re = [
-    # GitHub usernames in @mentions
-    "@[a-zA-Z0-9](?:-?[a-zA-Z0-9])*",
-    # Name of the package in the PR title
-    "Bump certifi ",
 ]
 
 [tool.typos.default.extend-words]

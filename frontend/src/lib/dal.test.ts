@@ -54,4 +54,11 @@ describe("getUser", () => {
     stubFetch(() => Response.json({ detail: "x" }, { status: 401 }))
     expect(await getUser()).toBeNull()
   })
+
+  test("rethrows a backend failure instead of reporting a signed-out user", async () => {
+    stubFetch(() => Response.json({ detail: "boom" }, { status: 500 }))
+    const error = await getUser().catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 500 })
+  })
 })

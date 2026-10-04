@@ -14,6 +14,8 @@ services:
       - --entrypoints.http.http.redirections.entrypoint.to=https
       - --entrypoints.http.http.redirections.entrypoint.scheme=https
       - --entrypoints.https.address=:443
+      - --entrypoints.https.forwardedheaders.trustedips=${TRUSTED_PROXIES:-127.0.0.1/32}
+      - --entrypoints.https.http.middlewares=hsts@docker
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
       - --certificatesresolvers.le.acme.tlschallenge=true
       - --accesslog
@@ -22,24 +24,18 @@ services:
   db:
     restart: always
 
-  adminer:
-    restart: always
-    labels:
-      - traefik.http.routers.adminer-https.rule=Host(`adminer.${DOMAIN:?Variable not set}`)
-      - traefik.http.routers.adminer-https.entrypoints=https
-      - traefik.http.routers.adminer-https.tls=true
-      - traefik.http.routers.adminer-https.tls.certresolver=le
-
   backend:
     restart: always
     environment:
       FRONTEND_HOST: https://${DOMAIN:?Variable not set}
     labels:
+      - traefik.http.middlewares.hsts.headers.stsseconds=31536000
+      - traefik.http.middlewares.auth-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=${PROXY_HOPS:-0}
       - traefik.http.routers.backend-https.rule=Host(`${DOMAIN:?Variable not set}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`))
       - traefik.http.routers.backend-https.entrypoints=https
       - traefik.http.routers.backend-https.tls=true
       - traefik.http.routers.backend-https.tls.certresolver=le
-      - traefik.http.routers.backend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`))
+      - traefik.http.routers.backend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`) || Path(`/api/v1/users/me/password`) || (Path(`/api/v1/users/me`) && Method(`DELETE`)))
       - traefik.http.routers.backend-auth-https.entrypoints=https
       - traefik.http.routers.backend-auth-https.middlewares=auth-ratelimit
       - traefik.http.routers.backend-auth-https.priority=1000
@@ -53,7 +49,7 @@ services:
       - traefik.http.routers.frontend-https.entrypoints=https
       - traefik.http.routers.frontend-https.tls=true
       - traefik.http.routers.frontend-https.tls.certresolver=le
-      - traefik.http.routers.frontend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`))
+      - traefik.http.routers.frontend-auth-https.rule=Host(`${DOMAIN:?Variable not set}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`) || Path(`/settings`))
       - traefik.http.routers.frontend-auth-https.entrypoints=https
       - traefik.http.routers.frontend-auth-https.middlewares=auth-ratelimit
       - traefik.http.routers.frontend-auth-https.priority=1000

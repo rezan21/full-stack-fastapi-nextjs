@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
-import { PageHeader } from "@/components/Common/PageHeader"
-import { Showcase } from "@/components/Showcase/Showcase"
+import { PageHeader } from "@/components/common/PageHeader"
+import { Showcase } from "@/components/showcase/Showcase"
 
 export const metadata: Metadata = { title: "Showcase - FastAPI Template" }
 

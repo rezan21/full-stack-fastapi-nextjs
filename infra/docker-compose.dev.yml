@@ -18,6 +18,16 @@ services:
     command: postgres -c log_min_messages=warning
 
   adminer:
+    image: adminer
+    depends_on:
+      - db
+    environment:
+      - ADMINER_DESIGN=pepa-linha-dark
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.adminer-http.rule=Host(`adminer.localhost`)
+      - traefik.http.routers.adminer-http.entrypoints=http
+      - traefik.http.services.adminer.loadbalancer.server.port=8080
     ports:
       - "127.0.0.1:8080:8080"
 
@@ -49,9 +59,6 @@ services:
             - .venv
         - path: ../backend/pyproject.toml
           action: rebuild
-    # TODO: remove once coverage is done locally
-    volumes:
-      - ../backend/htmlcov:/app/htmlcov
     environment:
       FASTAPI_ENV: "development"
       SMTP_HOST: "mailpit"

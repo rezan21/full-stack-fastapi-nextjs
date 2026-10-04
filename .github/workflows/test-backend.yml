@@ -33,6 +33,7 @@ jobs:
         run: cp backend/.env.example backend/.env
       - run: docker compose down -v --remove-orphans
       - run: docker compose up -d db mailpit
+      - run: docker compose run --rm dbsetup
       - name: Migrate DB
         run: uv run bash scripts/prestart.sh
         working-directory: backend

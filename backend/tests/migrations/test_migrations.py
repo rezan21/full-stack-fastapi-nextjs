@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from dotenv import dotenv_values
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
@@ -18,15 +19,23 @@ ITEM_INDEXED = "6b3f593b41ce"
 ITEM_INDEX = "ix_item_owner_id_created_at"
 TOKEN_VERSIONED = "be73c5442ef9"
 EMAILS_LOWERED = "9f3cbb8a0df2"
+CREATED_AT_REQUIRED = "165d280e56b9"
 
 
 @pytest.fixture
 def migration_db() -> Generator[str]:
     base = make_url(str(settings.DATABASE_URL))
     name = f"migrations_{uuid.uuid4().hex[:12]}"
-    admin = create_engine(base.set(database="postgres"), isolation_level="AUTOCOMMIT")
+    admin = create_engine(
+        base.set(
+            username="postgres",
+            password=dotenv_values(BACKEND / ".env")["POSTGRES_PASSWORD"],
+            database="postgres",
+        ),
+        isolation_level="AUTOCOMMIT",
+    )
     with admin.connect() as connection:
-        connection.execute(text(f'CREATE DATABASE "{name}"'))
+        connection.execute(text(f'CREATE DATABASE "{name}" OWNER "{base.username}"'))
     try:
         yield base.set(database=name).render_as_string(hide_password=False)
     finally:
@@ -206,3 +215,53 @@ def test_lowercasing_refuses_addresses_that_differ_only_by_case(
         command.upgrade(config, EMAILS_LOWERED)
 
     assert stored_emails(migration_db) == {"Clash@Example.com", "clash@example.com"}
+
+
+def created_at_values(url: str, table: str) -> list[object]:
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        values = list(
+            connection.execute(text(f'select created_at from "{table}"')).scalars()
+        )
+    engine.dispose()
+    return values
+
+
+def created_at_is_nullable(url: str, table: str) -> bool:
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        nullable = connection.execute(
+            text(
+                "select is_nullable from information_schema.columns "
+                "where table_name = :table and column_name = 'created_at'"
+            ),
+            {"table": table},
+        ).scalar_one()
+    engine.dispose()
+    return str(nullable) == "YES"
+
+
+def test_created_at_is_backfilled_and_required(migration_db: str) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, EMAILS_LOWERED)
+    insert_users(migration_db, ["old@example.com"])
+    engine = create_engine(migration_db)
+    with engine.begin() as connection:
+        owner = connection.execute(text('select id from "user"')).scalar_one()
+        connection.execute(
+            text("insert into item (id, title, owner_id) values (:id, 'Old', :owner)"),
+            {"id": uuid.uuid4(), "owner": owner},
+        )
+    engine.dispose()
+    assert created_at_values(migration_db, "user") == [None]
+    assert created_at_values(migration_db, "item") == [None]
+
+    command.upgrade(config, CREATED_AT_REQUIRED)
+
+    for table in ("user", "item"):
+        assert None not in created_at_values(migration_db, table)
+        assert not created_at_is_nullable(migration_db, table)
+
+    command.downgrade(config, EMAILS_LOWERED)
+    for table in ("user", "item"):
+        assert created_at_is_nullable(migration_db, table)

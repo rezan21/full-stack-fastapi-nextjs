@@ -17,7 +17,7 @@ x-backend: &backend
     SMTP_USER: ${SMTP_USER?Variable not set}
     SMTP_PASSWORD: ${SMTP_PASSWORD?Variable not set}
     EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL:?Variable not set}
-    DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Variable not set}@db:5432/app
+    DATABASE_URL: postgresql://app:${APP_DB_PASSWORD:?Variable not set}@db:5432/app
     SENTRY_DSN: ${SENTRY_DSN:-}
 
 services:
@@ -47,17 +47,21 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Variable not set}
       - POSTGRES_DB=app
 
-  adminer:
-    image: adminer
+  dbsetup:
+    image: postgres:18
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      - ADMINER_DESIGN=pepa-linha-dark
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.adminer-http.rule=Host(`adminer.${DOMAIN:-localhost}`)
-      - traefik.http.routers.adminer-http.entrypoints=http
-      - traefik.http.services.adminer.loadbalancer.server.port=8080
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Variable not set}
+      PGDATABASE: app
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Variable not set}
+    volumes:
+      - ./db/app-role.sql:/app-role.sql:ro
+    command: ["sh", "-c", "psql -v ON_ERROR_STOP=1 -v password=\"$$APP_DB_PASSWORD\" -f /app-role.sql"]
+    restart: "no"
 
   prestart:
     <<: *backend
@@ -65,6 +69,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      dbsetup:
+        condition: service_completed_successfully
     restart: "no"
 
   backend:
@@ -88,7 +94,7 @@ services:
       - traefik.http.middlewares.auth-ratelimit.ratelimit.average=10
       - traefik.http.middlewares.auth-ratelimit.ratelimit.period=1m
       - traefik.http.middlewares.auth-ratelimit.ratelimit.burst=10
-      - traefik.http.routers.backend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`))
+      - traefik.http.routers.backend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`) || Path(`/api/v1/users/me/password`) || (Path(`/api/v1/users/me`) && Method(`DELETE`)))
       - traefik.http.routers.backend-auth-http.entrypoints=http
       - traefik.http.routers.backend-auth-http.middlewares=auth-ratelimit
       - traefik.http.routers.backend-auth-http.priority=1000
@@ -107,7 +113,7 @@ services:
       - traefik.http.services.frontend.loadbalancer.server.port=3000
       - traefik.http.routers.frontend-http.rule=Host(`${DOMAIN:-localhost}`)
       - traefik.http.routers.frontend-http.entrypoints=http
-      - traefik.http.routers.frontend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`))
+      - traefik.http.routers.frontend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`) || Path(`/settings`))
       - traefik.http.routers.frontend-auth-http.entrypoints=http
       - traefik.http.routers.frontend-auth-http.middlewares=auth-ratelimit
       - traefik.http.routers.frontend-auth-http.priority=1000

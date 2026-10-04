@@ -39,6 +39,7 @@ def issue_token(user: User) -> Token:
     expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
         access_token=create_access_token(user.id, expires_delta, user.token_version),
+        token_type="bearer",
         expires_in=int(expires_delta.total_seconds()),
     )
 
