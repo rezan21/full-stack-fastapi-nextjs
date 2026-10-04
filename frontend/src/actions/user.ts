@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { type ActionResult, toError } from "@/lib/action-result"
 import {
+  type AccountDeletion,
   changePassword as apiChangePassword,
   deleteAccount as apiDeleteAccount,
   requestEmailChange as apiRequestEmailChange,
@@ -12,7 +13,7 @@ import {
   type UpdatePassword,
   type UserUpdateMe,
 } from "@/lib/api"
-import { deleteSession, getToken } from "@/lib/session"
+import { createSession, deleteSession, getToken } from "@/lib/session"
 
 // Updates the current user's profile.
 export async function updateProfile(data: UserUpdateMe): Promise<ActionResult> {
@@ -43,7 +44,8 @@ export async function changePassword(
 ): Promise<ActionResult> {
   if (!(await getToken())) return { error: "Not authenticated" }
   try {
-    await apiChangePassword(data)
+    const { access_token, expires_in } = await apiChangePassword(data)
+    await createSession(access_token, expires_in)
     return {}
   } catch (e) {
     return toError(e)
@@ -51,10 +53,12 @@ export async function changePassword(
 }
 
 // Deletes the current user's account.
-export async function deleteAccount(): Promise<ActionResult> {
+export async function deleteAccount(
+  data: AccountDeletion,
+): Promise<ActionResult> {
   if (!(await getToken())) return { error: "Not authenticated" }
   try {
-    await apiDeleteAccount()
+    await apiDeleteAccount(data)
   } catch (e) {
     return toError(e)
   }

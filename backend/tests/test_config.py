@@ -44,3 +44,17 @@ def test_the_database_url_always_uses_the_psycopg_driver(scheme: str) -> None:
     settings = settings_with(DATABASE_URL=f"{scheme}user:pw@localhost:5432/app")
 
     assert str(settings.DATABASE_URL).startswith("postgresql+psycopg://")
+
+
+def test_a_short_secret_key_only_warns_in_development() -> None:
+    with pytest.warns(UserWarning, match="at least 32 characters"):
+        settings_with(SECRET_KEY="too-short", FASTAPI_ENV="development")
+
+
+def test_a_short_secret_key_is_rejected_outside_development() -> None:
+    with pytest.raises(ValidationError, match="at least 32 characters"):
+        settings_with(SECRET_KEY="too-short")
+
+
+def test_a_long_secret_key_is_accepted_outside_development() -> None:
+    assert settings_with(SECRET_KEY="a" * 32).SECRET_KEY == "a" * 32

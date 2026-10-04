@@ -1,5 +1,7 @@
 import hashlib
 import logging
+import smtplib
+import ssl
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -10,6 +12,7 @@ import emails
 import jwt
 from jinja2 import Template
 from jwt.exceptions import InvalidTokenError
+from sentry_sdk.scrubber import DEFAULT_DENYLIST, EventScrubber
 
 from app.core import security
 from app.core.config import settings
@@ -17,14 +20,30 @@ from app.core.config import settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+PASSWORD_RESET_AUDIENCE = "password-reset"
 SIGNUP_AUDIENCE = "signup"
 EMAIL_CHANGE_AUDIENCE = "email-change"
+SMTP_TIMEOUT_SECONDS = 10
+SECRET_FIELDS = ["new_password", "current_password", "access_token"]
 
 
 @dataclass
 class EmailData:
     html_content: str
     subject: str
+
+
+def event_scrubber() -> EventScrubber:
+    """Build the Sentry scrubber that also hides the password and token fields."""
+    return EventScrubber(denylist=[*DEFAULT_DENYLIST, *SECRET_FIELDS], recursive=True)
+
+
+def describe_duration(minutes: int) -> str:
+    """Describe a duration in minutes for an email."""
+    if minutes % 60 == 0:
+        hours = minutes // 60
+        return f"{hours} hour{'' if hours == 1 else 's'}"
+    return f"{minutes} minute{'' if minutes == 1 else 's'}"
 
 
 def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
@@ -45,26 +64,32 @@ def send_email(
     """Send an email."""
     assert settings.emails_enabled, "no provided configuration for email variables"
     assert settings.EMAILS_FROM_EMAIL
+    assert settings.SMTP_HOST
     message = emails.message.Message(
         subject=subject,
         html=html_content,
         mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
     )
-    smtp_options: dict[str, Any] = {
-        "host": settings.SMTP_HOST,
-        "port": settings.SMTP_PORT,
-        "fail_silently": False,
-    }
-    if settings.SMTP_TLS:
-        smtp_options["tls"] = True
-    elif settings.SMTP_SSL:
-        smtp_options["ssl"] = True
-    if settings.SMTP_USER:
-        smtp_options["user"] = settings.SMTP_USER
-    if settings.SMTP_PASSWORD:
-        smtp_options["password"] = settings.SMTP_PASSWORD
-    response = message.send(to=email_to, smtp=smtp_options)
-    logger.info(f"send email result: {response}")
+    message.mail_to = email_to
+    context = ssl.create_default_context()
+    if settings.SMTP_SSL and not settings.SMTP_TLS:
+        server: smtplib.SMTP = smtplib.SMTP_SSL(
+            settings.SMTP_HOST,
+            settings.SMTP_PORT,
+            timeout=SMTP_TIMEOUT_SECONDS,
+            context=context,
+        )
+    else:
+        server = smtplib.SMTP(
+            settings.SMTP_HOST, settings.SMTP_PORT, timeout=SMTP_TIMEOUT_SECONDS
+        )
+    with server:
+        if settings.SMTP_TLS:
+            server.starttls(context=context)
+        if settings.SMTP_USER:
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD or "")
+        server.sendmail(settings.EMAILS_FROM_EMAIL, [email_to], message.as_string())
+    logger.info("Sent an email")
 
 
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
@@ -78,7 +103,9 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
             "project_name": settings.PROJECT_NAME,
             "username": email,
             "email": email_to,
-            "valid_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
+            "valid_for": describe_duration(
+                settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES
+            ),
             "link": link,
         },
     )
@@ -90,23 +117,46 @@ def password_fingerprint(hashed_password: str) -> str:
     return hashlib.sha256(hashed_password.encode()).hexdigest()[:16]
 
 
-def generate_password_reset_token(email: str, hashed_password: str) -> str:
-    """Create a password reset token for the email."""
-    delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
+def generate_email_token(
+    *, audience: str, claims: dict[str, str], expires_in: timedelta
+) -> str:
+    """Create a signed, expiring token for an emailed link."""
     now = datetime.now(UTC)
-    expires = now + delta
-    exp = expires.timestamp()
-    encoded_jwt = jwt.encode(
-        {
-            "exp": exp,
-            "nbf": now,
-            "sub": email,
-            "pwd": password_fingerprint(hashed_password),
-        },
+    return jwt.encode(
+        {**claims, "aud": audience, "nbf": now, "exp": now + expires_in},
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )
-    return encoded_jwt
+
+
+def verify_email_token(token: str, *, audience: str) -> dict[str, Any] | None:
+    """Return the claims of a valid token for the audience, otherwise None."""
+    try:
+        return jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[security.ALGORITHM],
+            audience=audience,
+        )
+    except InvalidTokenError:
+        return None
+
+
+def generate_password_reset_token(email: str, hashed_password: str) -> str:
+    """Create a password reset token for the email."""
+    return generate_email_token(
+        audience=PASSWORD_RESET_AUDIENCE,
+        claims={"sub": email, "pwd": password_fingerprint(hashed_password)},
+        expires_in=timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES),
+    )
+
+
+def verify_password_reset_token(token: str) -> tuple[str, str] | None:
+    """Return the email and password fingerprint in a valid reset token, otherwise None."""
+    claims = verify_email_token(token, audience=PASSWORD_RESET_AUDIENCE)
+    if not claims or "sub" not in claims or "pwd" not in claims:
+        return None
+    return str(claims["sub"]), str(claims["pwd"])
 
 
 def send_password_recovery_email(
@@ -129,36 +179,14 @@ def send_password_recovery_email(
         logger.exception("Failed to send the password recovery email")
 
 
-def generate_email_token(*, audience: str, claims: dict[str, str]) -> str:
-    """Create a signed, expiring token for an emailed link."""
-    now = datetime.now(UTC)
-    return jwt.encode(
-        {
-            **claims,
-            "aud": audience,
-            "nbf": now,
-            "exp": now + timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS),
-        },
-        settings.SECRET_KEY,
-        algorithm=security.ALGORITHM,
-    )
-
-
-def verify_email_token(token: str, *, audience: str) -> dict[str, Any] | None:
-    """Return the claims of a valid token for the audience, otherwise None."""
-    try:
-        return jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[security.ALGORITHM],
-            audience=audience,
-        )
-    except InvalidTokenError:
-        return None
-
-
 def send_confirmation_email(
-    *, email_to: str, subject: str, message: str, path: str, token: str
+    *,
+    email_to: str,
+    subject: str,
+    message: str,
+    path: str,
+    token: str,
+    valid_minutes: int,
 ) -> None:
     """Send an email with a link that confirms the address."""
     try:
@@ -168,7 +196,7 @@ def send_confirmation_email(
                 "project_name": settings.PROJECT_NAME,
                 "username": email_to,
                 "message": message,
-                "valid_hours": settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS,
+                "valid_for": describe_duration(valid_minutes),
                 "link": f"{settings.FRONTEND_HOST}{path}?token={token}",
             },
         )
@@ -180,7 +208,9 @@ def send_confirmation_email(
 def send_signup_email(*, email_to: str, full_name: str) -> None:
     """Send the link that completes a sign-up."""
     token = generate_email_token(
-        audience=SIGNUP_AUDIENCE, claims={"sub": email_to, "name": full_name}
+        audience=SIGNUP_AUDIENCE,
+        claims={"sub": email_to, "name": full_name},
+        expires_in=timedelta(minutes=settings.SIGNUP_TOKEN_EXPIRE_MINUTES),
     )
     send_confirmation_email(
         email_to=email_to,
@@ -188,6 +218,7 @@ def send_signup_email(*, email_to: str, full_name: str) -> None:
         message=f"Confirm your email address to finish creating your {settings.PROJECT_NAME} account:",
         path="/signup/complete",
         token=token,
+        valid_minutes=settings.SIGNUP_TOKEN_EXPIRE_MINUTES,
     )
 
 
@@ -198,6 +229,7 @@ def send_email_change_email(
     token = generate_email_token(
         audience=EMAIL_CHANGE_AUDIENCE,
         claims={"sub": str(user_id), "email": email_to, "from": current_email},
+        expires_in=timedelta(minutes=settings.EMAIL_CHANGE_TOKEN_EXPIRE_MINUTES),
     )
     send_confirmation_email(
         email_to=email_to,
@@ -205,15 +237,47 @@ def send_email_change_email(
         message=f"Confirm this address to use it for your {settings.PROJECT_NAME} account:",
         path="/confirm-email",
         token=token,
+        valid_minutes=settings.EMAIL_CHANGE_TOKEN_EXPIRE_MINUTES,
     )
 
 
-def verify_password_reset_token(token: str) -> tuple[str, str] | None:
-    """Return the email and password fingerprint in a valid reset token, otherwise None."""
+def send_notice_email(*, email_to: str, subject: str, message: str) -> None:
+    """Send an email that tells the owner of an address about a security event."""
     try:
-        decoded_token = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        html_content = render_email_template(
+            template_name="notice.html",
+            context={
+                "project_name": settings.PROJECT_NAME,
+                "username": email_to,
+                "message": message,
+            },
         )
-        return str(decoded_token["sub"]), str(decoded_token["pwd"])
-    except InvalidTokenError, KeyError:
-        return None
+        send_email(email_to=email_to, subject=subject, html_content=html_content)
+    except Exception:
+        logger.exception("Failed to send the notice email")
+
+
+def send_email_change_requested_notice(*, email_to: str, new_email: str) -> None:
+    """Tell the current address that a change to a new address was requested."""
+    send_notice_email(
+        email_to=email_to,
+        subject=f"{settings.PROJECT_NAME} - Email change requested",
+        message=(
+            f"A change of the email address of your {settings.PROJECT_NAME} account "
+            f"to {new_email} was requested. If this was you, confirm it from the "
+            "link we sent to that address. If it was not, change your password now."
+        ),
+    )
+
+
+def send_email_changed_notice(*, email_to: str, new_email: str) -> None:
+    """Tell the previous address that the account now uses a new address."""
+    send_notice_email(
+        email_to=email_to,
+        subject=f"{settings.PROJECT_NAME} - Your email was changed",
+        message=(
+            f"The email address of your {settings.PROJECT_NAME} account was changed "
+            f"to {new_email}, and every session was signed out. If this was not you, "
+            "your account may be compromised: contact the site operator."
+        ),
+    )

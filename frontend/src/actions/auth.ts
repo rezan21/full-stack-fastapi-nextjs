@@ -6,6 +6,7 @@ import { type ActionResult, toError } from "@/lib/action-result"
 import {
   completeSignup as apiCompleteSignup,
   confirmEmailChange as apiConfirmEmailChange,
+  logout as apiLogout,
   recoverPassword as apiRecoverPassword,
   resetPassword as apiResetPassword,
   loginAccessToken,
@@ -34,6 +35,7 @@ export async function login(
 
 // Signs the current user out.
 export async function logout(): Promise<void> {
+  await apiLogout().catch(() => undefined)
   await deleteSession()
   redirect("/login")
 }

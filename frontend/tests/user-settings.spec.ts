@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test"
-import { firstSuperuser, firstSuperuserPassword } from "./config"
+import { firstSuperuserPassword } from "./config"
 import { createUser } from "./utils/api"
 import { emailedToken, waitForEmailHtml } from "./utils/mailpit"
 import { randomEmail, randomPassword } from "./utils/random"
@@ -96,6 +96,7 @@ test.describe("Edit user email", () => {
 
     await page.getByRole("button", { name: "Edit" }).click()
     await typeInto(page.getByLabel("Email"), updatedEmail)
+    await page.getByTestId("current-password-input").fill(password)
     await page.getByRole("button", { name: "Save" }).click()
 
     await expect(
@@ -112,7 +113,9 @@ test.describe("Edit user email", () => {
     await page.goto(`/confirm-email?token=${emailedToken(html)}`)
     await page.getByRole("button", { name: "Confirm email" }).click()
 
-    await expect(page).toHaveURL(/\/settings$/)
+    await expect(page).toHaveURL(/\/login$/)
+    await logInUser(page, updatedEmail, password)
+    await page.goto("/settings")
     await page.getByRole("tab", { name: "My profile" }).click()
     await expect(
       page.locator("form").getByText(updatedEmail, { exact: true }),
@@ -130,6 +133,7 @@ test.describe("Edit user email", () => {
     await page.getByRole("tab", { name: "My profile" }).click()
     await page.getByRole("button", { name: "Edit" }).click()
     await typeInto(page.getByLabel("Email"), updatedEmail)
+    await page.getByTestId("current-password-input").fill(password)
     await page.getByRole("button", { name: "Save" }).click()
 
     const html = await waitForEmailHtml({
@@ -139,12 +143,48 @@ test.describe("Edit user email", () => {
     const link = `/confirm-email?token=${emailedToken(html)}`
     await page.goto(link)
     await page.getByRole("button", { name: "Confirm email" }).click()
-    await expect(page).toHaveURL(/\/settings$/)
+    await expect(page).toHaveURL(/\/login$/)
 
     await page.goto(link)
     await page.getByRole("button", { name: "Confirm email" }).click()
 
     await expect(page.getByText("Invalid token")).toBeVisible()
+  })
+
+  test("Changing the email asks for the current password", async ({ page }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "My profile" }).click()
+    await page.getByRole("button", { name: "Edit" }).click()
+    await typeInto(page.getByLabel("Email"), randomEmail())
+    await page.getByRole("button", { name: "Save" }).click()
+
+    await expect(
+      page.getByText("Current password is required to change the email"),
+    ).toBeVisible()
+  })
+
+  test("A wrong current password changes nothing", async ({ page }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "My profile" }).click()
+    await page.getByRole("button", { name: "Edit" }).click()
+    await typeInto(page.getByLabel("Email"), randomEmail())
+    await page.getByTestId("current-password-input").fill(randomPassword())
+    await page.getByRole("button", { name: "Save" }).click()
+
+    await expect(page.getByText("Incorrect password")).toBeVisible()
+    await expect(
+      page.getByText("Check your new email to confirm the change"),
+    ).not.toBeVisible()
   })
 
   test("An address already in use gets the same confirmation", async ({
@@ -161,6 +201,7 @@ test.describe("Edit user email", () => {
     await page.getByRole("tab", { name: "My profile" }).click()
     await page.getByRole("button", { name: "Edit" }).click()
     await typeInto(page.getByLabel("Email"), taken)
+    await page.getByTestId("current-password-input").fill(password)
     await page.getByRole("button", { name: "Save" }).click()
 
     await expect(
@@ -255,6 +296,57 @@ test.describe("Change password", () => {
   })
 })
 
+test.describe("Sessions after a security change", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test("Changing the password signs the other devices out", async ({
+    page,
+    browser,
+  }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    const newPassword = randomPassword()
+    await createUser({ email, password })
+    const other = await browser.newContext()
+    const otherPage = await other.newPage()
+    await logInUser(otherPage, email, password)
+    await logInUser(page, email, password)
+
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "Password" }).click()
+    await page.getByTestId("current-password-input").fill(password)
+    await page.getByTestId("new-password-input").fill(newPassword)
+    await page.getByTestId("confirm-password-input").fill(newPassword)
+    await page.getByRole("button", { name: "Update Password" }).click()
+    await expect(page.getByText("Password updated successfully")).toBeVisible()
+
+    await page.goto("/settings")
+    await expect(page.getByRole("tab", { name: "My profile" })).toBeVisible()
+    await otherPage.goto("/settings")
+    await expect(otherPage).toHaveURL(/\/login$/)
+    await other.close()
+  })
+
+  test("Logging out signs the user out everywhere", async ({
+    page,
+    browser,
+  }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    const other = await browser.newContext()
+    const otherPage = await other.newPage()
+    await logInUser(otherPage, email, password)
+    await logInUser(page, email, password)
+
+    await logOutUser(page)
+
+    await otherPage.goto("/settings")
+    await expect(otherPage).toHaveURL(/\/login$/)
+    await other.close()
+  })
+})
+
 test.describe("Change password validation", () => {
   test.use({ storageState: { cookies: [], origins: [] } })
   let email: string
@@ -333,6 +425,7 @@ test.describe("Delete account", () => {
     await page.goto("/settings")
     await page.getByRole("tab", { name: "Danger zone" }).click()
     await page.getByRole("button", { name: "Delete Account" }).click()
+    await page.getByTestId("delete-account-password-input").fill(password)
     await page.getByRole("button", { name: "Delete", exact: true }).click()
 
     await page.waitForURL("/login")
@@ -344,10 +437,42 @@ test.describe("Delete account", () => {
   })
 })
 
+test.describe("Delete account confirmation", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test("Deleting needs a password and a wrong one keeps the account", async ({
+    page,
+  }) => {
+    const email = randomEmail()
+    const password = randomPassword()
+
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await page.goto("/settings")
+    await page.getByRole("tab", { name: "Danger zone" }).click()
+    await page.getByRole("button", { name: "Delete Account" }).click()
+
+    await expect(
+      page.getByRole("button", { name: "Delete", exact: true }),
+    ).toBeDisabled()
+    await page
+      .getByTestId("delete-account-password-input")
+      .fill(randomPassword())
+    await page.getByRole("button", { name: "Delete", exact: true }).click()
+
+    await expect(page.getByText("Incorrect password")).toBeVisible()
+    await page.goto("/settings")
+    await expect(page.getByRole("tab", { name: "My profile" })).toBeVisible()
+  })
+})
+
 test("Superuser cannot delete their own account", async ({ page }) => {
   await page.goto("/settings")
   await page.getByRole("tab", { name: "Danger zone" }).click()
   await page.getByRole("button", { name: "Delete Account" }).click()
+  await page
+    .getByTestId("delete-account-password-input")
+    .fill(firstSuperuserPassword)
   await page.getByRole("button", { name: "Delete", exact: true }).click()
 
   await expect(
@@ -375,19 +500,28 @@ test("User can switch between theme modes", async ({ page }) => {
   await expect(page.locator("html")).toHaveClass(/light/)
 })
 
-test("Selected mode is preserved across sessions", async ({ page }) => {
-  await page.goto("/settings")
+test.describe("Selected mode across sessions", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
 
-  await openAppearanceMenu(page)
-  await page.getByTestId("light-mode").click()
-  await expect(page.locator("html")).toHaveClass(/light/)
+  test("Selected mode is preserved across sessions", async ({ page }) => {
+    const email = randomEmail()
+    const password = randomPassword()
 
-  await openAppearanceMenu(page)
-  await page.getByTestId("dark-mode").click()
-  await expect(page.locator("html")).toHaveClass(/dark/)
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await page.goto("/settings")
 
-  await logOutUser(page)
-  await logInUser(page, firstSuperuser, firstSuperuserPassword)
+    await openAppearanceMenu(page)
+    await page.getByTestId("light-mode").click()
+    await expect(page.locator("html")).toHaveClass(/light/)
 
-  await expect(page.locator("html")).toHaveClass(/dark/)
+    await openAppearanceMenu(page)
+    await page.getByTestId("dark-mode").click()
+    await expect(page.locator("html")).toHaveClass(/dark/)
+
+    await logOutUser(page)
+    await logInUser(page, email, password)
+
+    await expect(page.locator("html")).toHaveClass(/dark/)
+  })
 })

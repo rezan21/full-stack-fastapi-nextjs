@@ -344,3 +344,51 @@ def test_login_with_argon2_password_keeps_hash(client: TestClient, db: Session) 
 
     assert user.hashed_password == original_hash
     assert user.hashed_password.startswith("$argon2")
+
+
+def test_logout_retires_every_token_of_the_user(
+    client: TestClient, db: Session
+) -> None:
+    email, password = random_email(), random_lower_string()
+    create_user(
+        session=db,
+        user_create=UserCreate(email=email, full_name="Test User", password=password),
+    )
+    first = user_authentication_headers(client=client, email=email, password=password)
+    second = user_authentication_headers(client=client, email=email, password=password)
+
+    r = client.post(f"{settings.API_V1_STR}/logout", headers=first)
+
+    me = f"{settings.API_V1_STR}/users/me"
+    assert r.status_code == 204
+    assert client.get(me, headers=first).status_code == 401
+    assert client.get(me, headers=second).status_code == 401
+    again = user_authentication_headers(client=client, email=email, password=password)
+    assert client.get(me, headers=again).status_code == 200
+
+
+def test_logout_requires_a_session(client: TestClient) -> None:
+    assert client.post(f"{settings.API_V1_STR}/logout").status_code == 401
+
+
+def test_resetting_the_password_retires_existing_tokens(
+    client: TestClient, db: Session
+) -> None:
+    email, password = random_email(), random_lower_string()
+    user = create_user(
+        session=db,
+        user_create=UserCreate(email=email, full_name="Test User", password=password),
+    )
+    headers = user_authentication_headers(client=client, email=email, password=password)
+    token = generate_password_reset_token(
+        email=email, hashed_password=user.hashed_password
+    )
+
+    r = client.post(
+        f"{settings.API_V1_STR}/reset-password",
+        json={"token": token, "new_password": random_lower_string()},
+    )
+
+    assert r.status_code == 200
+    me = client.get(f"{settings.API_V1_STR}/users/me", headers=headers)
+    assert me.status_code == 401

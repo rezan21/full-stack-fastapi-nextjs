@@ -1,7 +1,8 @@
 import { expect, type Page, test } from "@playwright/test"
 import { SESSION_COOKIE } from "../src/lib/config"
 import { firstSuperuser, firstSuperuserPassword } from "./config"
-import { randomPassword } from "./utils/random"
+import { createUser } from "./utils/api"
+import { randomEmail, randomPassword } from "./utils/random"
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
@@ -71,9 +72,12 @@ test("Log in with invalid password", async ({ page }) => {
 })
 
 test("Successful log out", async ({ page }) => {
+  const email = randomEmail()
+  const password = randomPassword()
+  await createUser({ email, password })
   await page.goto("/login")
 
-  await fillForm(page, firstSuperuser, firstSuperuserPassword)
+  await fillForm(page, email, password)
   await page.getByRole("button", { name: "Log In" }).click()
 
   await page.waitForURL("/")
@@ -88,9 +92,12 @@ test("Successful log out", async ({ page }) => {
 })
 
 test("Logged-out user cannot access protected routes", async ({ page }) => {
+  const email = randomEmail()
+  const password = randomPassword()
+  await createUser({ email, password })
   await page.goto("/login")
 
-  await fillForm(page, firstSuperuser, firstSuperuserPassword)
+  await fillForm(page, email, password)
   await page.getByRole("button", { name: "Log In" }).click()
 
   await page.waitForURL("/")

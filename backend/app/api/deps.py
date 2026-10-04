@@ -41,13 +41,16 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     """Return the user the bearer token belongs to."""
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+            token,
+            settings.SECRET_KEY,
+            algorithms=[security.ALGORITHM],
+            audience=security.ACCESS_AUDIENCE,
         )
         token_data = TokenPayload(**payload)
     except InvalidTokenError, ValidationError:
         raise invalid_credentials()
     user = session.get(User, token_data.sub)
-    if not user:
+    if not user or user.token_version != token_data.ver:
         raise invalid_credentials()
     if not user.is_active:
         raise HTTPException(

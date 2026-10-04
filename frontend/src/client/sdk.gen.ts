@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersCompleteSignupData, UsersCompleteSignupErrors, UsersCompleteSignupResponses, UsersConfirmEmailChangeData, UsersConfirmEmailChangeErrors, UsersConfirmEmailChangeResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersRequestEmailChangeData, UsersRequestEmailChangeErrors, UsersRequestEmailChangeResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckErrors, UtilsHealthCheckResponses } from './types.gen';
-import { zItemsCreateItemBody, zItemsDeleteItemPath, zItemsReadItemPath, zItemsReadItemsQuery, zItemsUpdateItemBody, zItemsUpdateItemPath, zLoginLoginAccessTokenBody, zLoginRecoverPasswordBody, zLoginResetPasswordBody, zUsersCompleteSignupBody, zUsersConfirmEmailChangeBody, zUsersRegisterUserBody, zUsersRequestEmailChangeBody, zUsersUpdatePasswordMeBody, zUsersUpdateUserMeBody } from './zod.gen';
+import type { ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginLogoutData, LoginLogoutErrors, LoginLogoutResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersCompleteSignupData, UsersCompleteSignupErrors, UsersCompleteSignupResponses, UsersConfirmEmailChangeData, UsersConfirmEmailChangeErrors, UsersConfirmEmailChangeResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersRequestEmailChangeData, UsersRequestEmailChangeErrors, UsersRequestEmailChangeResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckErrors, UtilsHealthCheckResponses } from './types.gen';
+import { zItemsCreateItemBody, zItemsDeleteItemPath, zItemsReadItemPath, zItemsReadItemsQuery, zItemsUpdateItemBody, zItemsUpdateItemPath, zLoginLoginAccessTokenBody, zLoginRecoverPasswordBody, zLoginResetPasswordBody, zUsersCompleteSignupBody, zUsersConfirmEmailChangeBody, zUsersDeleteUserMeBody, zUsersRegisterUserBody, zUsersRequestEmailChangeBody, zUsersUpdatePasswordMeBody, zUsersUpdateUserMeBody } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -130,6 +130,22 @@ export const loginLoginAccessToken = <ThrowOnError extends boolean = false>(opti
 });
 
 /**
+ * Logout
+ *
+ * Sign the user out everywhere by retiring their tokens.
+ */
+export const loginLogout = <ThrowOnError extends boolean = false>(options?: Options<LoginLogoutData, ThrowOnError>): RequestResult<LoginLogoutResponses, LoginLogoutErrors, ThrowOnError> => (options?.client ?? client).post<LoginLogoutResponses, LoginLogoutErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/logout',
+    ...options
+});
+
+/**
  * Recover Password
  *
  * Password Recovery
@@ -191,15 +207,19 @@ export const usersConfirmEmailChange = <ThrowOnError extends boolean = false>(op
  *
  * Delete own user.
  */
-export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(options?: Options<UsersDeleteUserMeData, ThrowOnError>): RequestResult<UsersDeleteUserMeResponses, UsersDeleteUserMeErrors, ThrowOnError> => (options?.client ?? client).delete<UsersDeleteUserMeResponses, UsersDeleteUserMeErrors, ThrowOnError>({
+export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(options: Options<UsersDeleteUserMeData, ThrowOnError>): RequestResult<UsersDeleteUserMeResponses, UsersDeleteUserMeErrors, ThrowOnError> => (options.client ?? client).delete<UsersDeleteUserMeResponses, UsersDeleteUserMeErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
+        body: zUsersDeleteUserMeBody,
         path: z.never().optional(),
         query: z.never().optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/users/me',
-    ...options
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

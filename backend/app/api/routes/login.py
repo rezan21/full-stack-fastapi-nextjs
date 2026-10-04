@@ -1,14 +1,12 @@
 import hmac
-from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
-from app.api.deps import SessionDep, error_responses
+from app.api.deps import AUTH_ERRORS, CurrentUser, SessionDep, error_responses
 from app.core import security
-from app.core.config import settings
 from app.models import Message, NewPassword, PasswordRecovery, Token
 from app.utils import (
     password_fingerprint,
@@ -31,13 +29,15 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    return Token(
-        access_token=security.create_access_token(
-            user.id, expires_delta=access_token_expires
-        ),
-        expires_in=int(access_token_expires.total_seconds()),
-    )
+    return security.issue_token(user)
+
+
+@router.post("/logout", status_code=204, responses=AUTH_ERRORS)
+def logout(session: SessionDep, current_user: CurrentUser) -> None:
+    """Sign the user out everywhere by retiring their tokens."""
+    crud.revoke_tokens(current_user)
+    session.add(current_user)
+    session.commit()
 
 
 @router.post("/password-recovery")
@@ -74,6 +74,7 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     user.hashed_password = security.get_password_hash(body.new_password)
+    crud.revoke_tokens(user)
     session.add(user)
     session.commit()
     return Message(message="Password updated successfully")

@@ -3,9 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import type { z } from "zod"
+import { z } from "zod"
 import { changeEmail, updateProfile } from "@/actions/user"
 import { zEmailChange, zUserUpdateMe } from "@/client/zod.gen"
+import { PasswordInput } from "@/components/Common/PasswordInput"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -21,15 +22,28 @@ import useCustomToast from "@/hooks/useCustomToast"
 import type { UserPublic } from "@/lib/api"
 import { formError } from "@/lib/form-errors"
 
-const formSchema = zUserUpdateMe
-  .required({ full_name: true })
-  .extend({ email: zEmailChange.shape.email })
+// Builds the profile schema, which asks for the password only when the email changes.
+function profileSchema(currentEmail: string) {
+  return zUserUpdateMe
+    .required({ full_name: true })
+    .extend({
+      email: zEmailChange.shape.email,
+      current_password: zEmailChange.shape.current_password.or(z.literal("")),
+    })
+    .refine(
+      (data) => data.email === currentEmail || data.current_password !== "",
+      {
+        error: "Current password is required to change the email",
+        path: ["current_password"],
+      },
+    )
+}
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.infer<ReturnType<typeof profileSchema>>
 
 // Maps a user to the profile form values.
 function toFormData(user: UserPublic): FormData {
-  return { full_name: user.full_name, email: user.email }
+  return { full_name: user.full_name, email: user.email, current_password: "" }
 }
 
 // Profile form.
@@ -37,7 +51,7 @@ export function ProfileForm({ user }: { user: UserPublic }) {
   const [isEditing, setIsEditing] = useState(false)
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema, { error: formError }),
+    resolver: zodResolver(profileSchema(user.email), { error: formError }),
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: toFormData(user),
@@ -49,21 +63,27 @@ export function ProfileForm({ user }: { user: UserPublic }) {
   }
 
   const onSubmit = async (data: FormData) => {
+    const emailChanged = data.email !== user.email
+    if (emailChanged) {
+      const emailRes = await changeEmail({
+        email: data.email,
+        current_password: data.current_password,
+      })
+      if (emailRes.error) {
+        showErrorToast(emailRes.error)
+        return
+      }
+    }
     const res = await updateProfile({ full_name: data.full_name })
     if (res.error) {
       showErrorToast(res.error)
       return
     }
-    if (data.email !== user.email) {
-      const emailRes = await changeEmail({ email: data.email })
-      if (emailRes.error) {
-        showErrorToast(emailRes.error)
-        return
-      }
-      showSuccessToast("Check your new email to confirm the change")
-    } else {
-      showSuccessToast("User updated successfully")
-    }
+    showSuccessToast(
+      emailChanged
+        ? "Check your new email to confirm the change"
+        : "User updated successfully",
+    )
     setIsEditing(false)
   }
 
@@ -136,6 +156,27 @@ export function ProfileForm({ user }: { user: UserPublic }) {
             </Field>
           )}
         />
+
+        {isEditing && form.watch("email") !== user.email && (
+          <Controller
+            control={form.control}
+            name="current_password"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>Current password</FieldLabel>
+                <PasswordInput
+                  {...field}
+                  id={field.name}
+                  data-testid="current-password-input"
+                  placeholder="Current password"
+                  autoComplete="current-password"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.error && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+        )}
       </FieldGroup>
 
       <div className="flex gap-2">

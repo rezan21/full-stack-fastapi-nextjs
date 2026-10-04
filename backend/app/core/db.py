@@ -10,7 +10,7 @@ engine = create_engine(str(settings.DATABASE_URL))
 def init_db(session: Session) -> None:
     """Create the initial data if missing."""
     user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
+        select(User).where(User.email == settings.FIRST_SUPERUSER.lower())
     ).first()
     if not user:
         user_in = UserCreate(

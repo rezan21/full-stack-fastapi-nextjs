@@ -1,6 +1,21 @@
 {
   "components": {
     "schemas": {
+      "AccountDeletion": {
+        "properties": {
+          "current_password": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Current Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password"
+        ],
+        "title": "AccountDeletion",
+        "type": "object"
+      },
       "Body_login-login_access_token": {
         "properties": {
           "client_id": {
@@ -62,6 +77,12 @@
       },
       "EmailChange": {
         "properties": {
+          "current_password": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Current Password",
+            "type": "string"
+          },
           "email": {
             "format": "email",
             "maxLength": 255,
@@ -70,7 +91,8 @@
           }
         },
         "required": [
-          "email"
+          "email",
+          "current_password"
         ],
         "title": "EmailChange",
         "type": "object"
@@ -908,6 +930,46 @@
         ]
       }
     },
+    "/api/v1/logout": {
+      "post": {
+        "description": "Sign the user out everywhere by retiring their tokens.",
+        "operationId": "login-logout",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Logout",
+        "tags": [
+          "login"
+        ]
+      }
+    },
     "/api/v1/password-recovery": {
       "post": {
         "description": "Password Recovery",
@@ -1058,9 +1120,29 @@
       "delete": {
         "description": "Delete own user.",
         "operationId": "users-delete_user_me",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountDeletion"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Bad Request"
           },
           "401": {
             "content": {
@@ -1081,6 +1163,16 @@
               }
             },
             "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -1229,6 +1321,16 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
           "401": {
             "content": {
               "application/json": {
@@ -1290,7 +1392,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Message"
+                  "$ref": "#/components/schemas/Token"
                 }
               }
             },

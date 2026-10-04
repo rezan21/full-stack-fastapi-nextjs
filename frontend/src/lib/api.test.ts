@@ -14,6 +14,7 @@ const {
   getItem,
   getItems,
   loginAccessToken,
+  logout,
   recoverPassword,
   registerUser,
   requestEmailChange,
@@ -106,7 +107,13 @@ describe("requests", () => {
 describe("operations", () => {
   const cases: [string, () => Promise<unknown>, string, string][] = [
     ["getCurrentUser", () => getCurrentUser(), "GET", "/users/me"],
-    ["deleteAccount", () => deleteAccount(), "DELETE", "/users/me"],
+    ["logout", () => logout(), "POST", "/logout"],
+    [
+      "deleteAccount",
+      () => deleteAccount({ current_password: "old-password" }),
+      "DELETE",
+      "/users/me",
+    ],
     [
       "updateProfile",
       () => updateProfile({ full_name: "New Name" }),
@@ -137,7 +144,11 @@ describe("operations", () => {
     ],
     [
       "requestEmailChange",
-      () => requestEmailChange({ email: "new@example.com" }),
+      () =>
+        requestEmailChange({
+          email: "new@example.com",
+          current_password: "old-password",
+        }),
       "POST",
       "/users/me/email",
     ],
@@ -181,7 +192,10 @@ describe("created and deleted resources", () => {
 
   const deletes: [string, () => Promise<unknown>][] = [
     ["deleteItem", () => deleteItem(ITEM_ID)],
-    ["deleteAccount", () => deleteAccount()],
+    [
+      "deleteAccount",
+      () => deleteAccount({ current_password: "old-password" }),
+    ],
   ]
 
   for (const [name, call] of deletes) {

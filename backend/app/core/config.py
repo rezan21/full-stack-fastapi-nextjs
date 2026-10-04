@@ -11,6 +11,8 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+MIN_SECRET_LENGTH = 32
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -20,7 +22,7 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     FRONTEND_HOST: str = "http://localhost:3000"
     FASTAPI_ENV: Literal["development"] | None = None
 
@@ -52,7 +54,9 @@ class Settings(BaseSettings):
             self.EMAILS_FROM_NAME = self.PROJECT_NAME
         return self
 
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
+    PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 60
+    EMAIL_CHANGE_TOKEN_EXPIRE_MINUTES: int = 60
+    SIGNUP_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -74,9 +78,22 @@ class Settings(BaseSettings):
             else:
                 raise ValueError(message)
 
+    def _check_secret_length(self, var_name: str, value: str) -> None:
+        """Check that a secret is long enough to sign tokens with."""
+        if len(value) < MIN_SECRET_LENGTH:
+            message = (
+                f"The value of {var_name} must be at least "
+                f"{MIN_SECRET_LENGTH} characters long."
+            )
+            if self.FASTAPI_ENV == "development":
+                warnings.warn(message, stacklevel=1)
+            else:
+                raise ValueError(message)
+
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
+        self._check_secret_length("SECRET_KEY", self.SECRET_KEY)
         for host in self.DATABASE_URL.hosts():
             self._check_default_secret("DATABASE_URL password", host["password"])
         self._check_default_secret(

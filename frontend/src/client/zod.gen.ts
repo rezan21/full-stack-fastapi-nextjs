@@ -3,6 +3,13 @@
 import * as z from 'zod';
 
 /**
+ * AccountDeletion
+ */
+export const zAccountDeletion = z.object({
+    current_password: z.string().min(1).max(128)
+});
+
+/**
  * Body_login-login_access_token
  */
 export const zBodyLoginLoginAccessToken = z.object({
@@ -18,6 +25,7 @@ export const zBodyLoginLoginAccessToken = z.object({
  * EmailChange
  */
 export const zEmailChange = z.object({
+    current_password: z.string().min(1).max(128),
     email: z.email().max(255)
 });
 
@@ -182,6 +190,8 @@ export const zLoginRecoverPasswordBody = zPasswordRecovery;
 export const zLoginResetPasswordBody = zNewPassword;
 
 export const zUsersConfirmEmailChangeBody = zEmailChangeConfirm;
+
+export const zUsersDeleteUserMeBody = zAccountDeletion;
 
 export const zUsersUpdateUserMeBody = zUserUpdateMe;
 

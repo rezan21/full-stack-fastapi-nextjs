@@ -51,7 +51,20 @@ describe("login", () => {
 })
 
 describe("logout", () => {
-  test("ends the session and goes to the login page", async () => {
+  test("retires the tokens, ends the session and goes to the login page", async () => {
+    const requests = stubFetch(() => new Response(null, { status: 204 }))
+    await expect(logout()).rejects.toEqual(new Redirect("/login"))
+    expect(requests[0]).toMatchObject({
+      method: "POST",
+      url: `${API_URL}/api/v1/logout`,
+    })
+    expect(session.token).toBeUndefined()
+  })
+
+  test("still ends the session when the backend cannot be reached", async () => {
+    stubFetch(() => {
+      throw new TypeError("network down")
+    })
     await expect(logout()).rejects.toEqual(new Redirect("/login"))
     expect(session.token).toBeUndefined()
   })

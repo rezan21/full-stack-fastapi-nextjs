@@ -21,8 +21,8 @@ export function ConfirmEmailForm({ token }: { token: string }) {
       showErrorToast(res.error)
       return
     }
-    showSuccessToast("Email updated successfully")
-    router.replace("/settings")
+    showSuccessToast("Email updated, sign in again with the new address")
+    router.replace("/login")
   }
 
   return (

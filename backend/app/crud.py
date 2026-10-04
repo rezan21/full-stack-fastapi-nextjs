@@ -17,9 +17,14 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     """Return the user with the email, or None."""
-    statement = select(User).where(User.email == email)
+    statement = select(User).where(User.email == email.lower())
     session_user = session.exec(statement).first()
     return session_user
+
+
+def revoke_tokens(user: User) -> None:
+    """Retire every token issued to the user; the caller commits."""
+    user.token_version += 1
 
 
 DUMMY_HASH = "$argon2id$v=19$m=65536,t=3,p=4$MjQyZWE1MzBjYjJlZTI0Yw$YTU4NGM5ZTZmYjE2NzZlZjY0ZWY3ZGRkY2U2OWFjNjk"

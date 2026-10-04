@@ -8,7 +8,7 @@ type ResetPasswordProps = {
   project_name: string
   username: string
   link: string
-  valid_hours: string
+  valid_for: string
 }
 
 // Password reset email.
@@ -16,7 +16,7 @@ export default function ResetPassword({
   project_name = "{{ project_name }}",
   username = "{{ username }}",
   link = "{{ link }}",
-  valid_hours = "{{ valid_hours }}",
+  valid_for = "{{ valid_for }}",
 }: ResetPasswordProps) {
   return (
     <Layout
@@ -37,7 +37,7 @@ export default function ResetPassword({
         <Link href={link}>{link}</Link>
       </Text>
       <Text style={supportingTextStyle}>
-        This link will expire in {valid_hours} hours.
+        This link will expire in {valid_for}.
       </Text>
       <Text style={supportingTextStyle}>
         If you didn't request a password recovery, you can safely ignore this

@@ -2,14 +2,14 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from pydantic import EmailStr
+from pydantic import AfterValidator, EmailStr
 from pydantic.experimental.missing_sentinel import MISSING
 from sqlalchemy import DateTime, Index
 from sqlmodel import Field, Relationship, SQLModel
 
 PASSWORD_MAX_LENGTH = 128
 
-Email = Annotated[EmailStr, Field(max_length=255)]
+Email = Annotated[EmailStr, Field(max_length=255), AfterValidator(str.lower)]
 FullName = Annotated[str, Field(min_length=1, max_length=255)]
 Password = Annotated[str, Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)]
 CurrentPassword = Annotated[str, Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)]
@@ -43,6 +43,11 @@ class UserUpdateMe(SQLModel):
 
 class EmailChange(SQLModel):
     email: Email
+    current_password: CurrentPassword
+
+
+class AccountDeletion(SQLModel):
+    current_password: CurrentPassword
 
 
 class EmailChangeConfirm(SQLModel):
@@ -57,6 +62,7 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
+    token_version: int = Field(default=0, sa_column_kwargs={"server_default": "0"})
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),
@@ -124,6 +130,7 @@ class Token(SQLModel):
 
 class TokenPayload(SQLModel):
     sub: str | None = None
+    ver: int | None = None
 
 
 class PasswordRecovery(SQLModel):

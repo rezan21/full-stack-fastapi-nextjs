@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * AccountDeletion
+ */
+export type AccountDeletion = {
+    /**
+     * Current Password
+     */
+    current_password: string;
+};
+
+/**
  * Body_login-login_access_token
  */
 export type BodyLoginLoginAccessToken = {
@@ -38,6 +48,10 @@ export type BodyLoginLoginAccessToken = {
  * EmailChange
  */
 export type EmailChange = {
+    /**
+     * Current Password
+     */
+    current_password: string;
     /**
      * Email
      */
@@ -520,6 +534,35 @@ export type LoginLoginAccessTokenResponses = {
 
 export type LoginLoginAccessTokenResponse = LoginLoginAccessTokenResponses[keyof LoginLoginAccessTokenResponses];
 
+export type LoginLogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/logout';
+};
+
+export type LoginLogoutErrors = {
+    /**
+     * Unauthorized
+     */
+    401: HttpError;
+    /**
+     * Forbidden
+     */
+    403: HttpError;
+};
+
+export type LoginLogoutError = LoginLogoutErrors[keyof LoginLogoutErrors];
+
+export type LoginLogoutResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type LoginLogoutResponse = LoginLogoutResponses[keyof LoginLogoutResponses];
+
 export type LoginRecoverPasswordData = {
     body: PasswordRecovery;
     path?: never;
@@ -604,13 +647,17 @@ export type UsersConfirmEmailChangeResponses = {
 export type UsersConfirmEmailChangeResponse = UsersConfirmEmailChangeResponses[keyof UsersConfirmEmailChangeResponses];
 
 export type UsersDeleteUserMeData = {
-    body?: never;
+    body: AccountDeletion;
     path?: never;
     query?: never;
     url: '/api/v1/users/me';
 };
 
 export type UsersDeleteUserMeErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpError;
     /**
      * Unauthorized
      */
@@ -619,6 +666,10 @@ export type UsersDeleteUserMeErrors = {
      * Forbidden
      */
     403: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
 export type UsersDeleteUserMeError = UsersDeleteUserMeErrors[keyof UsersDeleteUserMeErrors];
@@ -703,6 +754,10 @@ export type UsersRequestEmailChangeData = {
 
 export type UsersRequestEmailChangeErrors = {
     /**
+     * Bad Request
+     */
+    400: HttpError;
+    /**
      * Unauthorized
      */
     401: HttpError;
@@ -759,7 +814,7 @@ export type UsersUpdatePasswordMeResponses = {
     /**
      * Successful Response
      */
-    200: Message;
+    200: Token;
 };
 
 export type UsersUpdatePasswordMeResponse = UsersUpdatePasswordMeResponses[keyof UsersUpdatePasswordMeResponses];

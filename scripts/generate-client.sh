@@ -4,6 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+FASTAPI_ENV=development \
 PROJECT_NAME="FastAPI Template" \
 SECRET_KEY=openapi-export \
 FIRST_SUPERUSER=admin@example.com \

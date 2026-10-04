@@ -1,6 +1,7 @@
 import "server-only"
 import { ZodError } from "zod"
 import {
+  type AccountDeletion,
   type EmailChange,
   type HttpError,
   type HttpValidationError,
@@ -14,6 +15,7 @@ import {
   itemsReadItems,
   itemsUpdateItem,
   loginLoginAccessToken,
+  loginLogout,
   loginRecoverPassword,
   loginResetPassword,
   type PasswordRecovery,
@@ -35,6 +37,7 @@ import { API_URL, ITEMS_PAGE_SIZE } from "@/lib/config"
 import { getToken } from "@/lib/session"
 
 export type {
+  AccountDeletion,
   EmailChange,
   ItemCreate,
   ItemPublic,
@@ -93,6 +96,10 @@ async function unwrap<T>(call: Promise<Result<T>>): Promise<T> {
 
 export function loginAccessToken(username: string, password: string) {
   return unwrap(loginLoginAccessToken({ body: { username, password } }))
+}
+
+export function logout() {
+  return unwrap(loginLogout())
 }
 
 export function getCurrentUser() {
@@ -160,6 +167,6 @@ export function changePassword(body: UpdatePassword) {
   return unwrap(usersUpdatePasswordMe({ body }))
 }
 
-export function deleteAccount() {
-  return unwrap(usersDeleteUserMe())
+export function deleteAccount(body: AccountDeletion) {
+  return unwrap(usersDeleteUserMe({ body }))
 }

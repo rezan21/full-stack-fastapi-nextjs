@@ -16,6 +16,8 @@ BEFORE_FULL_NAME_REQUIRED = "fe56fa70289e"
 FULL_NAME_REQUIRED = "a28bd8db53bb"
 ITEM_INDEXED = "6b3f593b41ce"
 ITEM_INDEX = "ix_item_owner_id_created_at"
+TOKEN_VERSIONED = "be73c5442ef9"
+EMAILS_LOWERED = "9f3cbb8a0df2"
 
 
 @pytest.fixture
@@ -133,3 +135,74 @@ def test_item_index_is_created_and_dropped(migration_db: str) -> None:
 
     command.downgrade(config, FULL_NAME_REQUIRED)
     assert item_index_columns(migration_db) == []
+
+
+def insert_users(url: str, emails: list[str]) -> None:
+    engine = create_engine(url)
+    with engine.begin() as connection:
+        for email in emails:
+            connection.execute(
+                text(
+                    'insert into "user" (id, email, hashed_password, is_active, '
+                    "is_superuser, full_name) values (:id, :email, 'x', true, false, "
+                    "'Name')"
+                ),
+                {"id": uuid.uuid4(), "email": email},
+            )
+    engine.dispose()
+
+
+def stored_emails(url: str) -> set[str]:
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        emails = set(connection.execute(text('select email from "user"')).scalars())
+    engine.dispose()
+    return emails
+
+
+def token_versions(url: str) -> list[int]:
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        versions = list(
+            connection.execute(text('select token_version from "user"')).scalars()
+        )
+    engine.dispose()
+    return versions
+
+
+def test_token_version_starts_at_zero_for_existing_users_and_is_dropped(
+    migration_db: str,
+) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, ITEM_INDEXED)
+    insert_users(migration_db, ["existing@example.com"])
+
+    command.upgrade(config, TOKEN_VERSIONED)
+    assert token_versions(migration_db) == [0]
+
+    command.downgrade(config, ITEM_INDEXED)
+    with pytest.raises(Exception, match="token_version"):
+        token_versions(migration_db)
+
+
+def test_emails_are_lowercased(migration_db: str) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, TOKEN_VERSIONED)
+    insert_users(migration_db, ["Mixed@Example.com", "lower@example.com"])
+
+    command.upgrade(config, EMAILS_LOWERED)
+
+    assert stored_emails(migration_db) == {"mixed@example.com", "lower@example.com"}
+
+
+def test_lowercasing_refuses_addresses_that_differ_only_by_case(
+    migration_db: str,
+) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, TOKEN_VERSIONED)
+    insert_users(migration_db, ["Clash@Example.com", "clash@example.com"])
+
+    with pytest.raises(RuntimeError, match="differ only by case"):
+        command.upgrade(config, EMAILS_LOWERED)
+
+    assert stored_emails(migration_db) == {"Clash@Example.com", "clash@example.com"}

@@ -1,7 +1,9 @@
 import re
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+import httpx
+import jwt
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
@@ -9,6 +11,8 @@ from sqlmodel import Session, select
 from app import crud
 from app.core.config import settings
 from app.core.security import (
+    ACCESS_AUDIENCE,
+    ALGORITHM,
     create_access_token,
     get_password_hash,
     verify_password,
@@ -50,46 +54,43 @@ def test_get_users_normal_user_me(
     assert current_user["email"] == EMAIL_TEST_USER
 
 
-def test_update_password_me(
-    client: TestClient, superuser_token_headers: dict[str, str], db: Session
-) -> None:
+def test_update_password_me(client: TestClient, db: Session) -> None:
+    user, headers, password = user_with_headers(client, db)
     new_password = random_lower_string()
-    data = {
-        "current_password": settings.FIRST_SUPERUSER_PASSWORD,
-        "new_password": new_password,
-    }
+
     r = client.patch(
         f"{settings.API_V1_STR}/users/me/password",
-        headers=superuser_token_headers,
-        json=data,
+        headers=headers,
+        json={"current_password": password, "new_password": new_password},
     )
+
     assert r.status_code == 200
-    updated_user = r.json()
-    assert updated_user["message"] == "Password updated successfully"
-
-    user_query = select(User).where(User.email == settings.FIRST_SUPERUSER)
-    user_db = db.exec(user_query).first()
-    assert user_db
-    assert user_db.email == settings.FIRST_SUPERUSER
-    verified, _ = verify_password(new_password, user_db.hashed_password)
+    db.refresh(user)
+    verified, _ = verify_password(new_password, user.hashed_password)
     assert verified
+    renewed = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    me = f"{settings.API_V1_STR}/users/me"
+    assert client.get(me, headers=renewed).status_code == 200
+    assert client.get(me, headers=headers).status_code == 401
 
-    old_data = {
-        "current_password": new_password,
-        "new_password": settings.FIRST_SUPERUSER_PASSWORD,
-    }
+
+def test_changing_the_password_signs_other_sessions_out(
+    client: TestClient, db: Session
+) -> None:
+    user, first, password = user_with_headers(client, db)
+    second = user_authentication_headers(
+        client=client, email=user.email, password=password
+    )
+
     r = client.patch(
         f"{settings.API_V1_STR}/users/me/password",
-        headers=superuser_token_headers,
-        json=old_data,
+        headers=first,
+        json={"current_password": password, "new_password": random_lower_string()},
     )
-    db.refresh(user_db)
 
+    me = f"{settings.API_V1_STR}/users/me"
     assert r.status_code == 200
-    verified, _ = verify_password(
-        settings.FIRST_SUPERUSER_PASSWORD, user_db.hashed_password
-    )
-    assert verified
+    assert client.get(me, headers=second).status_code == 401
 
 
 def test_update_password_me_incorrect_password(
@@ -241,44 +242,56 @@ def test_missing_token_is_unauthorized(client: TestClient) -> None:
     assert r.status_code == 401
 
 
-def test_delete_user_me(client: TestClient, db: Session) -> None:
-    username = random_email()
-    password = random_lower_string()
-    user_in = UserCreate(
-        email=username, full_name=random_lower_string(), password=password
-    )
-    user = crud.create_user(session=db, user_create=user_in)
-    user_id = user.id
-
-    login_data = {
-        "username": username,
-        "password": password,
-    }
-    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
-    tokens = r.json()
-    a_token = tokens["access_token"]
-    headers = {"Authorization": f"Bearer {a_token}"}
-
-    r = client.delete(
+def delete_account(
+    client: TestClient, headers: dict[str, str], password: str
+) -> httpx.Response:
+    return client.request(
+        "DELETE",
         f"{settings.API_V1_STR}/users/me",
         headers=headers,
+        json={"current_password": password},
     )
+
+
+def test_delete_user_me(client: TestClient, db: Session) -> None:
+    user, headers, password = user_with_headers(client, db)
+    user_id = user.id
+
+    r = delete_account(client, headers, password)
+
     assert r.status_code == 204
     assert r.content == b""
-    result = db.exec(select(User).where(User.id == user_id)).first()
-    assert result is None
+    assert db.exec(select(User).where(User.id == user_id)).first() is None
 
-    user_query = select(User).where(User.id == user_id)
-    user_db = db.execute(user_query).first()
-    assert user_db is None
+
+def test_delete_user_me_requires_the_current_password(
+    client: TestClient, db: Session
+) -> None:
+    user, headers, _ = user_with_headers(client, db)
+    email = user.email
+
+    r = delete_account(client, headers, "not-the-password")
+
+    assert r.status_code == 400
+    assert r.json() == {"detail": "Incorrect password"}
+    assert crud.get_user_by_email(session=db, email=email)
+
+
+def test_delete_user_me_without_a_body_is_rejected(
+    client: TestClient, db: Session
+) -> None:
+    _, headers, _ = user_with_headers(client, db)
+
+    r = client.delete(f"{settings.API_V1_STR}/users/me", headers=headers)
+
+    assert r.status_code == 422
 
 
 def test_delete_user_me_as_superuser(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
-    r = client.delete(
-        f"{settings.API_V1_STR}/users/me",
-        headers=superuser_token_headers,
+    r = delete_account(
+        client, superuser_token_headers, settings.FIRST_SUPERUSER_PASSWORD
     )
     assert r.status_code == 403
     response = r.json()
@@ -286,18 +299,32 @@ def test_delete_user_me_as_superuser(
 
 
 def emailed_token(send: MagicMock) -> str:
-    match = re.search(r"\?token=([\w.-]+)", send.call_args.kwargs["html_content"])
-    assert match
-    return match.group(1)
+    for call in send.call_args_list:
+        match = re.search(r"\?token=([\w.-]+)", call.kwargs["html_content"])
+        if match:
+            return match.group(1)
+    raise AssertionError("no email carried a link")
+
+
+def sent_to(send: MagicMock, address: str) -> list[str]:
+    return [
+        call.kwargs["html_content"]
+        for call in send.call_args_list
+        if call.kwargs["email_to"] == address
+    ]
 
 
 def signup_token(email: str) -> str:
     return generate_email_token(
-        audience=SIGNUP_AUDIENCE, claims={"sub": email, "name": "New User"}
+        audience=SIGNUP_AUDIENCE,
+        claims={"sub": email, "name": "New User"},
+        expires_in=timedelta(hours=1),
     )
 
 
-def user_with_headers(client: TestClient, db: Session) -> tuple[User, dict[str, str]]:
+def user_with_headers(
+    client: TestClient, db: Session
+) -> tuple[User, dict[str, str], str]:
     password = random_lower_string()
     user = crud.create_user(
         session=db,
@@ -308,7 +335,7 @@ def user_with_headers(client: TestClient, db: Session) -> tuple[User, dict[str, 
     headers = user_authentication_headers(
         client=client, email=user.email, password=password
     )
-    return user, headers
+    return user, headers, password
 
 
 def test_update_user_me(
@@ -432,8 +459,11 @@ def test_a_signup_link_works_once(client: TestClient) -> None:
 
 
 def test_complete_signup_rejects_an_expired_token(client: TestClient) -> None:
-    with patch("app.core.config.settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS", -1):
-        token = signup_token(random_email())
+    token = generate_email_token(
+        audience=SIGNUP_AUDIENCE,
+        claims={"sub": random_email(), "name": "New User"},
+        expires_in=timedelta(seconds=-1),
+    )
     r = client.post(
         f"{settings.API_V1_STR}/users/signup/complete",
         json={"token": token, "new_password": random_lower_string()},
@@ -458,8 +488,9 @@ def test_complete_signup_rejects_tokens_made_for_another_purpose(
         generate_email_token(
             audience=EMAIL_CHANGE_AUDIENCE,
             claims={"sub": email, "name": "New User"},
+            expires_in=timedelta(hours=1),
         ),
-        create_access_token(email, expires_delta=timedelta(minutes=5)),
+        create_access_token(email, expires_delta=timedelta(minutes=5), token_version=0),
     ]
     for token in tokens:
         r = client.post(
@@ -486,9 +517,20 @@ def test_a_signup_token_cannot_reset_a_password_or_authenticate(
     assert me.status_code == 401
 
 
+def request_email_change(
+    client: TestClient, headers: dict[str, str], email: str, password: str
+) -> httpx.Response:
+    return client.post(
+        f"{settings.API_V1_STR}/users/me/email",
+        headers=headers,
+        json={"email": email, "current_password": password},
+    )
+
+
 def test_email_change_request_requires_authentication(client: TestClient) -> None:
     r = client.post(
-        f"{settings.API_V1_STR}/users/me/email", json={"email": random_email()}
+        f"{settings.API_V1_STR}/users/me/email",
+        json={"email": random_email(), "current_password": "x"},
     )
     assert r.status_code == 401
 
@@ -496,46 +538,61 @@ def test_email_change_request_requires_authentication(client: TestClient) -> Non
 def test_email_change_emails_a_link_to_the_new_address(
     client: TestClient, db: Session
 ) -> None:
-    user, headers = user_with_headers(client, db)
+    user, headers, password = user_with_headers(client, db)
     old_email = user.email
     new_email = random_email()
     with patch("app.utils.send_email") as send:
-        r = client.post(
-            f"{settings.API_V1_STR}/users/me/email",
-            headers=headers,
-            json={"email": new_email},
-        )
+        r = request_email_change(client, headers, new_email, password)
     assert r.status_code == 200
-    send.assert_called_once()
-    assert send.call_args.kwargs["email_to"] == new_email
-    assert "/confirm-email?token=" in send.call_args.kwargs["html_content"]
+    (to_new,) = sent_to(send, new_email)
+    assert "/confirm-email?token=" in to_new
     db.refresh(user)
     assert user.email == old_email
+
+
+def test_email_change_requires_the_current_password(
+    client: TestClient, db: Session
+) -> None:
+    _, headers, _ = user_with_headers(client, db)
+    with patch("app.utils.send_email") as send:
+        r = request_email_change(client, headers, random_email(), "not-the-password")
+    assert r.status_code == 400
+    assert r.json() == {"detail": "Incorrect password"}
+    send.assert_not_called()
+
+
+def test_email_change_request_tells_the_current_address(
+    client: TestClient, db: Session
+) -> None:
+    user, headers, password = user_with_headers(client, db)
+    new_email = random_email()
+    with patch("app.utils.send_email") as send:
+        request_email_change(client, headers, new_email, password)
+    (notice,) = sent_to(send, user.email)
+    assert new_email in notice
+    assert "?token=" not in notice
 
 
 def test_email_change_answers_the_same_for_a_taken_address(
     client: TestClient, db: Session
 ) -> None:
-    _, headers = user_with_headers(client, db)
-    url = f"{settings.API_V1_STR}/users/me/email"
+    _, headers, password = user_with_headers(client, db)
+    free_address = random_email()
     with patch("app.utils.send_email") as send:
-        taken = client.post(
-            url, headers=headers, json={"email": settings.FIRST_SUPERUSER}
+        taken = request_email_change(
+            client, headers, settings.FIRST_SUPERUSER, password
         )
-        free = client.post(url, headers=headers, json={"email": random_email()})
+        free = request_email_change(client, headers, free_address, password)
     assert (taken.status_code, taken.json()) == (free.status_code, free.json())
-    send.assert_called_once()
+    assert sent_to(send, settings.FIRST_SUPERUSER) == []
+    assert len(sent_to(send, free_address)) == 1
 
 
 def test_confirming_an_email_change_applies_it(client: TestClient, db: Session) -> None:
-    _, headers = user_with_headers(client, db)
+    user, headers, password = user_with_headers(client, db)
     new_email = random_email()
     with patch("app.utils.send_email") as send:
-        client.post(
-            f"{settings.API_V1_STR}/users/me/email",
-            headers=headers,
-            json={"email": new_email},
-        )
+        request_email_change(client, headers, new_email, password)
 
     r = client.post(
         f"{settings.API_V1_STR}/users/confirm-email",
@@ -543,18 +600,39 @@ def test_confirming_an_email_change_applies_it(client: TestClient, db: Session) 
     )
 
     assert r.status_code == 200
-    me = client.get(f"{settings.API_V1_STR}/users/me", headers=headers)
+    renewed = user_authentication_headers(
+        client=client, email=new_email, password=password
+    )
+    me = client.get(f"{settings.API_V1_STR}/users/me", headers=renewed)
     assert me.json()["email"] == new_email
 
 
-def test_an_email_change_link_works_once(client: TestClient, db: Session) -> None:
-    _, headers = user_with_headers(client, db)
+def test_applying_an_email_change_signs_every_session_out_and_tells_the_old_address(
+    client: TestClient, db: Session
+) -> None:
+    user, headers, password = user_with_headers(client, db)
+    old_email = user.email
+    new_email = random_email()
     with patch("app.utils.send_email") as send:
+        request_email_change(client, headers, new_email, password)
         client.post(
-            f"{settings.API_V1_STR}/users/me/email",
-            headers=headers,
-            json={"email": random_email()},
+            f"{settings.API_V1_STR}/users/confirm-email",
+            json={"token": emailed_token(send)},
         )
+
+    assert (
+        client.get(f"{settings.API_V1_STR}/users/me", headers=headers).status_code
+        == 401
+    )
+    notices = sent_to(send, old_email)
+    assert len(notices) == 2
+    assert new_email in notices[-1]
+
+
+def test_an_email_change_link_works_once(client: TestClient, db: Session) -> None:
+    _, headers, password = user_with_headers(client, db)
+    with patch("app.utils.send_email") as send:
+        request_email_change(client, headers, random_email(), password)
     body = {"token": emailed_token(send)}
     url = f"{settings.API_V1_STR}/users/confirm-email"
 
@@ -565,15 +643,11 @@ def test_an_email_change_link_works_once(client: TestClient, db: Session) -> Non
 def test_an_email_change_fails_when_the_address_was_taken_meanwhile(
     client: TestClient, db: Session
 ) -> None:
-    user, headers = user_with_headers(client, db)
+    user, headers, password = user_with_headers(client, db)
     old_email = user.email
     new_email = random_email()
     with patch("app.utils.send_email") as send:
-        client.post(
-            f"{settings.API_V1_STR}/users/me/email",
-            headers=headers,
-            json={"email": new_email},
-        )
+        request_email_change(client, headers, new_email, password)
     crud.create_user(
         session=db,
         user_create=UserCreate(
@@ -603,3 +677,83 @@ def test_confirm_email_change_rejects_tokens_made_for_another_purpose(
             f"{settings.API_V1_STR}/users/confirm-email", json={"token": token}
         )
         assert r.status_code == 400
+
+
+def test_an_access_token_without_a_version_is_rejected(
+    client: TestClient, db: Session
+) -> None:
+    user, _, _ = user_with_headers(client, db)
+    token = jwt.encode(
+        {
+            "exp": datetime.now(UTC) + timedelta(hours=1),
+            "sub": str(user.id),
+            "aud": ACCESS_AUDIENCE,
+        },
+        settings.SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+    r = client.get(
+        f"{settings.API_V1_STR}/users/me", headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert r.status_code == 401
+
+
+def test_a_token_without_an_audience_is_rejected(
+    client: TestClient, db: Session
+) -> None:
+    user, _, _ = user_with_headers(client, db)
+    token = jwt.encode(
+        {
+            "exp": datetime.now(UTC) + timedelta(hours=1),
+            "sub": str(user.id),
+            "ver": user.token_version,
+        },
+        settings.SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+    r = client.get(
+        f"{settings.API_V1_STR}/users/me", headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert r.status_code == 401
+
+
+def test_a_password_reset_token_cannot_authenticate(client: TestClient) -> None:
+    token = generate_password_reset_token(
+        email=settings.FIRST_SUPERUSER, hashed_password="hash"
+    )
+
+    r = client.get(
+        f"{settings.API_V1_STR}/users/me", headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert r.status_code == 401
+
+
+def test_emails_are_stored_and_matched_in_lowercase(client: TestClient) -> None:
+    address = random_email()
+    mixed = address.upper()
+    password = random_lower_string()
+    r = client.post(
+        f"{settings.API_V1_STR}/users/signup/complete",
+        json={"token": signup_token(mixed), "new_password": password},
+    )
+    assert r.status_code == 201
+    assert r.json()["email"] == address
+
+    login = client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": mixed, "password": password},
+    )
+    assert login.status_code == 200
+    again = client.post(
+        f"{settings.API_V1_STR}/users/signup/complete",
+        json={"token": signup_token(address), "new_password": password},
+    )
+    assert again.status_code == 400
+    with patch("app.utils.send_email") as send:
+        client.post(f"{settings.API_V1_STR}/password-recovery", json={"email": mixed})
+    assert len(sent_to(send, address)) == 1

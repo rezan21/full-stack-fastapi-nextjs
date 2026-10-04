@@ -9,7 +9,7 @@ type ConfirmEmailProps = {
   username: string
   message: string
   link: string
-  valid_hours: string
+  valid_for: string
 }
 
 // Email address confirmation email.
@@ -18,7 +18,7 @@ export default function ConfirmEmail({
   username = "{{ username }}",
   message = "{{ message }}",
   link = "{{ link }}",
-  valid_hours = "{{ valid_hours }}",
+  valid_for = "{{ valid_for }}",
 }: ConfirmEmailProps) {
   return (
     <Layout
@@ -36,7 +36,7 @@ export default function ConfirmEmail({
         <Link href={link}>{link}</Link>
       </Text>
       <Text style={supportingTextStyle}>
-        This link will expire in {valid_hours} hours.
+        This link will expire in {valid_for}.
       </Text>
       <Text style={supportingTextStyle}>
         If you didn't request this, you can safely ignore this email.

@@ -28,7 +28,7 @@ To iterate on one side directly instead, run `uv run fastapi dev` (from `backend
 
 ## Configuration
 
-All settings live in `backend/.env`. Change `SECRET_KEY`, `FIRST_SUPERUSER_PASSWORD`, and `POSTGRES_PASSWORD` before deploying anywhere.
+All settings live in `backend/.env`. Change `SECRET_KEY` (at least 32 characters), `FIRST_SUPERUSER_PASSWORD`, and `POSTGRES_PASSWORD` before deploying anywhere; outside development a short or placeholder value stops the backend from starting. The API docs are served only in development.
 
 ## API contract
 
