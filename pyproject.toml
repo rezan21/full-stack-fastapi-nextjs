@@ -20,7 +20,7 @@ extend-exclude = [
     "frontend/bun.lock",
     "packages/react-email/bun.lock",
     "backend/htmlcov/",
-    "frontend/public/assets/images/",
+    "frontend/src/assets/images/",
 ]
 
 [tool.typos.default.extend-words]

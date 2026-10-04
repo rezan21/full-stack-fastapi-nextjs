@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "check:comments": "bun scripts/check-comments.ts",
+    "check:headers": "bun scripts/check-headers.ts",
     "lint": "biome check --write --error-on-warnings --no-errors-on-unmatched --files-ignore-unknown=true ./",
     "test": "playwright test",
     "test:unit": "bun test --coverage",

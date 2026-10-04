@@ -14,7 +14,7 @@ import { Main, type NavItem } from "./Main"
 import { User } from "./User"
 
 const navItems: NavItem[] = [
-  { icon: Home, title: "Dashboard", path: "/" },
+  { icon: Home, title: "Dashboard", path: "/dashboard" },
   { icon: Briefcase, title: "Items", path: "/items" },
   { icon: Blocks, title: "Showcase", path: "/showcase" },
 ]
@@ -24,7 +24,7 @@ export function AppSidebar({ user }: { user: UserPublic }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="px-4 py-6 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">
-        <Link href="/">
+        <Link href="/dashboard">
           <Logo variant="responsive" />
         </Link>
       </SidebarHeader>

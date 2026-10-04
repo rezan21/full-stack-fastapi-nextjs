@@ -26,7 +26,7 @@ function routesIn(dir: string, base = ""): string[] {
   })
 }
 
-const publicRoutes = [...routesIn(AUTH_DIR), "/confirm-email"]
+const publicRoutes = [...routesIn(AUTH_DIR), "/", "/confirm-email"]
 
 describe("proxy", () => {
   test("lets every page of the (auth) route group through without a session", () => {
@@ -37,7 +37,13 @@ describe("proxy", () => {
   })
 
   test("sends a visitor without a session to /login from any other path", () => {
-    for (const path of ["/", "/items", "/items/abc", "/settings", "/unknown"]) {
+    for (const path of [
+      "/dashboard",
+      "/items",
+      "/items/abc",
+      "/settings",
+      "/unknown",
+    ]) {
       const response = visit(path)
       expect(response.status).toBe(307)
       expect(response.headers.get("location")).toBe(`${ORIGIN}/login`)
@@ -45,7 +51,7 @@ describe("proxy", () => {
   })
 
   test("lets a visitor with a session cookie through everywhere", () => {
-    for (const path of ["/", "/items", "/settings", ...publicRoutes]) {
+    for (const path of ["/dashboard", "/items", "/settings", ...publicRoutes]) {
       expect(passesThrough(visit(path, "any-token"))).toBe(true)
     }
   })

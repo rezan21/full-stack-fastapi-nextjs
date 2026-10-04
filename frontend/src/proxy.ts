@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { SESSION_COOKIE } from "@/lib/config"
 
 const publicRoutes = [
+  "/",
   "/login",
   "/signup",
   "/signup/sent",
@@ -49,5 +50,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|assets|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 }

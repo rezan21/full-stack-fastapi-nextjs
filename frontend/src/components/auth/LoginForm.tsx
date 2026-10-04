@@ -35,7 +35,7 @@ export function LoginForm() {
       showErrorToast(res.error)
       return
     }
-    router.push("/")
+    router.push("/dashboard")
     router.refresh()
   }
 

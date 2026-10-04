@@ -1,28 +1,39 @@
-import Image from "next/image"
+import Image, { type StaticImageData } from "next/image"
+import iconLightMode from "@/assets/images/fastapi-icon.svg"
+import iconDarkMode from "@/assets/images/fastapi-icon-light.svg"
+import logoLightMode from "@/assets/images/fastapi-logo.svg"
+import logoDarkMode from "@/assets/images/fastapi-logo-light.svg"
 import { cn } from "@/lib/utils"
 
-const IMAGES = {
+type Mode = "light" | "dark"
+
+const IMAGES: Record<
+  "full" | "icon",
+  {
+    src: Record<Mode, StaticImageData>
+    width: number
+    height: number
+    className: string
+  }
+> = {
   full: {
-    src: {
-      light: "/assets/images/fastapi-logo.svg",
-      dark: "/assets/images/fastapi-logo-light.svg",
-    },
+    src: { light: logoLightMode, dark: logoDarkMode },
     width: 341,
     height: 64,
     className: "h-6 w-auto",
   },
   icon: {
-    src: {
-      light: "/assets/images/fastapi-icon.svg",
-      dark: "/assets/images/fastapi-icon-light.svg",
-    },
+    src: { light: iconLightMode, dark: iconDarkMode },
     width: 500,
     height: 500,
     className: "size-5",
   },
 }
 
-const MODE_CLASSES = { light: "dark:hidden", dark: "hidden dark:block" }
+const MODE_CLASSES: Record<Mode, string> = {
+  light: "dark:hidden",
+  dark: "hidden dark:block",
+}
 
 // Logo image in both color modes, of which the theme shows one.
 function LogoImage({

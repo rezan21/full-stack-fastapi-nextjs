@@ -32,10 +32,7 @@ export function Main({ items }: { items: NavItem[] }) {
       <SidebarGroupContent>
         <SidebarMenu className="gap-1">
           {items.map((item) => {
-            const isActive =
-              item.path === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.path)
+            const isActive = pathname.startsWith(item.path)
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton

@@ -60,7 +60,7 @@ Production runs behind Traefik with automatic HTTPS (Let's Encrypt) via `infra/d
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.deploy.yml up -d
 ```
 
-Behind a CDN or load balancer, set `TRUSTED_PROXIES` to its address ranges (comma-separated CIDRs) and `PROXY_HOPS` to the number of proxies in front of Traefik (1 for a single CDN). Traefik then takes the client address for the rate limit from `X-Forwarded-For`; without them it uses the connecting address, which behind a CDN is the CDN's. Let the origin accept connections from the CDN only, because a client that connects directly shares one rate-limit budget with every other direct client. Adminer is part of the dev stack only and is never deployed. Traefik sends HSTS on every HTTPS response.
+Adminer is part of the dev stack only and is never deployed. Traefik sends HSTS on every HTTPS response.
 
 Database migrations run automatically, in dev and in production alike: the `prestart` service runs `backend/scripts/prestart.sh` (wait for the database, `alembic upgrade head`, seed the first superuser), and the backend starts only after it succeeds. `up -d` replaces the running backend before the migration runs, so if a migration fails the backend stays down until you fix it. To keep the current version serving when a migration fails, run the migration first, so a failure stops the deploy before anything is replaced:
 
@@ -69,3 +69,11 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.deploy.yml ru
 ```
 
 Then run the `up -d` command above. In dev, run `./up.sh` again after adding a migration so the image is rebuilt with it.
+
+### Behind a CDN
+
+The stack works without one. If you add a CDN or load balancer, three things must hold, and `bun run check:headers` checks the second one:
+
+- **Client address.** Set `TRUSTED_PROXIES` to the CDN's published address ranges (comma-separated CIDRs) and `PROXY_HOPS` to the number of proxies in front of Traefik (1 for a single CDN). Traefik then takes the client address for the rate limit from `X-Forwarded-For`. Keep the ranges current: a request from an address that is not listed loses its forwarded address, and everyone arriving through that edge shares one rate-limit budget. Let the origin accept the CDN only, because a client that connects directly shares one budget with every other direct client. The per-account lockout does not depend on any of this.
+- **Caching.** Only static files are cacheable (they are hashed, so `immutable`). Every page is `no-store`, because it depends on the session cookie and carries a Content-Security-Policy nonce that is new for every response. Never turn on a "cache everything" rule for HTML: it would serve one visitor's page to another, with a nonce that does not match. Leave Next's `Cache-Control` headers alone, forward the `rsc` header and keep the query string in the cache key (Next's `_rsc` parameter).
+- **Check.** From `frontend/`, run `bun run check:headers https://your-domain`. It verifies that pages are `no-store` with their own nonce and that static files are `immutable`. CI runs the same check against every production build.

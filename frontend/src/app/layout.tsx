@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import { headers } from "next/headers"
 import type { ReactNode } from "react"
+import favicon from "@/assets/images/favicon.png"
 import { ThemeProvider } from "@/components/providers/ThemeProvider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -14,7 +15,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 export const metadata: Metadata = {
   title: "FastAPI Template",
   description: "Full Stack FastAPI Template",
-  icons: { icon: "/assets/images/favicon.png" },
+  icons: { icon: favicon.src },
 }
 
 // Root layout for every page.

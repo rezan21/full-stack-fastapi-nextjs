@@ -14,7 +14,7 @@ async function openAppearanceMenu(page: Page) {
 }
 
 test("Settings is reachable from the user menu", async ({ page }) => {
-  await page.goto("/")
+  await page.goto("/dashboard")
   await page.getByTestId("user-menu").click()
   await page.getByRole("menuitem", { name: "Settings" }).click()
 

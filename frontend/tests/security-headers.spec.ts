@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-const pages = ["/", "/items", "/settings", "/showcase"]
+const pages = ["/", "/dashboard", "/items", "/settings", "/showcase"]
 
 test("Responses carry the security headers", async ({ request }) => {
   const response = await request.get("/login")

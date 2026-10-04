@@ -31,3 +31,9 @@ jobs:
       - name: Type-check and build
         run: bun run build
         working-directory: frontend
+      - name: Check the headers of the production build
+        run: |
+          bun run start &
+          curl --silent --retry 30 --retry-delay 1 --retry-all-errors --output /dev/null http://localhost:3000/login
+          bun run check:headers
+        working-directory: frontend

@@ -15,7 +15,7 @@
       "!**/node_modules/**/*",
       "!**/src/components/ui/**/*",
       "!**/src/client/**/*",
-      "!**/public/assets/images/**/*",
+      "!**/src/assets/images/**/*",
       "!**/playwright-report",
       "!**/playwright.config.ts"
     ]
