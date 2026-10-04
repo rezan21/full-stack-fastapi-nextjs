@@ -54,7 +54,7 @@ The FastAPI and SQLModel packages ship agent skills. `backend/.agents/skills` an
 
 ## Deployment
 
-Production runs behind Traefik with automatic HTTPS (Let's Encrypt) via `infra/docker-compose.deploy.yml`. Set `DOMAIN` and the secrets as environment variables on the host, then:
+Production runs behind Traefik with automatic HTTPS (Let's Encrypt) via `infra/docker-compose.deploy.yml`. Set `DOMAIN` and the secrets as environment variables on the host (or pass a file with `--env-file`); `backend/.env.example` lists every setting, the deployment-only ones commented out. Then:
 
 ```bash
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.deploy.yml up -d

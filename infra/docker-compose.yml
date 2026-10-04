@@ -91,16 +91,14 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.services.backend.loadbalancer.server.port=8000
-      - traefik.http.routers.backend-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`))
-      - traefik.http.routers.backend-http.entrypoints=http
+      - traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`))
       - traefik.http.middlewares.auth-ratelimit.ratelimit.average=10
       - traefik.http.middlewares.auth-ratelimit.ratelimit.period=1m
       - traefik.http.middlewares.auth-ratelimit.ratelimit.burst=10
       - traefik.http.middlewares.auth-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6subnet=64
-      - traefik.http.routers.backend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`) || Path(`/api/v1/users/me/password`) || (Path(`/api/v1/users/me`) && Method(`DELETE`)))
-      - traefik.http.routers.backend-auth-http.entrypoints=http
-      - traefik.http.routers.backend-auth-http.middlewares=auth-ratelimit
-      - traefik.http.routers.backend-auth-http.priority=1000
+      - traefik.http.routers.backend-auth.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/users/me/email`) || PathPrefix(`/api/v1/users/confirm-email`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`) || Path(`/api/v1/users/me/password`) || (Path(`/api/v1/users/me`) && Method(`DELETE`)))
+      - traefik.http.routers.backend-auth.middlewares=auth-ratelimit
+      - traefik.http.routers.backend-auth.priority=1000
 
   frontend:
     image: frontend:latest
@@ -114,12 +112,10 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.services.frontend.loadbalancer.server.port=3000
-      - traefik.http.routers.frontend-http.rule=Host(`${DOMAIN:-localhost}`)
-      - traefik.http.routers.frontend-http.entrypoints=http
-      - traefik.http.routers.frontend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`) || Path(`/settings`))
-      - traefik.http.routers.frontend-auth-http.entrypoints=http
-      - traefik.http.routers.frontend-auth-http.middlewares=auth-ratelimit
-      - traefik.http.routers.frontend-auth-http.priority=1000
+      - traefik.http.routers.frontend.rule=Host(`${DOMAIN:-localhost}`)
+      - traefik.http.routers.frontend-auth.rule=Host(`${DOMAIN:-localhost}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/signup/complete`) || Path(`/confirm-email`) || Path(`/recover-password`) || Path(`/reset-password`) || Path(`/settings`))
+      - traefik.http.routers.frontend-auth.middlewares=auth-ratelimit
+      - traefik.http.routers.frontend-auth.priority=1000
 
 volumes:
   app-db-data:

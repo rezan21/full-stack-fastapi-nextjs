@@ -53,5 +53,5 @@ paths:
 
 ## Full-Stack
 
-- Share types (or a schema) between client and server; never redeclare shapes that can drift. API calls, types and field constraints come from the generated SDK in `frontend/src/client/` (`bash scripts/generate-client.sh`), called through `lib/api.ts`; never hand-write URLs, API types or copies of backend constraints.
+- Share types (or a schema) between client and server; never redeclare shapes that can drift. API calls and types come from the generated SDK in `frontend/src/client/` (`bash scripts/generate-client.sh`), called through `lib/api.ts`; never hand-write URLs or API types.
 - Keep types strict; avoid `any`/`unknown`/loose dictionaries at API boundaries.
