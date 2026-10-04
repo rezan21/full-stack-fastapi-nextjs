@@ -4,7 +4,7 @@ import * as z from 'zod';
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckErrors, UtilsHealthCheckResponses } from './types.gen';
 import { zItemsCreateItemBody, zItemsDeleteItemPath, zItemsReadItemPath, zItemsReadItemsQuery, zItemsUpdateItemBody, zItemsUpdateItemPath, zLoginLoginAccessTokenBody, zLoginRecoverPasswordBody, zLoginResetPasswordBody, zUsersRegisterUserBody, zUsersUpdatePasswordMeBody, zUsersUpdateUserMeBody } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
@@ -33,7 +33,7 @@ export const itemsReadItems = <ThrowOnError extends boolean = false>(options?: O
         query: zItemsReadItemsQuery.optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/items/',
+    url: '/api/v1/items',
     ...options
 });
 
@@ -49,7 +49,7 @@ export const itemsCreateItem = <ThrowOnError extends boolean = false>(options: O
         query: z.never().optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/items/',
+    url: '/api/v1/items',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ export const itemsReadItem = <ThrowOnError extends boolean = false>(options: Opt
  *
  * Update an item.
  */
-export const itemsUpdateItem = <ThrowOnError extends boolean = false>(options: Options<ItemsUpdateItemData, ThrowOnError>): RequestResult<ItemsUpdateItemResponses, ItemsUpdateItemErrors, ThrowOnError> => (options.client ?? client).put<ItemsUpdateItemResponses, ItemsUpdateItemErrors, ThrowOnError>({
+export const itemsUpdateItem = <ThrowOnError extends boolean = false>(options: Options<ItemsUpdateItemData, ThrowOnError>): RequestResult<ItemsUpdateItemResponses, ItemsUpdateItemErrors, ThrowOnError> => (options.client ?? client).patch<ItemsUpdateItemResponses, ItemsUpdateItemErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: zItemsUpdateItemBody,
         path: zItemsUpdateItemPath,
@@ -140,7 +140,7 @@ export const loginRecoverPassword = <ThrowOnError extends boolean = false>(optio
         path: z.never().optional(),
         query: z.never().optional()
     }).parseAsync(data),
-    url: '/api/v1/password-recovery/',
+    url: '/api/v1/password-recovery',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ export const loginResetPassword = <ThrowOnError extends boolean = false>(options
         path: z.never().optional(),
         query: z.never().optional()
     }).parseAsync(data),
-    url: '/api/v1/reset-password/',
+    url: '/api/v1/reset-password',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -260,13 +260,15 @@ export const usersRegisterUser = <ThrowOnError extends boolean = false>(options:
 
 /**
  * Health Check
+ *
+ * Report whether the API can serve requests.
  */
-export const utilsHealthCheck = <ThrowOnError extends boolean = false>(options?: Options<UtilsHealthCheckData, ThrowOnError>): RequestResult<UtilsHealthCheckResponses, unknown, ThrowOnError> => (options?.client ?? client).get<UtilsHealthCheckResponses, unknown, ThrowOnError>({
+export const utilsHealthCheck = <ThrowOnError extends boolean = false>(options?: Options<UtilsHealthCheckData, ThrowOnError>): RequestResult<UtilsHealthCheckResponses, UtilsHealthCheckErrors, ThrowOnError> => (options?.client ?? client).get<UtilsHealthCheckResponses, UtilsHealthCheckErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: z.never().optional(),
         path: z.never().optional(),
         query: z.never().optional()
     }).parseAsync(data),
-    url: '/api/v1/utils/health-check/',
+    url: '/api/v1/utils/health-check',
     ...options
 });

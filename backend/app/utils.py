@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -76,26 +77,36 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
     return EmailData(html_content=html_content, subject=subject)
 
 
-def generate_password_reset_token(email: str) -> str:
+def password_fingerprint(hashed_password: str) -> str:
+    """Return a short digest of a password hash."""
+    return hashlib.sha256(hashed_password.encode()).hexdigest()[:16]
+
+
+def generate_password_reset_token(email: str, hashed_password: str) -> str:
     """Create a password reset token for the email."""
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     now = datetime.now(UTC)
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
+        {
+            "exp": exp,
+            "nbf": now,
+            "sub": email,
+            "pwd": password_fingerprint(hashed_password),
+        },
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )
     return encoded_jwt
 
 
-def verify_password_reset_token(token: str) -> str | None:
-    """Return the email in a valid reset token, otherwise None."""
+def verify_password_reset_token(token: str) -> tuple[str, str] | None:
+    """Return the email and password fingerprint in a valid reset token, otherwise None."""
     try:
         decoded_token = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
-        return str(decoded_token["sub"])
-    except InvalidTokenError:
+        return str(decoded_token["sub"]), str(decoded_token["pwd"])
+    except InvalidTokenError, KeyError:
         return None

@@ -291,7 +291,7 @@ export type ItemsReadItemsData = {
          */
         limit?: number;
     };
-    url: '/api/v1/items/';
+    url: '/api/v1/items';
 };
 
 export type ItemsReadItemsErrors = {
@@ -324,7 +324,7 @@ export type ItemsCreateItemData = {
     body: ItemCreate;
     path?: never;
     query?: never;
-    url: '/api/v1/items/';
+    url: '/api/v1/items';
 };
 
 export type ItemsCreateItemErrors = {
@@ -512,7 +512,7 @@ export type LoginRecoverPasswordData = {
     body: PasswordRecovery;
     path?: never;
     query?: never;
-    url: '/api/v1/password-recovery/';
+    url: '/api/v1/password-recovery';
 };
 
 export type LoginRecoverPasswordErrors = {
@@ -537,7 +537,7 @@ export type LoginResetPasswordData = {
     body: NewPassword;
     path?: never;
     query?: never;
-    url: '/api/v1/reset-password/';
+    url: '/api/v1/reset-password';
 };
 
 export type LoginResetPasswordErrors = {
@@ -727,8 +727,17 @@ export type UtilsHealthCheckData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/utils/health-check/';
+    url: '/api/v1/utils/health-check';
 };
+
+export type UtilsHealthCheckErrors = {
+    /**
+     * Service Unavailable
+     */
+    503: HttpError;
+};
+
+export type UtilsHealthCheckError = UtilsHealthCheckErrors[keyof UtilsHealthCheckErrors];
 
 export type UtilsHealthCheckResponses = {
     /**

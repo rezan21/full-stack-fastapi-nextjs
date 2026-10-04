@@ -1,8 +1,10 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from sqlmodel import select
+from tenacity import RetryError, stop_after_attempt, wait_none
 
-from app.tests_pre_start import init, logger
+from app.tests_pre_start import init, logger, main
 
 
 def test_init_successful_connection() -> None:
@@ -31,3 +33,22 @@ def test_init_successful_connection() -> None:
         )
 
         session_mock.exec.assert_called_once_with(select1)
+
+
+def test_init_logs_and_gives_up_when_the_database_is_unreachable() -> None:
+    once = init.retry_with(stop=stop_after_attempt(1), wait=wait_none())
+    with (
+        patch("app.tests_pre_start.Session", side_effect=RuntimeError("down")),
+        patch.object(logger, "error") as log_error,
+        pytest.raises(RetryError),
+    ):
+        once(MagicMock())
+
+    log_error.assert_called_once()
+
+
+def test_main_waits_for_the_database() -> None:
+    with patch("app.tests_pre_start.init") as init_mock:
+        main()
+
+    init_mock.assert_called_once()

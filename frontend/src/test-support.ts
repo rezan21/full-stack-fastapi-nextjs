@@ -1,9 +1,45 @@
 import type { ItemPublic, UserPublic } from "@/client"
 import { client } from "@/client/client.gen"
+import { SESSION_COOKIE } from "@/lib/config"
 
 export const session: { token: string | undefined } = { token: "test-token" }
 
 export class NotFound extends Error {}
+
+export class Redirect extends Error {
+  constructor(readonly url: string) {
+    super(`redirect(${url})`)
+  }
+}
+
+export const cookieWrites: {
+  name: string
+  value: string
+  options: Record<string, unknown>
+}[] = []
+
+export const revalidated: [path: string, type: string | undefined][] = []
+
+export const cookieStore = {
+  get: (name: string) =>
+    name === SESSION_COOKIE && session.token
+      ? { name, value: session.token }
+      : undefined,
+  set: (name: string, value: string, options: Record<string, unknown>) => {
+    cookieWrites.push({ name, value, options })
+    session.token = value
+  },
+  delete: (name: string) => {
+    if (name === SESSION_COOKIE) session.token = undefined
+  },
+}
+
+// Resets the fake session and the recorded server effects.
+export function resetServer() {
+  session.token = "test-token"
+  cookieWrites.length = 0
+  revalidated.length = 0
+}
 
 export const ITEM = {
   id: "0f8fad5b-d9cb-469f-a165-70867728950e",

@@ -1,11 +1,13 @@
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
+import jwt
 from fastapi.testclient import TestClient
 from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.core.security import get_password_hash, verify_password
+from app.core.security import ALGORITHM, get_password_hash, verify_password
 from app.crud import create_user
 from app.models import User, UserCreate
 from app.utils import generate_password_reset_token
@@ -43,7 +45,7 @@ def test_recovery_password(
         patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
     ):
         r = client.post(
-            f"{settings.API_V1_STR}/password-recovery/",
+            f"{settings.API_V1_STR}/password-recovery",
             headers=normal_user_token_headers,
             json={"email": EMAIL_TEST_USER},
         )
@@ -58,7 +60,7 @@ def test_recovery_password_user_not_exits(
 ) -> None:
     email = "jVgQr@example.com"
     r = client.post(
-        f"{settings.API_V1_STR}/password-recovery/",
+        f"{settings.API_V1_STR}/password-recovery",
         headers=normal_user_token_headers,
         json={"email": email},
     )
@@ -70,7 +72,7 @@ def test_recovery_password_user_not_exits(
 
 def test_recovery_password_accepts_a_slash_in_the_address(client: TestClient) -> None:
     r = client.post(
-        f"{settings.API_V1_STR}/password-recovery/",
+        f"{settings.API_V1_STR}/password-recovery",
         json={"email": "first/last@example.com"},
     )
     assert r.status_code == 200
@@ -78,7 +80,7 @@ def test_recovery_password_accepts_a_slash_in_the_address(client: TestClient) ->
 
 def test_recovery_password_rejects_a_malformed_email(client: TestClient) -> None:
     for payload in ({"email": "not-an-email"}, {"email": ""}, {}):
-        r = client.post(f"{settings.API_V1_STR}/password-recovery/", json=payload)
+        r = client.post(f"{settings.API_V1_STR}/password-recovery", json=payload)
         assert r.status_code == 422
 
 
@@ -95,12 +97,14 @@ def test_reset_password(client: TestClient, db: Session) -> None:
         is_superuser=False,
     )
     user = create_user(session=db, user_create=user_create)
-    token = generate_password_reset_token(email=email)
+    token = generate_password_reset_token(
+        email=email, hashed_password=user.hashed_password
+    )
     headers = user_authentication_headers(client=client, email=email, password=password)
     data = {"new_password": new_password, "token": token}
 
     r = client.post(
-        f"{settings.API_V1_STR}/reset-password/",
+        f"{settings.API_V1_STR}/reset-password",
         headers=headers,
         json=data,
     )
@@ -113,12 +117,110 @@ def test_reset_password(client: TestClient, db: Session) -> None:
     assert verified
 
 
+def new_user_with_reset_token(db: Session) -> tuple[User, str]:
+    user = create_user(
+        session=db,
+        user_create=UserCreate(
+            email=random_email(),
+            full_name="Test User",
+            password=random_lower_string(),
+        ),
+    )
+    token = generate_password_reset_token(
+        email=user.email, hashed_password=user.hashed_password
+    )
+    return user, token
+
+
+def test_reset_password_token_works_only_once(client: TestClient, db: Session) -> None:
+    _, token = new_user_with_reset_token(db)
+    data = {"new_password": random_lower_string(), "token": token}
+
+    first = client.post(f"{settings.API_V1_STR}/reset-password", json=data)
+    second = client.post(f"{settings.API_V1_STR}/reset-password", json=data)
+
+    assert first.status_code == 200
+    assert second.status_code == 400
+    assert second.json() == {"detail": "Invalid token"}
+
+
+def test_reset_password_token_is_invalid_after_the_password_changes(
+    client: TestClient, db: Session
+) -> None:
+    user, token = new_user_with_reset_token(db)
+    user.hashed_password = get_password_hash(random_lower_string())
+    db.add(user)
+    db.commit()
+
+    r = client.post(
+        f"{settings.API_V1_STR}/reset-password",
+        json={"new_password": random_lower_string(), "token": token},
+    )
+
+    assert r.status_code == 400
+    assert r.json() == {"detail": "Invalid token"}
+
+
+def test_reset_password_token_without_a_fingerprint_is_invalid(
+    client: TestClient, db: Session
+) -> None:
+    user, _ = new_user_with_reset_token(db)
+    token = jwt.encode(
+        {"exp": datetime.now(UTC) + timedelta(hours=1), "sub": user.email},
+        settings.SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+    r = client.post(
+        f"{settings.API_V1_STR}/reset-password",
+        json={"new_password": random_lower_string(), "token": token},
+    )
+
+    assert r.status_code == 400
+    assert r.json() == {"detail": "Invalid token"}
+
+
+def test_login_inactive_user_is_rejected(client: TestClient, db: Session) -> None:
+    email, password = random_email(), random_lower_string()
+    create_user(
+        session=db,
+        user_create=UserCreate(
+            email=email, full_name="Test User", password=password, is_active=False
+        ),
+    )
+
+    r = client.post(
+        f"{settings.API_V1_STR}/login/access-token",
+        data={"username": email, "password": password},
+    )
+
+    assert r.status_code == 400
+    assert r.json() == {"detail": "Inactive user"}
+
+
+def test_reset_password_for_an_inactive_user_is_rejected(
+    client: TestClient, db: Session
+) -> None:
+    user, token = new_user_with_reset_token(db)
+    user.is_active = False
+    db.add(user)
+    db.commit()
+
+    r = client.post(
+        f"{settings.API_V1_STR}/reset-password",
+        json={"new_password": random_lower_string(), "token": token},
+    )
+
+    assert r.status_code == 400
+    assert r.json() == {"detail": "Inactive user"}
+
+
 def test_reset_password_invalid_token(
     client: TestClient, superuser_token_headers: dict[str, str]
 ) -> None:
     data = {"new_password": "changethis", "token": "invalid"}
     r = client.post(
-        f"{settings.API_V1_STR}/reset-password/",
+        f"{settings.API_V1_STR}/reset-password",
         headers=superuser_token_headers,
         json=data,
     )

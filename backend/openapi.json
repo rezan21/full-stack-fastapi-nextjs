@@ -458,7 +458,7 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/v1/items/": {
+    "/api/v1/items": {
       "get": {
         "description": "Retrieve items.",
         "operationId": "items-read_items",
@@ -753,7 +753,7 @@
           "items"
         ]
       },
-      "put": {
+      "patch": {
         "description": "Update an item.",
         "operationId": "items-update_item",
         "parameters": [
@@ -893,7 +893,7 @@
         ]
       }
     },
-    "/api/v1/password-recovery/": {
+    "/api/v1/password-recovery": {
       "post": {
         "description": "Password Recovery",
         "operationId": "login-recover_password",
@@ -935,7 +935,7 @@
         ]
       }
     },
-    "/api/v1/reset-password/": {
+    "/api/v1/reset-password": {
       "post": {
         "description": "Reset password",
         "operationId": "login-reset_password",
@@ -1276,8 +1276,9 @@
         ]
       }
     },
-    "/api/v1/utils/health-check/": {
+    "/api/v1/utils/health-check": {
       "get": {
+        "description": "Report whether the API can serve requests.",
         "operationId": "utils-health_check",
         "responses": {
           "200": {
@@ -1290,6 +1291,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
           }
         },
         "summary": "Health Check",

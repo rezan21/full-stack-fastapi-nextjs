@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test"
+import { beforeEach, describe, expect, test } from "bun:test"
 import { API_URL, ITEMS_PAGE_SIZE } from "@/lib/config"
-import { ITEM, stubFetch } from "@/test-support"
+import { ITEM, resetServer, stubFetch } from "@/test-support"
 
 const {
   ApiError,
@@ -20,6 +20,8 @@ const {
 } = await import("@/lib/api")
 
 const ITEM_ID = ITEM.id
+
+beforeEach(resetServer)
 
 async function failureOf(call: Promise<unknown>) {
   return call.then(
@@ -43,7 +45,7 @@ describe("requests", () => {
     expect(requests).toHaveLength(1)
     expect(requests[0].method).toBe("GET")
     expect(requests[0].url).toBe(
-      `${API_URL}/api/v1/items/?skip=0&limit=${ITEMS_PAGE_SIZE}`,
+      `${API_URL}/api/v1/items?skip=0&limit=${ITEMS_PAGE_SIZE}`,
     )
   })
 
@@ -51,7 +53,7 @@ describe("requests", () => {
     const requests = stubFetch(() => Response.json({ data: [], count: 0 }))
     await getItems(3)
     expect(requests[0].url).toBe(
-      `${API_URL}/api/v1/items/?skip=${2 * ITEMS_PAGE_SIZE}&limit=${ITEMS_PAGE_SIZE}`,
+      `${API_URL}/api/v1/items?skip=${2 * ITEMS_PAGE_SIZE}&limit=${ITEMS_PAGE_SIZE}`,
     )
   })
 
@@ -69,7 +71,7 @@ describe("requests", () => {
   test("send the recovery address in the body, not the path", async () => {
     const requests = stubFetch(() => Response.json({ message: "sent" }))
     await recoverPassword({ email: "user@example.com" })
-    expect(requests[0].url).toBe(`${API_URL}/api/v1/password-recovery/`)
+    expect(requests[0].url).toBe(`${API_URL}/api/v1/password-recovery`)
     expect(JSON.parse(requests[0].body)).toEqual({
       email: "user@example.com",
     })
@@ -133,12 +135,12 @@ describe("operations", () => {
       "resetPassword",
       () => resetPassword("a-token", "password123"),
       "POST",
-      "/reset-password/",
+      "/reset-password",
     ],
     [
       "updateItem",
       () => updateItem(ITEM_ID, { title: "New title" }),
-      "PUT",
+      "PATCH",
       `/items/${ITEM_ID}`,
     ],
     ["deleteItem", () => deleteItem(ITEM_ID), "DELETE", `/items/${ITEM_ID}`],

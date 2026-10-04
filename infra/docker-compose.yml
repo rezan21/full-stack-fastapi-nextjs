@@ -73,7 +73,7 @@ services:
       prestart:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -82,6 +82,13 @@ services:
       - traefik.http.services.backend.loadbalancer.server.port=8000
       - traefik.http.routers.backend-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`))
       - traefik.http.routers.backend-http.entrypoints=http
+      - traefik.http.middlewares.auth-ratelimit.ratelimit.average=10
+      - traefik.http.middlewares.auth-ratelimit.ratelimit.period=1m
+      - traefik.http.middlewares.auth-ratelimit.ratelimit.burst=10
+      - traefik.http.routers.backend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api/v1/login/access-token`) || PathPrefix(`/api/v1/users/signup`) || PathPrefix(`/api/v1/password-recovery`) || PathPrefix(`/api/v1/reset-password`))
+      - traefik.http.routers.backend-auth-http.entrypoints=http
+      - traefik.http.routers.backend-auth-http.middlewares=auth-ratelimit
+      - traefik.http.routers.backend-auth-http.priority=1000
 
   frontend:
     image: frontend:latest
@@ -97,6 +104,10 @@ services:
       - traefik.http.services.frontend.loadbalancer.server.port=3000
       - traefik.http.routers.frontend-http.rule=Host(`${DOMAIN:-localhost}`)
       - traefik.http.routers.frontend-http.entrypoints=http
+      - traefik.http.routers.frontend-auth-http.rule=Host(`${DOMAIN:-localhost}`) && Method(`POST`) && (Path(`/login`) || Path(`/signup`) || Path(`/recover-password`) || Path(`/reset-password`))
+      - traefik.http.routers.frontend-auth-http.entrypoints=http
+      - traefik.http.routers.frontend-auth-http.middlewares=auth-ratelimit
+      - traefik.http.routers.frontend-auth-http.priority=1000
 
 volumes:
   app-db-data:

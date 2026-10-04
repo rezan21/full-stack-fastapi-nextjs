@@ -1,3 +1,4 @@
+import hmac
 from datetime import timedelta
 from typing import Annotated
 
@@ -12,6 +13,7 @@ from app.models import Message, NewPassword, PasswordRecovery, Token
 from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
+    password_fingerprint,
     send_email,
     verify_password_reset_token,
 )
@@ -40,13 +42,15 @@ def login_access_token(
     )
 
 
-@router.post("/password-recovery/")
+@router.post("/password-recovery")
 def recover_password(body: PasswordRecovery, session: SessionDep) -> Message:
     """Password Recovery"""
     user = crud.get_user_by_email(session=session, email=body.email)
 
     if user:
-        password_reset_token = generate_password_reset_token(email=body.email)
+        password_reset_token = generate_password_reset_token(
+            email=body.email, hashed_password=user.hashed_password
+        )
         email_data = generate_reset_password_email(
             email_to=user.email, email=body.email, token=password_reset_token
         )
@@ -60,14 +64,17 @@ def recover_password(body: PasswordRecovery, session: SessionDep) -> Message:
     )
 
 
-@router.post("/reset-password/", responses=error_responses(400))
+@router.post("/reset-password", responses=error_responses(400))
 def reset_password(session: SessionDep, body: NewPassword) -> Message:
     """Reset password"""
-    email = verify_password_reset_token(token=body.token)
-    if not email:
+    claims = verify_password_reset_token(token=body.token)
+    if not claims:
         raise HTTPException(status_code=400, detail="Invalid token")
+    email, fingerprint = claims
     user = crud.get_user_by_email(session=session, email=email)
-    if not user:
+    if not user or not hmac.compare_digest(
+        password_fingerprint(user.hashed_password), fingerprint
+    ):
         raise HTTPException(status_code=400, detail="Invalid token")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

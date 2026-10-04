@@ -12,7 +12,7 @@ router = APIRouter(prefix="/items", tags=["items"], responses=AUTH_ERRORS)
 MAX_PAGE_SIZE = 100
 
 
-@router.get("/", response_model=ItemsPublic)
+@router.get("", response_model=ItemsPublic)
 def read_items(
     session: SessionDep,
     current_user: CurrentUser,
@@ -59,7 +59,7 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
     return item
 
 
-@router.post("/", response_model=ItemPublic, status_code=201)
+@router.post("", response_model=ItemPublic, status_code=201)
 def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> Any:
@@ -71,7 +71,7 @@ def create_item(
     return item
 
 
-@router.put("/{id}", response_model=ItemPublic, responses=error_responses(404))
+@router.patch("/{id}", response_model=ItemPublic, responses=error_responses(404))
 def update_item(
     *,
     session: SessionDep,
