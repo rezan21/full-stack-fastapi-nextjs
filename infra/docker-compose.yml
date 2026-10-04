@@ -1,5 +1,7 @@
 name: full-stack-fastapi-nextjs
 
+x-postgres-image: &postgres-image postgres:18
+
 x-backend: &backend
   image: backend:latest
   build:
@@ -34,7 +36,7 @@ services:
       - --log
 
   db:
-    image: postgres:18
+    image: *postgres-image
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d app"]
       interval: 10s
@@ -48,7 +50,7 @@ services:
       - POSTGRES_DB=app
 
   dbsetup:
-    image: postgres:18
+    image: *postgres-image
     depends_on:
       db:
         condition: service_healthy

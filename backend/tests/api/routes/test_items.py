@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
@@ -6,6 +7,8 @@ from sqlmodel import Session, select
 from app.core.config import settings
 from app.models import Item
 from tests.utils.item import create_random_item
+from tests.utils.user import create_random_user
+from tests.utils.utils import random_lower_string
 
 
 def test_create_item(
@@ -93,6 +96,48 @@ def test_read_item_not_enough_permissions(
     assert response.status_code == 403
     content = response.json()
     assert content["detail"] == "Not enough permissions"
+
+
+def create_tied_items(db: Session, owner_id: uuid.UUID, count: int) -> list[str]:
+    created_at = datetime.now(UTC)
+    items = [
+        Item(title=random_lower_string(), owner_id=owner_id, created_at=created_at)
+        for _ in range(count)
+    ]
+    db.add_all(items)
+    db.commit()
+    return sorted(str(item.id) for item in items)
+
+
+def test_read_items_orders_items_created_at_the_same_moment_by_id(
+    client: TestClient, normal_user_token_headers: dict[str, str], db: Session
+) -> None:
+    me = client.get(
+        f"{settings.API_V1_STR}/users/me", headers=normal_user_token_headers
+    ).json()
+    tied = create_tied_items(db, uuid.UUID(me["id"]), 5)
+    url = f"{settings.API_V1_STR}/items"
+
+    listed: list[str] = []
+    while page := client.get(
+        f"{url}?skip={len(listed)}&limit=2", headers=normal_user_token_headers
+    ).json()["data"]:
+        listed += [item["id"] for item in page]
+
+    assert len(listed) == len(set(listed))
+    assert [item_id for item_id in listed if item_id in tied] == tied
+
+
+def test_superuser_items_created_at_the_same_moment_are_ordered_by_id(
+    client: TestClient, superuser_token_headers: dict[str, str], db: Session
+) -> None:
+    tied = create_tied_items(db, create_random_user(db).id, 5)
+
+    listed = client.get(
+        f"{settings.API_V1_STR}/items?limit=100", headers=superuser_token_headers
+    ).json()["data"]
+
+    assert [item["id"] for item in listed if item["id"] in tied] == tied
 
 
 def test_read_items_only_lists_the_users_own_items(
