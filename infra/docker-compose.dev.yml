@@ -3,8 +3,8 @@ services:
   proxy:
     image: traefik:3.6
     ports:
-      - "80:80"
-      - "8090:8080"
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:8090:8080"
     command:
       - --providers.docker
       - --providers.docker.exposedbydefault=false
@@ -14,12 +14,12 @@ services:
       - --api.insecure=true
   db:
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     command: postgres -c log_min_messages=warning
 
   adminer:
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
   prestart:
     environment:
@@ -27,7 +27,7 @@ services:
 
   backend:
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -78,13 +78,13 @@ services:
         - action: rebuild
           path: ../frontend/bun.lock
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
   mailpit:
     image: axllent/mailpit
     ports:
-      - "8025:8025"
-      - "1025:1025"
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
     environment:
       MP_QUIET: "true"
 
@@ -112,4 +112,4 @@ services:
       - ../frontend/blob-report:/app/blob-report
       - ../frontend/test-results:/app/test-results
     ports:
-      - 9323:9323
+      - "127.0.0.1:9323:9323"
