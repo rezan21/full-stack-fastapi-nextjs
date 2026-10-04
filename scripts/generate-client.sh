@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Regenerates the OpenAPI spec and the API client.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

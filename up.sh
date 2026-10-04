@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Starts the development stack.
 set -euo pipefail
 
 export COMPOSE_FILE=infra/docker-compose.yml:infra/docker-compose.dev.yml
@@ -18,6 +19,7 @@ trap 'echo; echo "🛑  Stopping stack..."; kill "${watch_pid:-}" 2>/dev/null ||
 superuser=$(grep -E '^FIRST_SUPERUSER=' backend/.env | cut -d= -f2-)
 password=$(grep -E '^FIRST_SUPERUSER_PASSWORD=' backend/.env | cut -d= -f2-)
 
+# Prints the URL a compose service is published on.
 svc_url() {
   local port
   port=$(docker compose port "$1" "$2" 2>/dev/null | tail -1)
@@ -31,7 +33,6 @@ pkill -f "compose watch" 2>/dev/null && sleep 1 || true
 docker compose down
 
 echo "🔨  Building images..."
-# Docker's build cache occasionally goes stale (dangling snapshot reference); retry once before failing.
 docker compose build --quiet || {
   echo "⚠️   Build failed, retrying once..."
   docker compose build --quiet

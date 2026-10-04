@@ -52,6 +52,8 @@ select = [
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
     "ARG001", # unused arguments in functions
+    "ERA001", # commented-out code
+    "D200",   # one-line docstring should fit on one line
     "T201",   # print statements are not allowed
 ]
 ignore = [

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Runs the backend tests.
 
 set -e
 set -x

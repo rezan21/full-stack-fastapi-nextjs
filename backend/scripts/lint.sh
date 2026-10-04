@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Lints and type-checks the backend.
 
 set -e
 set -x

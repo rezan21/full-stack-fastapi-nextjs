@@ -2,6 +2,8 @@
 paths:
   - "**/*.{tsx,css,ts,py}"
   - "**/Dockerfile*"
+  - "**/*.sh"
+  - ".pre-commit-config.yaml"
 ---
 
 ## Comments & Doc strings — default to none
@@ -23,13 +25,14 @@ Most comments mask a design problem. Before writing one, dissolve the need:
 | A comment added because a change was just made or a decision just taken (usage tips, pointers to a file you just created) | The change is the deliverable, not a reason to caption it — only comment if it independently meets one of the exceptions below |
 | A mechanism that feels complex enough to "deserve" explaining (a cache, an intercepting route) — the urge to write more grows exactly here | Resist harder, not less — one factual line or nothing; the complexity is a reason to trust names and types, not narrate around them |
 
-Default to **no comment**, with three narrow, mechanical exceptions:
+Default to **no comment**, with four narrow, mechanical exceptions:
 
-- A function or method may carry a single-line summary of what it does, directly above its signature; in Python the one-line docstring is that summary. Apply this consistently within a file: if most functions there already have one, an outlier without one is a gap, not restraint. Test functions need none: the test name is the summary.
+- A function or method may carry a single-line summary of what it does, directly above its signature; in Python the one-line docstring is that summary. Apply this consistently within a file: if most functions there already have one, an outlier without one is a gap, not restraint. Test functions need none: the test name is the summary. A script that is run directly (a shell script, or a file under a `scripts/` directory) carries a one-line summary of what it does at the top, after any shebang.
 - A Dockerfile build stage (`FROM ... AS <name>`) may carry a single-line comment describing that stage's purpose.
+- Each hook in `.pre-commit-config.yaml` carries a one-line comment saying what it does.
 - A function or render block long enough to have several distinct sections — logic or markup — may label each with one short comment (e.g. `// validate state`, `// upsert user`, `{/* playlists */}`) — a label, not a narration of what each line does.
 
-Nothing else gets a comment — no inline notes explaining individual statements, config values, or one-off lines of logic. Keep every comment to one concise line naming what the thing does; don't restate what a decent name or type already says, and don't reintroduce any of the smells above. This one-line cap applies to docstrings too (Python, JSDoc, etc.) — multi-line isn't exempt just because the syntax allows it.
+Nothing else gets a comment — no inline notes explaining individual statements, config values, or one-off lines of logic. Keep every comment to one concise line naming what the thing does; don't restate what a decent name or type already says, and don't reintroduce any of the smells above. This one-line cap applies to docstrings too (Python, JSDoc, etc.) — multi-line isn't exempt just because the syntax allows it. The `one-line comments` pre-commit hooks enforce the cap (Python, shell and Dockerfiles; TS, JS and CSS); tool directives such as `noqa`, `type: ignore` and `biome-ignore` are exempt.
 
 If explaining something properly would take more than two lines, that's not a cue to write a longer comment — it's a signal the implementation is the wrong one. Fix the design; don't caption it.
 
@@ -308,4 +311,22 @@ Do — delete the block:
 projects: [
   { name: 'setup', testMatch: /.*\.setup\.ts/ },
 ],
+```
+
+Don't — a script with no summary, and a note that only restates the flag:
+
+```sh
+#! /usr/bin/env sh
+
+# Exit in case of error
+set -e
+```
+
+Do — one line saying what the script does, after the shebang:
+
+```sh
+#! /usr/bin/env sh
+# Runs the backend tests against a disposable stack.
+
+set -e
 ```

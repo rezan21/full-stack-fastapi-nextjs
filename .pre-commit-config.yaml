@@ -2,24 +2,31 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
     hooks:
+      # Block accidentally committed large files
       - id: check-added-large-files
+      # Validate TOML syntax
       - id: check-toml
+      # Validate YAML syntax
       - id: check-yaml
         args:
           - --unsafe
+      # End every file with a single newline
       - id: end-of-file-fixer
         exclude: |
             (?x)^(
                 backend/app/email-templates/.*
             )$
+      # Trim trailing whitespace
       - id: trailing-whitespace
   - repo: https://github.com/crate-ci/typos
     rev: bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # frozen: v1.48.0
     hooks:
+      # Catch common spelling mistakes
       - id: typos
         args: [--force-exclude]
   - repo: local
     hooks:
+      # Lint and format the frontend
       - id: local-biome-check
         name: biome check
         entry: bash -c 'cd frontend && bun run lint'
@@ -27,6 +34,7 @@ repos:
         types: [text]
         files: ^frontend/
 
+      # Keep the generated API client in sync with the backend
       - id: local-api-client
         name: api client up to date
         entry: bash scripts/generate-client.sh
@@ -34,6 +42,7 @@ repos:
         pass_filenames: false
         files: ^(backend/app/|backend/openapi\.json|frontend/openapi-ts\.config\.ts|frontend/src/client/)
 
+      # Lint the backend
       - id: local-ruff-check
         name: ruff check
         entry: uv run --project backend ruff check --force-exclude --fix --exit-non-zero-on-fix
@@ -41,6 +50,7 @@ repos:
         language: unsupported
         types: [python]
 
+      # Format the backend
       - id: local-ruff-format
         name: ruff format
         entry: uv run --project backend ruff format --force-exclude --exit-non-zero-on-format
@@ -48,6 +58,7 @@ repos:
         language: unsupported
         types: [python]
 
+      # Type-check the backend
       - id: local-mypy
         name: mypy check
         entry: uv run --project backend mypy --config-file backend/pyproject.toml backend/app
@@ -55,6 +66,7 @@ repos:
         language: unsupported
         pass_filenames: false
 
+      # Second type-check of the backend
       - id: local-ty
         name: ty check
         entry: uv run --project backend ty check backend/app
@@ -62,9 +74,27 @@ repos:
         language: unsupported
         pass_filenames: false
 
+      # Check that the backend agent skills resolve
       - id: local-library-skills
         name: backend skills resolve
         entry: bash -c 'cd backend && uv run --project .. library-skills --check --claude'
         language: system
         pass_filenames: false
         files: ^backend/(\.agents/|\.claude/|pyproject\.toml|uv\.lock|\.python-version)
+
+      # Keep comments to one line in the frontend
+      - id: local-comments-frontend
+        name: one-line comments (frontend)
+        entry: bash -c 'cd frontend && bun run check:comments'
+        language: system
+        pass_filenames: false
+        files: ^(frontend|packages)/.*\.(ts|tsx|js|jsx|mjs|cjs|css)$
+
+      # Keep comments and docstrings to one line in Python, shell and Dockerfiles
+      - id: local-comments-backend
+        name: one-line comments (python, shell, docker)
+        entry: uv run --project backend python scripts/check_comments.py
+        require_serial: true
+        language: unsupported
+        pass_filenames: false
+        files: (\.(py|sh)|Dockerfile[^/]*)$
