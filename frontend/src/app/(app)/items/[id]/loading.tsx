@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
+// Loading state for the item page.
 export default function Loading() {
   return (
     <div className="flex flex-col gap-6">

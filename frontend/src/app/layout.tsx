@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   icons: { icon: "/assets/images/favicon.png" },
 }
 
+// Root layout for every page.
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>

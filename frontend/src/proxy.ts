@@ -8,6 +8,7 @@ const publicRoutes = [
   "/reset-password",
 ]
 
+// Guards the routes that require a session.
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublic = publicRoutes.includes(pathname)

@@ -17,6 +17,7 @@ type LayoutProps = React.PropsWithChildren & {
   preview?: string
 }
 
+// Base layout for the emails.
 export const Layout = ({
   project_name,
   title,

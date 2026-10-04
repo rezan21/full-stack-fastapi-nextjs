@@ -18,6 +18,7 @@ const navItems: NavItem[] = [
   { icon: Blocks, title: "Showcase", path: "/showcase" },
 ]
 
+// Application sidebar.
 export function AppSidebar({ user }: { user: UserPublic }) {
   return (
     <Sidebar collapsible="icon">

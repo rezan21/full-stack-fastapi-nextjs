@@ -1,5 +1,6 @@
 export { cn } from "cn"
 
+// Returns the initials for a name.
 export function getInitials(name: string): string {
   return name
     .split(" ")
@@ -9,6 +10,7 @@ export function getInitials(name: string): string {
     .toUpperCase()
 }
 
+// Formats a creation date as a label.
 export function formatCreated(createdAt?: string | null): string | undefined {
   if (!createdAt) return undefined
   const date = new Date(createdAt).toLocaleDateString("en-US", {

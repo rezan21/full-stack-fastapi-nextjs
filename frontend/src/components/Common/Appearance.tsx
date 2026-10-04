@@ -20,6 +20,7 @@ const ICON_MAP = {
   dark: Moon,
 } as const
 
+// Theme options.
 function ThemeItems() {
   const { setTheme } = useTheme()
 
@@ -47,6 +48,7 @@ function ThemeItems() {
   )
 }
 
+// Theme switcher submenu.
 export function AppearanceSubmenu() {
   const { theme } = useTheme()
   const Icon = ICON_MAP[theme as keyof typeof ICON_MAP] ?? Monitor
@@ -64,6 +66,7 @@ export function AppearanceSubmenu() {
   )
 }
 
+// Theme switcher.
 export function Appearance() {
   return (
     <div className="flex items-center justify-center">

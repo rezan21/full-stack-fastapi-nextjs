@@ -13,6 +13,7 @@ from tests.utils.utils import EMAIL_TEST_USER, get_superuser_token_headers
 
 @pytest.fixture(scope="session", autouse=True)
 def db() -> Generator[Session]:
+    """Provide the test database session."""
     with Session(engine) as session:
         init_db(session)
         yield session

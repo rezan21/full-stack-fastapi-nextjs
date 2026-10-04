@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 
+// Item description.
 export function ItemDescription({
   description,
 }: {

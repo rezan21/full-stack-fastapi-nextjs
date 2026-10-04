@@ -20,6 +20,7 @@ import { formError } from "@/lib/form-errors"
 
 type FormData = z.infer<typeof zPasswordRecovery>
 
+// Password recovery form.
 export function RecoverPasswordForm() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const form = useForm<FormData>({

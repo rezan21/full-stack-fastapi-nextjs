@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sidebar"
 import { getUser } from "@/lib/dal"
 
+// Layout for the main app pages.
 export default async function Layout({ children }: { children: ReactNode }) {
   const user = await getUser()
   if (!user) redirect("/login")

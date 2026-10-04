@@ -1,16 +1,9 @@
-"""make user full_name required
-
-Revision ID: a28bd8db53bb
-Revises: fe56fa70289e
-Create Date: 2026-10-03 11:12:44.481966
-
-"""
+"""make user full_name required"""
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 
 
-# revision identifiers, used by Alembic.
 revision = 'a28bd8db53bb'
 down_revision = 'fe56fa70289e'
 branch_labels = None

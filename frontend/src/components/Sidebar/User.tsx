@@ -23,6 +23,7 @@ import {
 import type { UserPublic } from "@/lib/api"
 import { getInitials } from "@/lib/utils"
 
+// User summary.
 function UserInfo({
   fullName,
   email,
@@ -43,6 +44,7 @@ function UserInfo({
   )
 }
 
+// Sidebar user menu.
 export function User({ user }: { user: UserPublic }) {
   const { isMobile, setOpenMobile } = useSidebar()
 
@@ -50,6 +52,7 @@ export function User({ user }: { user: UserPublic }) {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
+          {/* trigger */}
           <DropdownMenuTrigger
             render={
               <SidebarMenuButton
@@ -68,12 +71,14 @@ export function User({ user }: { user: UserPublic }) {
             align="end"
             sideOffset={4}
           >
+            {/* identity */}
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
                 <UserInfo fullName={user.full_name} email={user.email} />
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            {/* preferences */}
             <DropdownMenuGroup>
               <DropdownMenuItem
                 render={<Link href="/settings" />}
@@ -85,6 +90,7 @@ export function User({ user }: { user: UserPublic }) {
               <AppearanceSubmenu />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            {/* sign out */}
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => logout()}>
                 <LogOut />

@@ -21,7 +21,6 @@ def get_datetime_utc() -> datetime:
     return datetime.now(UTC)
 
 
-# Shared properties
 class UserBase(SQLModel):
     email: Email = Field(unique=True, index=True)
     is_active: bool = True
@@ -29,7 +28,6 @@ class UserBase(SQLModel):
     full_name: FullName
 
 
-# Properties to receive via API on creation
 class UserCreate(UserBase):
     password: Password
 
@@ -50,7 +48,6 @@ class UpdatePassword(SQLModel):
     new_password: Password
 
 
-# Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
@@ -61,30 +58,25 @@ class User(UserBase, table=True):
     items: list[Item] = Relationship(back_populates="owner", cascade_delete=True)
 
 
-# Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
     created_at: datetime | None = None
 
 
-# Shared properties
 class ItemBase(SQLModel):
     title: ItemTitle
     description: ItemDescription = None
 
 
-# Properties to receive on item creation
 class ItemCreate(ItemBase):
     pass
 
 
-# Properties to receive on item update
 class ItemUpdate(SQLModel):
     title: ItemTitle | MISSING = MISSING  # type: ignore[valid-type]
     description: ItemDescription | MISSING = MISSING  # type: ignore[valid-type]
 
 
-# Database model, database table inferred from class name
 class Item(ItemBase, table=True):
     __table_args__ = (Index("ix_item_owner_id_created_at", "owner_id", "created_at"),)
 
@@ -99,7 +91,6 @@ class Item(ItemBase, table=True):
     owner: User | None = Relationship(back_populates="items")
 
 
-# Properties to return via API, id is always required
 class ItemPublic(ItemBase):
     id: uuid.UUID
     owner_id: uuid.UUID
@@ -111,7 +102,6 @@ class ItemsPublic(SQLModel):
     count: int
 
 
-# Generic message
 class Message(SQLModel):
     message: str
 
@@ -120,14 +110,12 @@ class HTTPError(SQLModel):
     detail: str
 
 
-# JSON payload containing access token
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
 
 
-# Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
 

@@ -19,9 +19,7 @@ def read_items(
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = MAX_PAGE_SIZE,
 ) -> Any:
-    """
-    Retrieve items.
-    """
+    """Retrieve items."""
 
     if current_user.is_superuser:
         count_statement = select(func.count()).select_from(Item)
@@ -52,9 +50,7 @@ def read_items(
 
 @router.get("/{id}", response_model=ItemPublic, responses=error_responses(404))
 def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
-    """
-    Get item by ID.
-    """
+    """Get item by ID."""
     item = session.get(Item, id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -67,9 +63,7 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
 def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> Any:
-    """
-    Create new item.
-    """
+    """Create new item."""
     item = Item.model_validate(item_in, update={"owner_id": current_user.id})
     session.add(item)
     session.commit()
@@ -85,9 +79,7 @@ def update_item(
     id: uuid.UUID,
     item_in: ItemUpdate,
 ) -> Any:
-    """
-    Update an item.
-    """
+    """Update an item."""
     item = session.get(Item, id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -103,9 +95,7 @@ def update_item(
 
 @router.delete("/{id}", status_code=204, responses=error_responses(404))
 def delete_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> None:
-    """
-    Delete an item.
-    """
+    """Delete an item."""
     item = session.get(Item, id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")

@@ -24,10 +24,12 @@ const formSchema = zUserUpdateMe.required({ email: true, full_name: true })
 
 type FormData = z.infer<typeof formSchema>
 
+// Maps a user to the profile form values.
 function toFormData(user: UserPublic): FormData {
   return { full_name: user.full_name, email: user.email }
 }
 
+// Profile form.
 export function ProfileForm({ user }: { user: UserPublic }) {
   const [isEditing, setIsEditing] = useState(false)
   const { showSuccessToast, showErrorToast } = useCustomToast()

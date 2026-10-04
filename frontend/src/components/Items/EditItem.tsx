@@ -4,6 +4,7 @@ import { updateItem } from "@/actions/items"
 import type { ItemPublic } from "@/lib/api"
 import { ItemFormDialog } from "./ItemFormDialog"
 
+// Dialog for editing an item.
 export function EditItem({
   item,
   open,

@@ -11,6 +11,7 @@ import { formatCreated } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Item - FastAPI Template" }
 
+// Item details page.
 export default async function Page({
   params,
 }: {

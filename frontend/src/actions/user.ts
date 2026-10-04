@@ -12,6 +12,7 @@ import {
 } from "@/lib/api"
 import { deleteSession, getToken } from "@/lib/session"
 
+// Updates the current user's profile.
 export async function updateProfile(data: UserUpdateMe): Promise<ActionResult> {
   if (!(await getToken())) return { error: "Not authenticated" }
   try {
@@ -23,6 +24,7 @@ export async function updateProfile(data: UserUpdateMe): Promise<ActionResult> {
   return {}
 }
 
+// Changes the current user's password.
 export async function changePassword(
   data: UpdatePassword,
 ): Promise<ActionResult> {
@@ -35,6 +37,7 @@ export async function changePassword(
   }
 }
 
+// Deletes the current user's account.
 export async function deleteAccount(): Promise<ActionResult> {
   if (!(await getToken())) return { error: "Not authenticated" }
   try {

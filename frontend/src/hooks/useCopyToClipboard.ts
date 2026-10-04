@@ -4,6 +4,7 @@ type CopiedValue = string | null
 
 type CopyFn = (text: string) => Promise<boolean>
 
+// Copies text to the clipboard.
 export function useCopyToClipboard(): [CopiedValue, CopyFn] {
   const [copiedText, setCopiedText] = useState<CopiedValue>(null)
 

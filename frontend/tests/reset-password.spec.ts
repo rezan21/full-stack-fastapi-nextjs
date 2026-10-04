@@ -38,7 +38,6 @@ test("User can reset password successfully using the link", async ({
   const password = randomPassword()
   const newPassword = randomPassword()
 
-  // Sign up a new user
   await signUpNewUser(page, fullName, email, password)
 
   await page.goto("/recover-password")
@@ -55,7 +54,6 @@ test("User can reset password successfully using the link", async ({
   const resetUrl = emailHtml.match(/\/reset-password\?token=[^"]+/)?.[0]
   expect(resetUrl).toBeDefined()
 
-  // Set the new password and confirm it
   await page.goto(resetUrl!)
 
   await page.getByTestId("new-password-input").fill(newPassword)
@@ -63,7 +61,6 @@ test("User can reset password successfully using the link", async ({
   await page.getByRole("button", { name: "Reset Password" }).click()
   await expect(page.getByText("Password updated successfully")).toBeVisible()
 
-  // Check if the user is able to login with the new password
   await logInUser(page, email, newPassword)
 })
 
@@ -86,7 +83,6 @@ test("Weak new password validation", async ({ page, request }) => {
   const password = randomPassword()
   const weakPassword = "123"
 
-  // Sign up a new user
   await signUpNewUser(page, fullName, email, password)
 
   await page.goto("/recover-password")
@@ -102,7 +98,6 @@ test("Weak new password validation", async ({ page, request }) => {
   const resetUrl = emailHtml.match(/\/reset-password\?token=[^"]+/)?.[0]
   expect(resetUrl).toBeDefined()
 
-  // Set a weak new password
   await page.goto(resetUrl!)
   await page.getByTestId("new-password-input").fill(weakPassword)
   await page.getByTestId("confirm-password-input").fill(weakPassword)

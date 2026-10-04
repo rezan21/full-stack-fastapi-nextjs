@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 
+// Error fallback for pages.
 export default function ErrorBoundary({
   error,
   reset,

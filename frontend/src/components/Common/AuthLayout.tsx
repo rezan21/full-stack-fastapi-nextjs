@@ -6,6 +6,7 @@ interface AuthLayoutProps {
   children: React.ReactNode
 }
 
+// Layout for the authentication pages.
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">

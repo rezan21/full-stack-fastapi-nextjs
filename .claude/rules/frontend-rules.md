@@ -13,7 +13,6 @@ paths:
 - Deletion is valid: remove code the change makes obsolete, don't leave it "for safety."
 - No speculative abstraction; solve the problem in front of you, not a hypothetical future one.
 - Verify claims: run test/build/lint before saying something works.
-- Comments explain "why," never restate "what" the code already shows.
 
 ## Next.js
 

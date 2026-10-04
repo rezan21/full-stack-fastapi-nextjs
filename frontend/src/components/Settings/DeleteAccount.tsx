@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
 
+// Account deletion control.
 export function DeleteAccount() {
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()

@@ -23,6 +23,7 @@ interface LogoProps {
   asLink?: boolean
 }
 
+// Application logo.
 export function Logo({
   variant = "full",
   className,

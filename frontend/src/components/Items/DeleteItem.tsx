@@ -16,6 +16,7 @@ import {
 import { Spinner } from "@/components/ui/spinner"
 import useCustomToast from "@/hooks/useCustomToast"
 
+// Dialog for deleting an item.
 export function DeleteItem({
   id,
   open,

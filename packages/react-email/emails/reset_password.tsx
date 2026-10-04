@@ -11,6 +11,7 @@ type ResetPasswordProps = {
   valid_hours: string
 }
 
+// Password reset email.
 export default function ResetPassword({
   project_name = "{{ project_name }}",
   username = "{{ username }}",

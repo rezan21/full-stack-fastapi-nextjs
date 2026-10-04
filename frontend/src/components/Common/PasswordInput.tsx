@@ -9,6 +9,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 
+// Password field.
 export function PasswordInput(
   props: Omit<ComponentProps<typeof InputGroupInput>, "type">,
 ) {

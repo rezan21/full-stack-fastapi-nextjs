@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/pagination"
 import { itemsPageHref } from "@/lib/pagination"
 
+// Link to a page of items.
 function PageLink({
   page,
   label,
@@ -36,6 +37,7 @@ function PageLink({
   )
 }
 
+// Pagination for the items list.
 export function ItemsPagination({
   page,
   pages,

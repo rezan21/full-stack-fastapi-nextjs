@@ -27,6 +27,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>
 
+// Login form.
 export function LoginForm() {
   const router = useRouter()
   const { showErrorToast } = useCustomToast()

@@ -4,6 +4,7 @@ import { ItemSheet } from "@/components/Items/ItemSheet"
 import { loadItem } from "@/lib/dal"
 import { formatCreated } from "@/lib/utils"
 
+// Item details in a modal.
 export default async function Page({
   params,
 }: {

@@ -60,6 +60,7 @@ export class ApiError extends Error {
 
 type Result<T> = { data?: T; error?: unknown; response?: Response }
 
+// Extracts a message from an API error.
 function errorMessage(
   error: HttpError | HttpValidationError | string,
   response: Response,
@@ -71,6 +72,7 @@ function errorMessage(
   return error.detail?.[0]?.msg ?? (response.statusText || FALLBACK_ERROR)
 }
 
+// Returns a call's data, or throws an ApiError.
 async function unwrap<T>(call: Promise<Result<T>>): Promise<T> {
   const { data, error, response } = await call
   if (error === undefined) return data as T
@@ -110,6 +112,7 @@ export function getItem(id: string) {
   return unwrap(itemsReadItem({ path: { id } }))
 }
 
+// Fetches one page of items.
 export function getItems(page: number) {
   return unwrap(
     itemsReadItems({

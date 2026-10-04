@@ -82,7 +82,6 @@ def test_update_password_me(
     verified, _ = verify_password(new_password, user_db.hashed_password)
     assert verified
 
-    # Revert to the old password to keep consistency in test
     old_data = {
         "current_password": new_password,
         "new_password": settings.FIRST_SUPERUSER_PASSWORD,

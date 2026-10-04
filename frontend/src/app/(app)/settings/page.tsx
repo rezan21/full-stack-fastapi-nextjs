@@ -16,6 +16,7 @@ import { getUser } from "@/lib/dal"
 
 export const metadata: Metadata = { title: "Settings - FastAPI Template" }
 
+// Account settings page.
 export default async function Page() {
   const user = await getUser()
   if (!user) redirect("/login")

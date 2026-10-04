@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { ItemActionsMenu } from "./ItemActionsMenu"
 import { ITEM_COLUMNS, type ItemColumnId } from "./item-columns"
 
+// Copyable item id.
 function CopyId({ id }: { id: string }) {
   const [copiedText, copy] = useCopyToClipboard()
   const isCopied = copiedText === id
@@ -82,6 +83,7 @@ const columns = columnHelper.columns(
   ),
 )
 
+// Table of items.
 export function ItemsTable({ items }: { items: ItemPublic[] }) {
   const table = useTable({
     features,

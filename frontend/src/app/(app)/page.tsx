@@ -4,6 +4,7 @@ import { getUser } from "@/lib/dal"
 
 export const metadata: Metadata = { title: "Dashboard - FastAPI Template" }
 
+// Dashboard page.
 export default async function Page() {
   const user = await getUser()
 

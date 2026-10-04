@@ -1,14 +1,7 @@
-"""index items by owner and creation time
-
-Revision ID: 6b3f593b41ce
-Revises: a28bd8db53bb
-Create Date: 2026-10-04 00:12:01.482308
-
-"""
+"""index items by owner and creation time"""
 from alembic import op
 
 
-# revision identifiers, used by Alembic.
 revision = '6b3f593b41ce'
 down_revision = 'a28bd8db53bb'
 branch_labels = None

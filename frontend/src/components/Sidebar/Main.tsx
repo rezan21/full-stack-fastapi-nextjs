@@ -19,6 +19,7 @@ export type NavItem = {
   path: string
 }
 
+// Sidebar navigation.
 export function Main({ items }: { items: NavItem[] }) {
   const { isMobile, setOpenMobile } = useSidebar()
   const pathname = usePathname()

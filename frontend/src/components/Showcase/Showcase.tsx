@@ -202,6 +202,7 @@ const teamMembers = [
   { name: "Priya Nair", role: "QA Engineer", status: "Away" as const },
 ]
 
+// Showcase of the theme and components.
 export function Showcase() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const [sliderValue, setSliderValue] = useState([40])

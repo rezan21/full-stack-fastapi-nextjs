@@ -27,6 +27,7 @@ const formSchema = withPasswordConfirmation(
 
 type FormData = z.infer<typeof formSchema>
 
+// Password reset form.
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter()
   const { showSuccessToast, showErrorToast } = useCustomToast()

@@ -1,17 +1,10 @@
-"""Edit replace id integers in all models to use UUID instead
-
-Revision ID: d98dd8ec85a3
-Revises: 9c0a54914c78
-Create Date: 2024-07-19 04:08:04.000976
-
-"""
+"""Edit replace id integers in all models to use UUID instead"""
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 from sqlalchemy.dialects import postgresql
 
 
-# revision identifiers, used by Alembic.
 revision = 'd98dd8ec85a3'
 down_revision = '9c0a54914c78'
 branch_labels = None
@@ -55,13 +48,12 @@ def upgrade():
     op.create_foreign_key('item_owner_id_fkey', 'item', 'user', ['owner_id'], ['id'])
 
 def downgrade():
-    # Reverse the upgrade process
+    # Add the old integer columns
     op.add_column('user', sa.Column('old_id', sa.Integer, autoincrement=True))
     op.add_column('item', sa.Column('old_id', sa.Integer, autoincrement=True))
     op.add_column('item', sa.Column('old_owner_id', sa.Integer, nullable=True))
 
-    # Populate the old columns with default values
-    # Generate sequences for the integer IDs if not exist
+    # Generate sequences and populate the old columns
     op.execute('CREATE SEQUENCE IF NOT EXISTS user_id_seq AS INTEGER OWNED BY "user".old_id')
     op.execute('CREATE SEQUENCE IF NOT EXISTS item_id_seq AS INTEGER OWNED BY item.old_id')
 

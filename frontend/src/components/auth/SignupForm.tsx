@@ -25,6 +25,7 @@ const formSchema = withPasswordConfirmation(zUserRegister, "password")
 
 type FormData = z.infer<typeof formSchema>
 
+// Sign-up form.
 export function SignupForm() {
   const router = useRouter()
   const { showErrorToast } = useCustomToast()

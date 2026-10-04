@@ -16,6 +16,7 @@ import { EditItem } from "./EditItem"
 
 type ItemDialog = "edit" | "delete" | null
 
+// Actions menu for an item.
 export function ItemActionsMenu({
   item,
   redirectTo,

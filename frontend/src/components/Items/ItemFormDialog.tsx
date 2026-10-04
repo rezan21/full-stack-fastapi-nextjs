@@ -25,6 +25,7 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { formError } from "@/lib/form-errors"
 import { type ItemFormData, itemFormSchema } from "@/lib/schemas"
 
+// Dialog form for an item.
 export function ItemFormDialog({
   title,
   description,

@@ -19,6 +19,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
 
 
 def get_db() -> Generator[Session]:
+    """Yield a database session."""
     with Session(engine) as session:
         yield session
 
@@ -28,6 +29,7 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 
 def invalid_credentials() -> HTTPException:
+    """Build the error for unauthenticated requests."""
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -36,6 +38,7 @@ def invalid_credentials() -> HTTPException:
 
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
+    """Return the user the bearer token belongs to."""
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
@@ -57,6 +60,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def error_responses(*codes: int) -> dict[int | str, dict[str, Any]]:
+    """Build the documented error responses for the status codes."""
     return {code: {"model": HTTPError} for code in codes}
 
 

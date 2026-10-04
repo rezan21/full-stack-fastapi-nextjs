@@ -1,10 +1,12 @@
 import type { z } from "zod"
 
+// Turns a schema path into a field label.
 function fieldLabel(path: PropertyKey[] | undefined): string {
   const name = String(path?.at(-1) ?? "field").replaceAll("_", " ")
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
+// Maps validation issues to messages.
 export const formError: z.core.$ZodErrorMap = (issue) => {
   const field = fieldLabel(issue.path)
   if (issue.code === "too_small" && issue.origin === "string") {

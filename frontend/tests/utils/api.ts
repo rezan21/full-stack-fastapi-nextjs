@@ -8,6 +8,7 @@ import { API_URL } from "../../src/lib/config"
 
 client.setConfig({ baseUrl: API_URL })
 
+// Registers a user through the API.
 export async function createUser({
   email,
   password,
@@ -22,10 +23,12 @@ export async function createUser({
   return data
 }
 
+// Deletes an item as the token's user.
 export async function deleteItemAs(token: string, id: string) {
   await itemsDeleteItem({ path: { id }, auth: token, throwOnError: true })
 }
 
+// Creates items as the token's user.
 export async function createItemsAs(token: string, count: number) {
   for (let number = 1; number <= count; number++) {
     await itemsCreateItem({

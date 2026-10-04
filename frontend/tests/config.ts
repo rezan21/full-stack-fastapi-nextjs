@@ -7,6 +7,7 @@ const __dirname = path.dirname(__filename)
 
 dotenv.config({ path: path.join(__dirname, "../../backend/.env") })
 
+// Reads a required environment variable.
 function getEnvVar(name: string): string {
   const value = process.env[name]
   if (!value) {

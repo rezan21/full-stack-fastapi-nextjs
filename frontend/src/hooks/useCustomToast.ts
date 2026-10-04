@@ -1,5 +1,6 @@
 import { toast } from "sonner"
 
+// Provides toast helpers.
 export default function useCustomToast() {
   const showSuccessToast = (description: string) => {
     toast.success("Success!", { description })

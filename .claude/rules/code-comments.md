@@ -1,6 +1,7 @@
 ---
 paths:
   - "**/*.{tsx,css,ts,py}"
+  - "**/Dockerfile*"
 ---
 
 ## Comments & Doc strings — default to none
@@ -24,7 +25,7 @@ Most comments mask a design problem. Before writing one, dissolve the need:
 
 Default to **no comment**, with three narrow, mechanical exceptions:
 
-- A function or method may carry a single-line summary of what it does, directly above its signature. Apply this consistently within a file: if most functions there already have one, an outlier without one is a gap, not restraint.
+- A function or method may carry a single-line summary of what it does, directly above its signature; in Python the one-line docstring is that summary. Apply this consistently within a file: if most functions there already have one, an outlier without one is a gap, not restraint. Test functions need none: the test name is the summary.
 - A Dockerfile build stage (`FROM ... AS <name>`) may carry a single-line comment describing that stage's purpose.
 - A function or render block long enough to have several distinct sections — logic or markup — may label each with one short comment (e.g. `// validate state`, `// upsert user`, `{/* playlists */}`) — a label, not a narration of what each line does.
 
@@ -175,4 +176,136 @@ Do:
   {/* disconnect */}
   <DropdownMenuItem variant="destructive">...</DropdownMenuItem>
 </DropdownMenuContent>
+```
+
+Summaries name the role, not what is inside today. A field, mechanism, number or audience in the comment goes stale on a small change, and the comment must stay accurate when the code changes a little.
+
+Don't — names the fields the form has today:
+
+```tsx
+// Email and password sign-in form.
+export function LoginForm() { ... }
+```
+
+Do:
+
+```tsx
+// Login form.
+export function LoginForm() { ... }
+```
+
+Don't — describes what the page renders; it is wrong the day the page stops greeting:
+
+```tsx
+// Dashboard greeting.
+export default async function Page() { ... }
+```
+
+Do:
+
+```tsx
+// Dashboard page.
+export default async function Page() { ... }
+```
+
+Don't — hashing and rehash behavior are implementation details that change independently of the contract (the tuple is already in the type):
+
+```python
+def verify_password(plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
+    """Return whether the password matches, plus an upgraded hash when the stored one is outdated."""
+```
+
+Do:
+
+```python
+def verify_password(plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
+    """Verify a password against its stored hash."""
+```
+
+Don't — the comment is a guard for an invariant; nothing fails if it is deleted or ignored:
+
+```python
+if not db_user:
+    # Prevent timing attacks by running password verification even when user doesn't exist
+    verify_password(password, DUMMY_HASH)
+    return None
+```
+
+Do — drop the note and encode the invariant in a test:
+
+```python
+def test_authenticate_unknown_email_still_verifies_a_password_hash(db, monkeypatch) -> None:
+    ...
+    assert verified_hashes == [crud.DUMMY_HASH]
+```
+
+Don't — narrates each statement of a test; the names and assertions already say it:
+
+```python
+# Create a bcrypt hash directly (simulating legacy password)
+bcrypt_hash = BcryptHasher().hash(password)
+assert bcrypt_hash.startswith("$2")  # bcrypt hashes start with $2
+# Verify the hash was upgraded to argon2
+assert user.hashed_password.startswith("$argon2")
+```
+
+Do:
+
+```python
+bcrypt_hash = BcryptHasher().hash(password)
+assert bcrypt_hash.startswith("$2")
+assert user.hashed_password.startswith("$argon2")
+```
+
+Don't — a second line pointing at a URL that can move or die:
+
+```dockerfile
+# Install uv
+# Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+```
+
+Do:
+
+```dockerfile
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+```
+
+Don't — generated boilerplate that exceeds the one-line cap and repeats what the file already holds (`revision` and `down_revision` are right below it):
+
+```python
+"""Add created_at to User and Item
+
+Revision ID: fe56fa70289e
+Revises: 1a31ce608336
+Create Date: 2026-01-23 15:50:37.171462
+
+"""
+```
+
+Do:
+
+```python
+"""Add created_at to User and Item"""
+```
+
+Don't — commented-out code; version control already keeps it:
+
+```ts
+projects: [
+  { name: 'setup', testMatch: /.*\.setup\.ts/ },
+  // {
+  //   name: 'firefox',
+  //   use: { ...devices['Desktop Firefox'] },
+  // },
+],
+```
+
+Do — delete the block:
+
+```ts
+projects: [
+  { name: 'setup', testMatch: /.*\.setup\.ts/ },
+],
 ```

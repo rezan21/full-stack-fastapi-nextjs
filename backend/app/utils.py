@@ -23,6 +23,7 @@ class EmailData:
 
 
 def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
+    """Render an email template with the context."""
     template_str = (
         Path(__file__).parent / "email-templates" / template_name
     ).read_text()
@@ -36,8 +37,9 @@ def send_email(
     subject: str = "",
     html_content: str = "",
 ) -> None:
+    """Send an email."""
     assert settings.emails_enabled, "no provided configuration for email variables"
-    assert settings.EMAILS_FROM_EMAIL  # For type checker
+    assert settings.EMAILS_FROM_EMAIL
     message = emails.message.Message(
         subject=subject,
         html=html_content,
@@ -57,6 +59,7 @@ def send_email(
 
 
 def generate_reset_password_email(email_to: str, email: str, token: str) -> EmailData:
+    """Build the password recovery email."""
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Password recovery for user {email}"
     link = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
@@ -74,6 +77,7 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
 
 
 def generate_password_reset_token(email: str) -> str:
+    """Create a password reset token for the email."""
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     now = datetime.now(UTC)
     expires = now + delta
@@ -87,6 +91,7 @@ def generate_password_reset_token(email: str) -> str:
 
 
 def verify_password_reset_token(token: str) -> str | None:
+    """Return the email in a valid reset token, otherwise None."""
     try:
         decoded_token = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]

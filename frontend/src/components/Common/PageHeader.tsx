@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 
+// Page header.
 export function PageHeader({
   title,
   description,

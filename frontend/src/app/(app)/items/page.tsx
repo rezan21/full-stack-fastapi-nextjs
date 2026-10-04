@@ -18,6 +18,7 @@ import { itemsPageHref, pageCount, parsePage } from "@/lib/pagination"
 
 export const metadata: Metadata = { title: "Items - FastAPI Template" }
 
+// Items list page.
 export default async function Page({
   searchParams,
 }: {

@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# Dev server with hot reload; source is kept in sync via `docker compose watch`
+# Dev server with hot reload
 FROM oven/bun:1 AS dev
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1

@@ -30,6 +30,7 @@ export type RecordedRequest = {
   body: string
 }
 
+// Stubs the client's fetch and records its requests.
 export function stubFetch(reply: () => Response | Promise<Response>) {
   const requests: RecordedRequest[] = []
   const stub = async (input: RequestInfo | URL, init?: RequestInit) => {

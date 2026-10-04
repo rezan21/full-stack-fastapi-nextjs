@@ -22,6 +22,7 @@ const formSchema = withPasswordConfirmation(zUpdatePassword, "new_password")
 
 type FormData = z.infer<typeof formSchema>
 
+// Change password form.
 export function PasswordForm() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const form = useForm<FormData>({

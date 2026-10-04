@@ -11,6 +11,7 @@ import {
 } from "@/lib/api"
 import { getToken } from "@/lib/session"
 
+// Creates an item.
 export async function createItem(data: ItemCreate): Promise<ActionResult> {
   if (!(await getToken())) return { error: "Not authenticated" }
   try {
@@ -22,6 +23,7 @@ export async function createItem(data: ItemCreate): Promise<ActionResult> {
   }
 }
 
+// Updates an item.
 export async function updateItem(
   id: string,
   data: ItemUpdate,
@@ -36,6 +38,7 @@ export async function updateItem(
   }
 }
 
+// Deletes an item.
 export async function deleteItem(id: string): Promise<ActionResult> {
   if (!(await getToken())) return { error: "Not authenticated" }
   try {

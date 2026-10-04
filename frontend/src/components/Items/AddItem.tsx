@@ -6,6 +6,7 @@ import { createItem } from "@/actions/items"
 import { Button } from "@/components/ui/button"
 import { ItemFormDialog } from "./ItemFormDialog"
 
+// Control for adding an item.
 export function AddItem() {
   const [open, setOpen] = useState(false)
 

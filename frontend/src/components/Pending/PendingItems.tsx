@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+// Loading placeholder for the items table.
 const PendingItems = () => (
   <Table>
     <TableHeader>

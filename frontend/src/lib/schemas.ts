@@ -5,6 +5,7 @@ export const itemFormSchema = zItemCreate
 
 export type ItemFormData = z.infer<typeof itemFormSchema>
 
+// Adds a password confirmation check to a schema.
 export function withPasswordConfirmation<
   Shape extends z.core.$ZodShape,
   Field extends keyof Shape & string,

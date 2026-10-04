@@ -4,6 +4,7 @@ import { cache } from "react"
 import { ApiError, getCurrentUser, getItem, type UserPublic } from "@/lib/api"
 import { getToken } from "@/lib/session"
 
+// Returns the current user, or null when there is none.
 export const getUser = cache(async (): Promise<UserPublic | null> => {
   const token = await getToken()
   if (!token) return null
@@ -16,6 +17,7 @@ export const getUser = cache(async (): Promise<UserPublic | null> => {
 
 const NOT_FOUND_STATUSES = [403, 404, 422]
 
+// Loads an item, or renders not-found when it isn't available.
 export async function loadItem(id: string) {
   try {
     return await getItem(id)

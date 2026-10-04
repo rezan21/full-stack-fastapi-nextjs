@@ -12,6 +12,7 @@ import {
 } from "@/lib/api"
 import { createSession, deleteSession } from "@/lib/session"
 
+// Signs a user in.
 export async function login(
   username: string,
   password: string,
@@ -28,11 +29,13 @@ export async function login(
   }
 }
 
+// Signs the current user out.
 export async function logout(): Promise<void> {
   await deleteSession()
   redirect("/login")
 }
 
+// Registers a new user.
 export async function signup(data: UserRegister): Promise<ActionResult> {
   try {
     await registerUser(data)
@@ -42,6 +45,7 @@ export async function signup(data: UserRegister): Promise<ActionResult> {
   }
 }
 
+// Starts a password recovery.
 export async function recoverPassword(
   data: PasswordRecovery,
 ): Promise<ActionResult> {
@@ -53,6 +57,7 @@ export async function recoverPassword(
   }
 }
 
+// Completes a password reset.
 export async function resetPassword(
   token: string,
   newPassword: string,

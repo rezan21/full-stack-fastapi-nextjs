@@ -4,6 +4,7 @@ import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm"
 
 export const metadata: Metadata = { title: "Reset Password - FastAPI Template" }
 
+// Reset password page.
 export default async function Page({
   searchParams,
 }: {

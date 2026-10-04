@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 
+// Sheet for item details.
 export function ItemSheet({
   title,
   description,

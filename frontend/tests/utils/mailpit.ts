@@ -4,6 +4,7 @@ type EmailSummary = {
   ID: string
 }
 
+// Waits for an email matching the query and returns its HTML.
 export async function waitForEmailHtml({
   request,
   query,
