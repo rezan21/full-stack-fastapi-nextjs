@@ -34,6 +34,30 @@ repos:
         types: [text]
         files: ^frontend/
 
+      # Forbid raw Tailwind palette colors in app code
+      - id: local-no-raw-palette-colors
+        name: no raw palette colors
+        entry: '\b(?:bg|text|border|ring|fill|stroke|from|via|to|outline|divide|accent|caret|decoration|shadow|placeholder)-(?:(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}|white|black)\b'
+        language: pygrep
+        files: ^frontend/src/.*\.tsx?$
+        exclude: ^frontend/src/(components/ui|client)/
+
+      # Forbid space-x and space-y utilities in app code
+      - id: local-no-space-xy
+        name: no space-x or space-y
+        entry: '\bspace-[xy]-'
+        language: pygrep
+        files: ^frontend/src/.*\.tsx?$
+        exclude: ^frontend/src/(components/ui|client)/
+
+      # Forbid the Radix asChild prop in app code
+      - id: local-no-as-child
+        name: no asChild
+        entry: '\basChild\b'
+        language: pygrep
+        files: ^frontend/src/.*\.tsx?$
+        exclude: ^frontend/src/(components/ui|client)/
+
       # Keep the generated API client in sync with the backend
       - id: local-api-client
         name: api client up to date

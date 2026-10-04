@@ -1,6 +1,6 @@
 ---
 paths:
-  - "**/*.{tsx,css,ts,py}"
+  - "**/*.{ts,tsx,js,jsx,mjs,cjs,css,py}"
   - "**/Dockerfile*"
   - "**/*.sh"
   - ".pre-commit-config.yaml"
@@ -8,7 +8,7 @@ paths:
 
 ## Comments & Doc strings — default to none
 
-Default to no code comments or docstrings. The code itself should be readable.
+Default to no code comments or docstrings. The code itself should be readable. The vendored `frontend/src/components/ui/` and the generated `frontend/src/client/` are out of scope.
 Most comments mask a design problem. Before writing one, dissolve the need:
 
 <!-- prettier-ignore -->
