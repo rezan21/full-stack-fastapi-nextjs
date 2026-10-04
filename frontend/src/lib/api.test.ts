@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { API_URL } from "@/lib/config"
+import { API_URL, ITEMS_PAGE_SIZE } from "@/lib/config"
 import { ITEM, stubFetch } from "@/test-support"
 
 const {
@@ -33,16 +33,26 @@ async function failureOf(call: Promise<unknown>) {
 describe("requests", () => {
   test("send the session token as a bearer token", async () => {
     const requests = stubFetch(() => Response.json({ data: [], count: 0 }))
-    await getItems()
+    await getItems(1)
     expect(requests[0].authorization).toBe("Bearer test-token")
   })
 
-  test("list items with the backend's paging defaults", async () => {
+  test("list the first page of items", async () => {
     const requests = stubFetch(() => Response.json({ data: [], count: 0 }))
-    await getItems()
+    await getItems(1)
     expect(requests).toHaveLength(1)
     expect(requests[0].method).toBe("GET")
-    expect(requests[0].url).toBe(`${API_URL}/api/v1/items/`)
+    expect(requests[0].url).toBe(
+      `${API_URL}/api/v1/items/?skip=0&limit=${ITEMS_PAGE_SIZE}`,
+    )
+  })
+
+  test("skip the items on the earlier pages", async () => {
+    const requests = stubFetch(() => Response.json({ data: [], count: 0 }))
+    await getItems(3)
+    expect(requests[0].url).toBe(
+      `${API_URL}/api/v1/items/?skip=${2 * ITEMS_PAGE_SIZE}&limit=${ITEMS_PAGE_SIZE}`,
+    )
   })
 
   test("post a typed body as JSON", async () => {
@@ -199,7 +209,7 @@ describe("failures", () => {
 
   test("use a plain-text body as the message", async () => {
     stubFetch(() => new Response("upstream down", { status: 502 }))
-    expect(await failureOf(getItems())).toMatchObject({
+    expect(await failureOf(getItems(1))).toMatchObject({
       message: "upstream down",
       status: 502,
     })
@@ -210,11 +220,11 @@ describe("failures", () => {
       () =>
         new Response("", { status: 500, statusText: "Internal Server Error" }),
     )
-    expect(await failureOf(getItems())).toMatchObject({
+    expect(await failureOf(getItems(1))).toMatchObject({
       message: "Internal Server Error",
     })
     stubFetch(() => new Response("", { status: 500 }))
-    expect(await failureOf(getItems())).toMatchObject({
+    expect(await failureOf(getItems(1))).toMatchObject({
       message: "Something went wrong.",
     })
   })
@@ -223,7 +233,7 @@ describe("failures", () => {
     stubFetch(() => {
       throw new TypeError("fetch failed")
     })
-    const error = await failureOf(getItems())
+    const error = await failureOf(getItems(1))
     expect(error).toBeInstanceOf(TypeError)
     expect(error).not.toBeInstanceOf(ApiError)
   })

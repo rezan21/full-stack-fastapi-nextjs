@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
-import { SESSION_COOKIE } from "../src/lib/config"
-import { createUser, deleteItemAs } from "./utils/api"
+import { ITEMS_PAGE_SIZE } from "../src/lib/config"
+import { createItemsAs, createUser, deleteItemAs } from "./utils/api"
 import {
   randomEmail,
   randomItemDescription,
@@ -8,7 +8,7 @@ import {
   randomPassword,
 } from "./utils/random"
 import { typeInto } from "./utils/type"
-import { logInUser } from "./utils/user"
+import { logInUser, sessionToken } from "./utils/user"
 
 const sheet = (page: Page) => page.locator('[data-slot="sheet-content"]')
 
@@ -230,10 +230,10 @@ test.describe("Items management", () => {
       const href = (await page
         .getByRole("link", { name: itemTitle })
         .getAttribute("href")) as string
-      const token = (await page.context().cookies()).find(
-        (cookie) => cookie.name === SESSION_COOKIE,
-      )?.value as string
-      await deleteItemAs(token, href.split("/").pop() as string)
+      await deleteItemAs(
+        await sessionToken(page),
+        href.split("/").pop() as string,
+      )
 
       await page.getByRole("link", { name: itemTitle }).click()
 
@@ -282,5 +282,91 @@ test.describe("Items empty state", () => {
 
     await expect(page.getByText("You don't have any items yet")).toBeVisible()
     await expect(page.getByText("Add a new item to get started")).toBeVisible()
+  })
+})
+
+test.describe("Items paging", () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  async function signInWithItems(page: Page, count: number) {
+    const email = randomEmail()
+    const password = randomPassword()
+    await createUser({ email, password })
+    await logInUser(page, email, password)
+    await createItemsAs(await sessionToken(page), count)
+  }
+
+  const rows = (page: Page) => page.locator("tbody tr")
+
+  test("Pages through more items than fit on one page", async ({ page }) => {
+    await signInWithItems(page, ITEMS_PAGE_SIZE + 5)
+
+    await page.goto("/items")
+    await expect(rows(page)).toHaveCount(ITEMS_PAGE_SIZE)
+    await expect(page.getByText("Page 1 of 2")).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Go to previous page" }),
+    ).toBeDisabled()
+
+    await page.getByRole("button", { name: "Go to next page" }).click()
+    await expect(page).toHaveURL(/\/items\?page=2$/)
+    await expect(rows(page)).toHaveCount(5)
+    await expect(page.getByText("Page 2 of 2")).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Go to next page" }),
+    ).toBeDisabled()
+
+    await page.getByRole("button", { name: "Go to previous page" }).click()
+    await expect(page).toHaveURL(/\/items$/)
+    await expect(rows(page)).toHaveCount(ITEMS_PAGE_SIZE)
+  })
+
+  test("Sends a page past the end to the last page", async ({ page }) => {
+    await signInWithItems(page, ITEMS_PAGE_SIZE + 1)
+
+    await page.goto("/items?page=99")
+
+    await expect(page).toHaveURL(/\/items\?page=2$/)
+    await expect(rows(page)).toHaveCount(1)
+  })
+
+  test("Treats an unreadable page as the first", async ({ page }) => {
+    await signInWithItems(page, ITEMS_PAGE_SIZE + 1)
+
+    await page.goto("/items?page=abc")
+
+    await expect(rows(page)).toHaveCount(ITEMS_PAGE_SIZE)
+    await expect(page.getByText("Page 1 of 2")).toBeVisible()
+  })
+
+  test("Shows no pagination when everything fits on one page", async ({
+    page,
+  }) => {
+    await signInWithItems(page, 3)
+
+    await page.goto("/items")
+
+    await expect(rows(page)).toHaveCount(3)
+    await expect(
+      page.getByRole("navigation", { name: "pagination" }),
+    ).toHaveCount(0)
+  })
+
+  test("Deleting the only item on the last page shows the page before", async ({
+    page,
+  }) => {
+    await signInWithItems(page, ITEMS_PAGE_SIZE + 1)
+
+    await page.goto("/items?page=2")
+    const row = rows(page).filter({ hasText: "Item 1" })
+    await row.getByRole("button").last().click()
+    await page.getByRole("menuitem", { name: "Delete Item" }).click()
+    await page.getByRole("button", { name: "Delete" }).click()
+
+    await expect(page).toHaveURL(/\/items$/)
+    await expect(rows(page)).toHaveCount(ITEMS_PAGE_SIZE)
+    await expect(
+      page.getByRole("navigation", { name: "pagination" }),
+    ).toHaveCount(0)
   })
 })

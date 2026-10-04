@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test"
+import { SESSION_COOKIE } from "../../src/lib/config"
 
 export async function signUpNewUser(
   page: Page,
@@ -32,4 +33,10 @@ export async function logOutUser(page: Page) {
   await page.getByTestId("user-menu").click()
   await page.getByRole("menuitem", { name: "Log out" }).click()
   await page.goto("/login")
+}
+
+export async function sessionToken(page: Page) {
+  const cookies = await page.context().cookies()
+  return cookies.find((cookie) => cookie.name === SESSION_COOKIE)
+    ?.value as string
 }

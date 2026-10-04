@@ -27,7 +27,7 @@ import {
   usersUpdateUserMe,
 } from "@/client"
 import { client } from "@/client/client.gen"
-import { API_URL } from "@/lib/config"
+import { API_URL, ITEMS_PAGE_SIZE } from "@/lib/config"
 import { getToken } from "@/lib/session"
 
 export type {
@@ -110,8 +110,12 @@ export function getItem(id: string) {
   return unwrap(itemsReadItem({ path: { id } }))
 }
 
-export function getItems() {
-  return unwrap(itemsReadItems())
+export function getItems(page: number) {
+  return unwrap(
+    itemsReadItems({
+      query: { skip: (page - 1) * ITEMS_PAGE_SIZE, limit: ITEMS_PAGE_SIZE },
+    }),
+  )
 }
 
 export function createItem(body: ItemCreate) {

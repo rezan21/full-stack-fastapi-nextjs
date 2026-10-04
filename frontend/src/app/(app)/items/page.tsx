@@ -1,7 +1,9 @@
 import { Search } from "lucide-react"
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { AddItem } from "@/components/Items/AddItem"
+import { ItemsPagination } from "@/components/Items/ItemsPagination"
 import { ItemsTable } from "@/components/Items/ItemsTable"
 import {
   Empty,
@@ -11,11 +13,20 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { getItems } from "@/lib/api"
+import { ITEMS_PAGE_SIZE } from "@/lib/config"
+import { itemsPageHref, pageCount, parsePage } from "@/lib/pagination"
 
 export const metadata: Metadata = { title: "Items - FastAPI Template" }
 
-export default async function Page() {
-  const items = await getItems()
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string | string[] }>
+}) {
+  const page = parsePage((await searchParams).page)
+  const items = await getItems(page)
+  const pages = pageCount(items.count, ITEMS_PAGE_SIZE)
+  if (page > pages) redirect(itemsPageHref(pages))
 
   return (
     <div className="flex flex-col gap-6">
@@ -23,7 +34,7 @@ export default async function Page() {
         <AddItem />
       </PageHeader>
 
-      {items.data.length === 0 ? (
+      {items.count === 0 ? (
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -34,7 +45,10 @@ export default async function Page() {
           </EmptyHeader>
         </Empty>
       ) : (
-        <ItemsTable items={items.data} />
+        <>
+          <ItemsTable items={items.data} />
+          <ItemsPagination page={page} pages={pages} />
+        </>
       )}
     </div>
   )
