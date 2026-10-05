@@ -19,3 +19,11 @@ export function formatCreated(createdAt?: string | null): string | undefined {
   })
   return `Created ${date}`
 }
+
+// Formats the date of a conversation's last activity.
+export function formatActivity(updatedAt: string): string {
+  return new Date(updatedAt).toLocaleDateString("en-US", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  })
+}

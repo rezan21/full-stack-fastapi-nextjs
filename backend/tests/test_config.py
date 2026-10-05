@@ -58,3 +58,28 @@ def test_a_short_secret_key_is_rejected_outside_development() -> None:
 
 def test_a_long_secret_key_is_accepted_outside_development() -> None:
     assert settings_with(SECRET_KEY="a" * 32).SECRET_KEY == "a" * 32
+
+
+def test_the_openai_key_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    assert settings_with().OPENAI_API_KEY is None
+
+
+def test_an_empty_openai_key_counts_as_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "")
+
+    assert settings_with().OPENAI_API_KEY is None
+
+
+def test_the_openai_key_is_kept_out_of_reprs() -> None:
+    settings = settings_with(OPENAI_API_KEY="sk-a-key-nobody-should-see")
+
+    assert settings.OPENAI_API_KEY is not None
+    assert settings.OPENAI_API_KEY.get_secret_value() == "sk-a-key-nobody-should-see"
+    assert "sk-a-key-nobody-should-see" not in repr(settings)
+
+
+def test_the_chat_run_quota_must_be_positive() -> None:
+    with pytest.raises(ValidationError, match="CHAT_RUNS_PER_HOUR"):
+        settings_with(CHAT_RUNS_PER_HOUR="0")

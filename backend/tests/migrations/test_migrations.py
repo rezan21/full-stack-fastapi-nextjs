@@ -6,6 +6,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from dotenv import dotenv_values
+from langgraph.checkpoint.postgres import PostgresSaver
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
@@ -20,6 +21,9 @@ ITEM_INDEX = "ix_item_owner_id_created_at"
 TOKEN_VERSIONED = "be73c5442ef9"
 EMAILS_LOWERED = "9f3cbb8a0df2"
 CREATED_AT_REQUIRED = "165d280e56b9"
+AUTH_THROTTLED = "979b1f68212c"
+CHAT_ADDED = "ae666eac2868"
+CHAT_MESSAGE_ADDED = "c16abe1c9cbf"
 
 
 @pytest.fixture
@@ -265,3 +269,47 @@ def test_created_at_is_backfilled_and_required(migration_db: str) -> None:
     command.downgrade(config, EMAILS_LOWERED)
     for table in ("user", "item"):
         assert created_at_is_nullable(migration_db, table)
+
+
+def table_names(url: str) -> set[str]:
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        names = set(
+            connection.execute(
+                text("select tablename from pg_tables where schemaname = 'public'")
+            ).scalars()
+        )
+    engine.dispose()
+    return names
+
+
+def test_chat_tables_are_created_and_dropped(migration_db: str) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, CHAT_ADDED)
+    assert {"conversation", "chat_usage"} <= table_names(migration_db)
+
+    command.downgrade(config, AUTH_THROTTLED)
+    assert not {"conversation", "chat_usage"} & table_names(migration_db)
+
+
+def test_the_tables_the_chat_checkpointer_manages_are_left_alone(
+    migration_db: str,
+) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, "head")
+    conninfo = migration_db.replace("postgresql+psycopg://", "postgresql://", 1)
+    with PostgresSaver.from_conn_string(conninfo) as saver:
+        saver.setup()
+    assert "checkpoints" in table_names(migration_db)
+
+    command.check(config)
+
+
+def test_the_chat_message_table_is_created_and_dropped(migration_db: str) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, CHAT_MESSAGE_ADDED)
+    assert "chat_message" in table_names(migration_db)
+
+    command.downgrade(config, CHAT_ADDED)
+    assert "chat_message" not in table_names(migration_db)
+    assert "conversation" in table_names(migration_db)

@@ -3,13 +3,14 @@ from math import ceil
 from typing import Annotated, Any
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlmodel import Session
 
 from app.core import security, throttle
+from app.core.chat import Chat
 from app.core.config import settings
 from app.core.db import engine
 from app.models import HTTPError, TokenPayload, User
@@ -26,7 +27,14 @@ def get_db() -> Generator[Session]:
         yield session
 
 
+def get_chat(request: Request) -> Chat:
+    """Return the chat the app opened at startup."""
+    chat: Chat = request.app.state.chat
+    return chat
+
+
 SessionDep = Annotated[Session, Depends(get_db)]
+ChatDep = Annotated[Chat, Depends(get_chat)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 

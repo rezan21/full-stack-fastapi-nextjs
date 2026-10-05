@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { readdirSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { NextRequest } from "next/server"
-import { SESSION_COOKIE } from "@/lib/config"
+import { CHAT_RUN_URL, SESSION_COOKIE } from "@/lib/config"
 import { config, proxy } from "@/proxy"
 
 const ORIGIN = "http://localhost:3000"
@@ -37,6 +37,13 @@ describe("proxy", () => {
       expect(covered(path), path).toBe(false)
     }
     for (const path of ["/login", "/dashboard", "/no-such-page"]) {
+      expect(covered(path), path).toBe(true)
+    }
+  })
+
+  test("leaves the chat stream to its own session check, and nothing else under it", () => {
+    expect(covered(CHAT_RUN_URL)).toBe(false)
+    for (const path of ["/chat", "/chat/abc", `${CHAT_RUN_URL}-history`]) {
       expect(covered(path), path).toBe(true)
     }
   })

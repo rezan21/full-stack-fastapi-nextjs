@@ -1,6 +1,6 @@
 "use client"
 
-import { Blocks, Briefcase, Home } from "lucide-react"
+import { Blocks, Briefcase, Home, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/common/Logo"
 import {
@@ -16,6 +16,7 @@ import { User } from "./User"
 const navItems: NavItem[] = [
   { icon: Home, title: "Dashboard", path: "/dashboard" },
   { icon: Briefcase, title: "Items", path: "/items" },
+  { icon: MessageSquare, title: "AI Chat", path: "/chat" },
   { icon: Blocks, title: "Showcase", path: "/showcase" },
 ]
 

@@ -1,8 +1,18 @@
 import { beforeEach, describe, expect, test } from "bun:test"
-import { ITEM, NotFound, session, stubFetch, USER } from "@/test-support"
+import {
+  CHAT_MESSAGES,
+  CONVERSATION,
+  ITEM,
+  NotFound,
+  session,
+  stubFetch,
+  USER,
+} from "@/test-support"
 
 const { ApiError } = await import("@/lib/api")
-const { getUser, loadItem } = await import("@/lib/dal")
+const { getUser, loadConversation, loadItem, loadMessages } = await import(
+  "@/lib/dal"
+)
 
 const ITEM_ID = ITEM.id
 
@@ -59,6 +69,56 @@ describe("getUser", () => {
     stubFetch(() => Response.json({ detail: "boom" }, { status: 500 }))
     const error = await getUser().catch((e: unknown) => e)
     expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 500 })
+  })
+})
+
+describe("loadConversation", () => {
+  test("returns the conversation", async () => {
+    stubFetch(() => Response.json(CONVERSATION))
+    expect(await loadConversation(CONVERSATION.id)).toEqual(CONVERSATION)
+  })
+
+  for (const status of [403, 404, 422]) {
+    test(`shows not found for a ${status}`, async () => {
+      stubFetch(() => Response.json({ detail: "nope" }, { status }))
+      await expect(loadConversation(CONVERSATION.id)).rejects.toBeInstanceOf(
+        NotFound,
+      )
+    })
+  }
+
+  test("shows not found for an id that is not a UUID", async () => {
+    const requests = stubFetch(() => Response.json({}))
+    await expect(loadConversation("not-a-uuid")).rejects.toBeInstanceOf(
+      NotFound,
+    )
+    expect(requests).toHaveLength(0)
+  })
+
+  test("rethrows any other failure", async () => {
+    stubFetch(() => Response.json({ detail: "boom" }, { status: 500 }))
+    const error = await loadConversation(CONVERSATION.id).catch(
+      (e: unknown) => e,
+    )
+    expect(error).toMatchObject({ status: 500 })
+  })
+})
+
+describe("loadMessages", () => {
+  test("returns the transcript", async () => {
+    stubFetch(() => Response.json(CHAT_MESSAGES))
+    expect(await loadMessages(CONVERSATION.id)).toEqual(CHAT_MESSAGES)
+  })
+
+  test("shows not found for a conversation that is not the user's", async () => {
+    stubFetch(() => Response.json({ detail: "nope" }, { status: 404 }))
+    await expect(loadMessages(CONVERSATION.id)).rejects.toBeInstanceOf(NotFound)
+  })
+
+  test("rethrows any other failure", async () => {
+    stubFetch(() => Response.json({ detail: "boom" }, { status: 500 }))
+    const error = await loadMessages(CONVERSATION.id).catch((e: unknown) => e)
     expect(error).toMatchObject({ status: 500 })
   })
 })

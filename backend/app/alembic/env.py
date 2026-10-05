@@ -13,6 +13,19 @@ from app.core.config import settings # noqa
 
 target_metadata = SQLModel.metadata
 
+CHECKPOINT_TABLES = {
+    "checkpoints",
+    "checkpoint_blobs",
+    "checkpoint_writes",
+    "checkpoint_migrations",
+}
+
+
+def include_object(object, name, type_, reflected, compare_to):
+    """Leave the tables the chat checkpointer manages out of autogenerate."""
+    table = object if type_ == "table" else getattr(object, "table", None)
+    return getattr(table, "name", None) not in CHECKPOINT_TABLES
+
 
 def get_url():
     """Return the configured database URL."""
@@ -23,7 +36,11 @@ def run_migrations_offline():
     """Run migrations in 'offline' mode."""
     url = get_url()
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True, compare_type=True
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        compare_type=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -43,7 +60,10 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata, compare_type=True
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

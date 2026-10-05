@@ -10,6 +10,59 @@ export const zAccountDeletion = z.object({
 });
 
 /**
+ * ChatMessagePublic
+ */
+export const zChatMessagePublic = z.object({
+    content: z.string(),
+    created_at: z.iso.datetime(),
+    id: z.uuid(),
+    role: z.enum(['user', 'assistant'])
+});
+
+/**
+ * ChatMessagesPublic
+ */
+export const zChatMessagesPublic = z.object({
+    count: z.int(),
+    data: z.array(zChatMessagePublic)
+});
+
+/**
+ * ChatRunMessage
+ */
+export const zChatRunMessage = z.object({
+    content: z.unknown().optional(),
+    role: z.string()
+});
+
+/**
+ * ChatRun
+ */
+export const zChatRun = z.object({
+    messages: z.array(zChatRunMessage),
+    runId: z.string(),
+    threadId: z.string()
+});
+
+/**
+ * ConversationPublic
+ */
+export const zConversationPublic = z.object({
+    created_at: z.iso.datetime(),
+    id: z.uuid(),
+    title: z.string().nullable(),
+    updated_at: z.iso.datetime()
+});
+
+/**
+ * ConversationsPublic
+ */
+export const zConversationsPublic = z.object({
+    count: z.int(),
+    data: z.array(zConversationPublic)
+});
+
+/**
  * Credentials
  */
 export const zCredentials = z.object({
@@ -156,6 +209,25 @@ export const zValidationError = z.object({
  */
 export const zHttpValidationError = z.object({
     detail: z.array(zValidationError).optional()
+});
+
+export const zChatRunChatBody = zChatRun;
+
+export const zChatReadConversationsQuery = z.object({
+    skip: z.int().gte(0).optional().default(0),
+    limit: z.int().gte(1).lte(100).optional().default(100)
+});
+
+export const zChatReadConversationPath = z.object({
+    id: z.uuid()
+});
+
+export const zChatReadMessagesPath = z.object({
+    id: z.uuid()
+});
+
+export const zChatReadMessagesQuery = z.object({
+    limit: z.int().gte(1).lte(500).optional().default(100)
 });
 
 export const zItemsReadItemsQuery = z.object({

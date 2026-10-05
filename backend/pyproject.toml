@@ -11,12 +11,16 @@ dependencies = [
     "emails>=1.1.2,<2.0",
     "jinja2<4.0.0,>=3.1.4",
     "alembic<2.0.0,>=1.12.1",
-    "psycopg[binary]>=3.3.4,<4.0.0",
+    "psycopg[binary,pool]>=3.3.4,<4.0.0",
     "sqlmodel>=0.0.39,<1.0.0",
     "pydantic-settings<3.0.0,>=2.2.1",
     "sentry-sdk[fastapi]>=2.66.1,<3.0.0",
     "pyjwt<3.0.0,>=2.13.0",
     "pwdlib[argon2,bcrypt]>=0.3.0",
+    "deepagents>=0.7.21,<1.0.0",
+    "ag-ui-langgraph>=0.0.46,<0.1.0",
+    "langgraph-checkpoint-postgres>=3.1.2,<4.0.0",
+    "langchain-openai>=1.6.7,<2.0.0",
 ]
 
 [dependency-groups]
@@ -37,6 +41,10 @@ build-backend = "hatchling.build"
 [tool.mypy]
 strict = true
 exclude = ["venv", ".venv", "alembic"]
+
+[[tool.mypy.overrides]]
+module = ["ag_ui_langgraph"]
+ignore_missing_imports = true
 
 [tool.ruff]
 target-version = "py314"

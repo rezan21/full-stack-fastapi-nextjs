@@ -1,20 +1,25 @@
 from typing import Any
 
+from anyio import from_thread
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from sqlalchemy.exc import IntegrityError
+from sqlmodel import col, select
 
 from app import crud
 from app.api.deps import (
     AUTH_ERRORS,
+    ChatDep,
     CurrentUser,
     SessionDep,
     error_responses,
     require_current_password,
 )
 from app.core import security
+from app.core.chat import delete_threads
 from app.core.security import get_password_hash
 from app.models import (
     AccountDeletion,
+    Conversation,
     EmailChange,
     EmailChangeConfirm,
     Message,
@@ -172,7 +177,7 @@ def update_password_me(
     "/me", status_code=204, responses={**AUTH_ERRORS, **error_responses(400, 429)}
 )
 def delete_user_me(
-    session: SessionDep, body: AccountDeletion, current_user: CurrentUser
+    session: SessionDep, body: AccountDeletion, current_user: CurrentUser, chat: ChatDep
 ) -> None:
     """Delete own user."""
     require_current_password(session, current_user, body.current_password)
@@ -180,5 +185,9 @@ def delete_user_me(
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
+    conversation_ids = session.exec(
+        select(Conversation.id).where(col(Conversation.owner_id) == current_user.id)
+    ).all()
+    from_thread.run(delete_threads, chat.checkpointer, conversation_ids)
     session.delete(current_user)
     session.commit()

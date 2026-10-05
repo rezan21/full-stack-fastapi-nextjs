@@ -24,7 +24,13 @@ PASSWORD_RESET_AUDIENCE = "password-reset"
 SIGNUP_AUDIENCE = "signup"
 EMAIL_CHANGE_AUDIENCE = "email-change"
 SMTP_TIMEOUT_SECONDS = 10
-SECRET_FIELDS = ["new_password", "current_password", "access_token"]
+SECRET_FIELDS = [
+    "new_password",
+    "current_password",
+    "access_token",
+    "messages",
+    "content",
+]
 
 
 @dataclass

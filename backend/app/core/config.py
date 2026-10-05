@@ -2,8 +2,10 @@ import warnings
 from typing import Literal, Self
 
 from pydantic import (
+    Field,
     HttpUrl,
     PostgresDsn,
+    SecretStr,
     computed_field,
     field_validator,
     model_validator,
@@ -60,6 +62,10 @@ class Settings(BaseSettings):
     SIGNUP_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     AUTH_MAX_FAILURES: int = 5
     AUTH_LOCK_MINUTES: int = 15
+
+    OPENAI_API_KEY: SecretStr | None = None
+    CHAT_MODEL: str = "gpt-5.4-mini"
+    CHAT_RUNS_PER_HOUR: int = Field(default=30, gt=0)
 
     @computed_field  # type: ignore[prop-decorator]
     @property

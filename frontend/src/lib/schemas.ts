@@ -1,7 +1,27 @@
 import { z } from "zod"
-import { zItemCreate } from "@/client/zod.gen"
+import { zChatRun, zItemCreate } from "@/client/zod.gen"
+import { CHAT_MESSAGE_MAX_LENGTH } from "@/lib/config"
 
 export const itemFormSchema = zItemCreate
+
+const messageTooLong = `The message can be at most ${CHAT_MESSAGE_MAX_LENGTH} characters.`
+
+export const chatMessageSchema = z
+  .string()
+  .trim()
+  .max(CHAT_MESSAGE_MAX_LENGTH, { error: messageTooLong })
+  .min(1)
+
+export const chatRunSchema = zChatRun.refine(
+  (run) => {
+    const newest = run.messages.findLast((message) => message.role === "user")
+    return (
+      typeof newest?.content !== "string" ||
+      newest.content.length <= CHAT_MESSAGE_MAX_LENGTH
+    )
+  },
+  { error: messageTooLong, path: ["messages"] },
+)
 
 export type ItemFormData = z.infer<typeof itemFormSchema>
 

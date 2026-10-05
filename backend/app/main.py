@@ -4,6 +4,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
+from app.core.chat import chat_lifespan
 from app.core.config import settings
 from app.utils import event_scrubber
 
@@ -29,6 +30,7 @@ def build_app(*, docs: bool) -> FastAPI:
         docs_url="/docs" if docs else None,
         redoc_url="/redoc" if docs else None,
         generate_unique_id_function=custom_generate_unique_id,
+        lifespan=chat_lifespan,
     )
     app.add_middleware(
         CORSMiddleware,

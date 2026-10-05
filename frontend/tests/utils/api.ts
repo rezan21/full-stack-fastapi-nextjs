@@ -1,5 +1,6 @@
 import { request } from "@playwright/test"
 import {
+  chatCreateConversation,
   itemsCreateItem,
   itemsDeleteItem,
   usersCompleteSignup,
@@ -49,4 +50,13 @@ export async function createItemsAs(token: string, count: number) {
       throwOnError: true,
     })
   }
+}
+
+// Starts a conversation as the token's user and returns its id.
+export async function createConversationAs(token: string) {
+  const { data } = await chatCreateConversation({
+    auth: token,
+    throwOnError: true,
+  })
+  return data.id
 }

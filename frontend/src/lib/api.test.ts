@@ -1,15 +1,27 @@
 import { beforeEach, describe, expect, test } from "bun:test"
-import { API_URL, ITEMS_PAGE_SIZE } from "@/lib/config"
-import { ITEM, resetServer, stubFetch } from "@/test-support"
+import { client } from "@/client/client.gen"
+import { API_URL, CHAT_MESSAGE_MAX_LENGTH, ITEMS_PAGE_SIZE } from "@/lib/config"
+import {
+  CHAT_MESSAGES,
+  CONVERSATION,
+  ITEM,
+  resetServer,
+  stubFetch,
+} from "@/test-support"
 
 const {
   ApiError,
+  CHAT_RUN_PATH,
   changePassword,
   completeSignup,
   confirmEmailChange,
+  createConversation,
   createItem,
   deleteAccount,
   deleteItem,
+  getConversation,
+  getConversationMessages,
+  getConversations,
   getCurrentUser,
   getItem,
   getItems,
@@ -19,6 +31,7 @@ const {
   registerUser,
   requestEmailChange,
   resetPassword,
+  streamChat,
   updateItem,
   updateProfile,
 } = await import("@/lib/api")
@@ -293,5 +306,156 @@ describe("request validation", () => {
     const result = await itemsReadItems({ query: { limit: 101 } })
     expect(result.error).toBeDefined()
     expect(requests).toHaveLength(0)
+  })
+})
+
+const CHAT_BASE = `${API_URL}/api/v1/chat`
+
+describe("conversations", () => {
+  test("createConversation posts to the conversations", async () => {
+    const requests = stubFetch(() =>
+      Response.json(CONVERSATION, { status: 201 }),
+    )
+    expect(await createConversation()).toEqual(CONVERSATION)
+    expect(requests[0]).toMatchObject({
+      method: "POST",
+      url: `${CHAT_BASE}/conversations`,
+      authorization: "Bearer test-token",
+    })
+  })
+
+  test("getConversations lists them", async () => {
+    const requests = stubFetch(() =>
+      Response.json({ data: [CONVERSATION], count: 1 }),
+    )
+    expect(await getConversations()).toEqual({ data: [CONVERSATION], count: 1 })
+    expect(requests[0]).toMatchObject({
+      method: "GET",
+      url: `${CHAT_BASE}/conversations`,
+    })
+  })
+
+  test("getConversation reads one", async () => {
+    const requests = stubFetch(() => Response.json(CONVERSATION))
+    expect(await getConversation(CONVERSATION.id)).toEqual(CONVERSATION)
+    expect(requests[0].url).toBe(
+      `${CHAT_BASE}/conversations/${CONVERSATION.id}`,
+    )
+  })
+
+  test("getConversationMessages reads what was said", async () => {
+    const requests = stubFetch(() => Response.json(CHAT_MESSAGES))
+    expect(await getConversationMessages(CONVERSATION.id)).toEqual(
+      CHAT_MESSAGES,
+    )
+    expect(requests[0].url).toBe(
+      `${CHAT_BASE}/conversations/${CONVERSATION.id}/messages`,
+    )
+  })
+
+  test("an id that is not a UUID is refused without a request", async () => {
+    const requests = stubFetch(() => Response.json({}))
+    expect(await failureOf(getConversation("not-a-uuid"))).toMatchObject({
+      status: 422,
+    })
+    expect(requests).toHaveLength(0)
+  })
+
+  test("the API's reason for refusing is kept", async () => {
+    stubFetch(() =>
+      Response.json({ detail: "Conversation not found" }, { status: 404 }),
+    )
+    expect(await failureOf(getConversation(CONVERSATION.id))).toMatchObject({
+      status: 404,
+      message: "Conversation not found",
+    })
+  })
+})
+
+describe("streamChat", () => {
+  const body = {
+    threadId: CONVERSATION.id,
+    runId: "run-1",
+    messages: [{ role: "user", content: "Hello" }],
+  }
+  const events = 'data: {"type":"RUN_STARTED"}\n\n'
+
+  test("posts the run with the session token and hands back the stream untouched", async () => {
+    const requests = stubFetch(
+      () =>
+        new Response(events, {
+          headers: { "content-type": "text/event-stream" },
+        }),
+    )
+    const response = await streamChat(body, new AbortController().signal)
+    expect(requests[0]).toMatchObject({
+      method: "POST",
+      url: CHAT_BASE,
+      authorization: "Bearer test-token",
+    })
+    expect(requests[0].contentType).toContain("application/json")
+    expect(JSON.parse(requests[0].body)).toEqual(body)
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("text/event-stream")
+    expect(await response.text()).toBe(events)
+  })
+
+  test("keeps the status, the reason and the retry delay of a refusal", async () => {
+    stubFetch(() =>
+      Response.json(
+        { detail: "Too many messages. Try again in 1 hour." },
+        { status: 429, headers: { "retry-after": "1800" } },
+      ),
+    )
+    const response = await streamChat(body, new AbortController().signal)
+    expect(response.status).toBe(429)
+    expect(response.headers.get("retry-after")).toBe("1800")
+    expect(await response.json()).toEqual({
+      detail: "Too many messages. Try again in 1 hour.",
+    })
+  })
+
+  test("fails when the API cannot be reached", async () => {
+    stubFetch(() => {
+      throw new TypeError("network down")
+    })
+    expect(
+      await failureOf(streamChat(body, new AbortController().signal)),
+    ).toBeInstanceOf(TypeError)
+  })
+
+  test("passes the caller's abort signal on to the request", async () => {
+    const controller = new AbortController()
+    let seen: AbortSignal | null | undefined
+    client.setConfig({
+      fetch: Object.assign(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          seen = new Request(input, init).signal
+          return new Response(events)
+        },
+        { preconnect: () => {} },
+      ),
+    })
+    await streamChat(body, controller.signal)
+    controller.abort()
+    expect(seen?.aborted).toBe(true)
+  })
+
+  test("allows as long a message as the API publishes", async () => {
+    const spec = await Bun.file(
+      new URL("../../../backend/openapi.json", import.meta.url),
+    ).json()
+    expect(
+      spec.components.schemas.ChatRun.properties.messages[
+        "x-max-user-message-length"
+      ],
+    ).toBe(CHAT_MESSAGE_MAX_LENGTH)
+  })
+
+  test("goes to the path the generated contract documents", async () => {
+    const spec = await Bun.file(
+      new URL("../../../backend/openapi.json", import.meta.url),
+    ).json()
+    expect(spec.paths[CHAT_RUN_PATH].post.operationId).toBe("chat-run_chat")
   })
 })

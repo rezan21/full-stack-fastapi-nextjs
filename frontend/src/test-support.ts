@@ -1,4 +1,10 @@
-import type { ItemPublic, UserPublic } from "@/client"
+import type {
+  ChatMessagePublic,
+  ChatMessagesPublic,
+  ConversationPublic,
+  ItemPublic,
+  UserPublic,
+} from "@/client"
 import { client } from "@/client/client.gen"
 import { SESSION_COOKIE } from "@/lib/config"
 
@@ -48,6 +54,25 @@ export const ITEM = {
   description: null,
   created_at: "2026-10-03T12:00:00Z",
 } satisfies ItemPublic
+
+export const CONVERSATION = {
+  id: "9b2d1f0e-3c4a-4d5b-8e6f-7a8b9c0d1e2f",
+  title: "A first question",
+  created_at: "2026-10-03T12:00:00Z",
+  updated_at: "2026-10-03T12:05:00Z",
+} satisfies ConversationPublic
+
+export const CHAT_MESSAGE = {
+  id: "5b0d3c1a-7e2f-4a6b-9c8d-1e2f3a4b5c6d",
+  role: "user",
+  content: "A first question",
+  created_at: "2026-10-03T12:00:00Z",
+} satisfies ChatMessagePublic
+
+export const CHAT_MESSAGES = {
+  data: [CHAT_MESSAGE],
+  count: 1,
+} satisfies ChatMessagesPublic
 
 export const USER = {
   id: "6dfc5bca-8013-429d-996e-5b0e50de044c",

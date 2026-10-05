@@ -2,6 +2,13 @@ import "server-only"
 import { ZodError } from "zod"
 import {
   type AccountDeletion,
+  type ChatMessagePublic,
+  type ChatRun,
+  type ConversationPublic,
+  chatCreateConversation,
+  chatReadConversation,
+  chatReadConversations,
+  chatReadMessages,
   type EmailChange,
   type HttpError,
   type HttpValidationError,
@@ -37,6 +44,9 @@ import { getToken } from "@/lib/session"
 
 export type {
   AccountDeletion,
+  ChatMessagePublic,
+  ChatRun,
+  ConversationPublic,
   EmailChange,
   ItemCreate,
   ItemPublic,
@@ -49,6 +59,8 @@ export type {
 }
 
 const FALLBACK_ERROR = "Something went wrong."
+
+export const CHAT_RUN_PATH = "/api/v1/chat"
 
 client.setConfig({
   baseUrl: API_URL,
@@ -167,4 +179,42 @@ export function changePassword(body: UpdatePassword) {
 
 export function deleteAccount(body: AccountDeletion) {
   return unwrap(usersDeleteUserMe({ body }))
+}
+
+export function createConversation() {
+  return unwrap(chatCreateConversation())
+}
+
+export function getConversations() {
+  return unwrap(chatReadConversations())
+}
+
+export function getConversation(id: string) {
+  return unwrap(chatReadConversation({ path: { id } }))
+}
+
+export function getConversationMessages(id: string) {
+  return unwrap(chatReadMessages({ path: { id } }))
+}
+
+// Starts a chat run and returns the API's response, a live stream when it succeeds.
+export async function streamChat(
+  body: ChatRun,
+  signal: AbortSignal,
+): Promise<Response> {
+  const { error, response } = await client.post({
+    url: CHAT_RUN_PATH,
+    body,
+    signal,
+    parseAs: "stream",
+    security: [{ scheme: "bearer", type: "http" }],
+    headers: { "Content-Type": "application/json" },
+  })
+  if (!response) throw error
+  if (response.ok) return response
+  const retryAfter = response.headers.get("retry-after")
+  return Response.json(error ?? {}, {
+    status: response.status,
+    headers: retryAfter ? { "retry-after": retryAfter } : undefined,
+  })
 }

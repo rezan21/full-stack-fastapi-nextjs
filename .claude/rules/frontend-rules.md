@@ -10,7 +10,7 @@ paths:
 - Be explicit about App Router vs Pages Router; never mix conventions.
 - Server Components are the default; add `"use client"` only when interactivity/hooks/browser APIs are needed.
 - Fetch data in Server Components or Route Handlers, not via client-side `useEffect`, unless polling or user-triggered refetch is required.
-- Mutations use Server Actions where possible; use API routes only when a public API surface is needed.
+- Mutations use Server Actions where possible. Use a Route Handler when the response has to be streamed (such as SSE) or when a public API surface is needed. Keep it thin: authenticate, validate with the generated schema, and forward through `lib/`. Next.js checks the `Origin` header for Server Actions only, so a Route Handler that acts on the session cookie checks it itself.
 - Set caching/revalidation (`revalidate`, `dynamic`, fetch cache options) explicitly, don't rely on defaults.
 - Validate all input in Route Handlers/Server Actions; never trust client-submitted data.
 - Never import server-only env vars into client-bundled code; respect `NEXT_PUBLIC_` boundaries.
@@ -53,5 +53,5 @@ paths:
 
 ## Full-Stack
 
-- Share types (or a schema) between client and server; never redeclare shapes that can drift. API calls and types come from the generated SDK in `frontend/src/client/` (`bash scripts/generate-client.sh`), called through `lib/api.ts`; never hand-write URLs or API types.
+- Share types (or a schema) between client and server; never redeclare shapes that can drift. API calls and types come from the generated SDK in `frontend/src/client/` (`bash scripts/generate-client.sh`), called through `lib/api.ts`; never hand-write URLs or API types. The one exception is a streamed response forwarded as it is: the generated SSE client parses every event and retries a POST, which a pass-through proxy must not do, so `lib/api.ts` calls the generated client with `parseAs: "stream"` and a test ties its path to `backend/openapi.json`.
 - Keep types strict; avoid `any`/`unknown`/loose dictionaries at API boundaries.

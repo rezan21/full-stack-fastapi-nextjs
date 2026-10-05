@@ -4,7 +4,7 @@ A full-stack starter with a FastAPI + PostgreSQL backend and a Next.js 16 (App R
 
 ## Stack
 
-- **Backend** ([`backend/`](backend/)) — FastAPI, SQLModel, PostgreSQL, Alembic, JWT auth.
+- **Backend** ([`backend/`](backend/)) — FastAPI, SQLModel, PostgreSQL, Alembic, JWT auth, and an AI chat built on [LangChain Deep Agents](https://docs.langchain.com/oss/python/deepagents/overview) (OpenAI, streamed over [AG-UI](https://docs.ag-ui.com) and SSE, conversations kept in Postgres).
 - **Frontend** ([`frontend/`](frontend/)) — Next.js 16 (App Router), React, TypeScript, Tailwind CSS, shadcn/ui.
 - **Infra** ([`infra/`](infra/)) — Docker Compose + Traefik, Mailpit for local email, Playwright for end-to-end tests.
 
@@ -28,7 +28,7 @@ To iterate on one side directly instead, run `uv run fastapi dev` (from `backend
 
 ## Configuration
 
-All settings live in `backend/.env`. Change `SECRET_KEY` (at least 32 characters), `FIRST_SUPERUSER_PASSWORD`, `POSTGRES_PASSWORD` (the database administrator) and `APP_DB_PASSWORD` (the limited `app` role the backend connects as) before deploying anywhere; outside development a short or placeholder value stops the backend from starting. The `dbsetup` service creates or updates the `app` role and makes it the owner of the `app` database on every start, so the backend never connects as the superuser and an existing database volume is converted the first time it runs. After `AUTH_MAX_FAILURES` (5) wrong passwords within `AUTH_LOCK_MINUTES` (15) an account answers 429 for that long, whatever the client address; a correct password or a password reset clears the count. The API docs are served only in development.
+All settings live in `backend/.env`. Change `SECRET_KEY` (at least 32 characters), `FIRST_SUPERUSER_PASSWORD`, `POSTGRES_PASSWORD` (the database administrator) and `APP_DB_PASSWORD` (the limited `app` role the backend connects as) before deploying anywhere; outside development a short or placeholder value stops the backend from starting. The `dbsetup` service creates or updates the `app` role and makes it the owner of the `app` database on every start, so the backend never connects as the superuser and an existing database volume is converted the first time it runs. After `AUTH_MAX_FAILURES` (5) wrong passwords within `AUTH_LOCK_MINUTES` (15) an account answers 429 for that long, whatever the client address; a correct password or a password reset clears the count. The API docs are served only in development. Set `OPENAI_API_KEY` to turn the AI chat on; each user can send `CHAT_RUNS_PER_HOUR` (30) messages an hour, and the conversations are private to the user who started them.
 
 ## API contract
 

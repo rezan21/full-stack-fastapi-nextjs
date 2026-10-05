@@ -2,10 +2,10 @@
 
 import * as z from 'zod';
 
-import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
+import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginLogoutData, LoginLogoutErrors, LoginLogoutResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersCompleteSignupData, UsersCompleteSignupErrors, UsersCompleteSignupResponses, UsersConfirmEmailChangeData, UsersConfirmEmailChangeErrors, UsersConfirmEmailChangeResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersRequestEmailChangeData, UsersRequestEmailChangeErrors, UsersRequestEmailChangeResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckErrors, UtilsHealthCheckResponses } from './types.gen';
-import { zItemsCreateItemBody, zItemsDeleteItemPath, zItemsReadItemPath, zItemsReadItemsQuery, zItemsUpdateItemBody, zItemsUpdateItemPath, zLoginLoginAccessTokenBody, zLoginRecoverPasswordBody, zLoginResetPasswordBody, zUsersCompleteSignupBody, zUsersConfirmEmailChangeBody, zUsersDeleteUserMeBody, zUsersRegisterUserBody, zUsersRequestEmailChangeBody, zUsersUpdatePasswordMeBody, zUsersUpdateUserMeBody } from './zod.gen';
+import type { ChatCreateConversationData, ChatCreateConversationErrors, ChatCreateConversationResponses, ChatReadConversationData, ChatReadConversationErrors, ChatReadConversationResponses, ChatReadConversationsData, ChatReadConversationsErrors, ChatReadConversationsResponses, ChatReadMessagesData, ChatReadMessagesErrors, ChatReadMessagesResponses, ChatRunChatData, ChatRunChatErrors, ChatRunChatResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginLogoutData, LoginLogoutErrors, LoginLogoutResponses, LoginRecoverPasswordData, LoginRecoverPasswordErrors, LoginRecoverPasswordResponses, LoginResetPasswordData, LoginResetPasswordErrors, LoginResetPasswordResponses, UsersCompleteSignupData, UsersCompleteSignupErrors, UsersCompleteSignupResponses, UsersConfirmEmailChangeData, UsersConfirmEmailChangeErrors, UsersConfirmEmailChangeResponses, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersRequestEmailChangeData, UsersRequestEmailChangeErrors, UsersRequestEmailChangeResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UtilsHealthCheckData, UtilsHealthCheckErrors, UtilsHealthCheckResponses } from './types.gen';
+import { zChatReadConversationPath, zChatReadConversationsQuery, zChatReadMessagesPath, zChatReadMessagesQuery, zChatRunChatBody, zItemsCreateItemBody, zItemsDeleteItemPath, zItemsReadItemPath, zItemsReadItemsQuery, zItemsUpdateItemBody, zItemsUpdateItemPath, zLoginLoginAccessTokenBody, zLoginRecoverPasswordBody, zLoginResetPasswordBody, zUsersCompleteSignupBody, zUsersConfirmEmailChangeBody, zUsersDeleteUserMeBody, zUsersRegisterUserBody, zUsersRequestEmailChangeBody, zUsersUpdatePasswordMeBody, zUsersUpdateUserMeBody } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -20,6 +20,90 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+/**
+ * Run Chat
+ *
+ * Stream the assistant's reply to a message as AG-UI events.
+ */
+export const chatRunChat = <ThrowOnError extends boolean = false>(options: Options<ChatRunChatData, ThrowOnError, unknown>): Promise<ServerSentEventsResult<ChatRunChatResponses>> => (options.client ?? client).sse.post<ChatRunChatResponses, ChatRunChatErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zChatRunChatBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/chat',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read Conversations
+ *
+ * Retrieve the current user's conversations, latest activity first.
+ */
+export const chatReadConversations = <ThrowOnError extends boolean = false>(options?: Options<ChatReadConversationsData, ThrowOnError>): RequestResult<ChatReadConversationsResponses, ChatReadConversationsErrors, ThrowOnError> => (options?.client ?? client).get<ChatReadConversationsResponses, ChatReadConversationsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zChatReadConversationsQuery.optional()
+    }).parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/chat/conversations',
+    ...options
+});
+
+/**
+ * Create Conversation
+ *
+ * Start a new conversation.
+ */
+export const chatCreateConversation = <ThrowOnError extends boolean = false>(options?: Options<ChatCreateConversationData, ThrowOnError>): RequestResult<ChatCreateConversationResponses, ChatCreateConversationErrors, ThrowOnError> => (options?.client ?? client).post<ChatCreateConversationResponses, ChatCreateConversationErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/chat/conversations',
+    ...options
+});
+
+/**
+ * Read Conversation
+ *
+ * Get a conversation by ID.
+ */
+export const chatReadConversation = <ThrowOnError extends boolean = false>(options: Options<ChatReadConversationData, ThrowOnError>): RequestResult<ChatReadConversationResponses, ChatReadConversationErrors, ThrowOnError> => (options.client ?? client).get<ChatReadConversationResponses, ChatReadConversationErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zChatReadConversationPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/chat/conversations/{id}',
+    ...options
+});
+
+/**
+ * Read Messages
+ *
+ * Get what was said in a conversation, latest messages last.
+ */
+export const chatReadMessages = <ThrowOnError extends boolean = false>(options: Options<ChatReadMessagesData, ThrowOnError>): RequestResult<ChatReadMessagesResponses, ChatReadMessagesErrors, ThrowOnError> => (options.client ?? client).get<ChatReadMessagesResponses, ChatReadMessagesErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zChatReadMessagesPath,
+        query: zChatReadMessagesQuery.optional()
+    }).parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/chat/conversations/{id}/messages',
+    ...options
+});
 
 /**
  * Read Items

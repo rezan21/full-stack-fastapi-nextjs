@@ -15,6 +15,110 @@ export type AccountDeletion = {
 };
 
 /**
+ * ChatMessagePublic
+ */
+export type ChatMessagePublic = {
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Role
+     */
+    role: 'user' | 'assistant';
+};
+
+/**
+ * ChatMessagesPublic
+ */
+export type ChatMessagesPublic = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Data
+     */
+    data: Array<ChatMessagePublic>;
+};
+
+/**
+ * ChatRun
+ */
+export type ChatRun = {
+    /**
+     * Messages
+     */
+    messages: Array<ChatRunMessage>;
+    /**
+     * Runid
+     */
+    runId: string;
+    /**
+     * Threadid
+     */
+    threadId: string;
+};
+
+/**
+ * ChatRunMessage
+ */
+export type ChatRunMessage = {
+    /**
+     * Content
+     */
+    content?: unknown;
+    /**
+     * Role
+     */
+    role: string;
+};
+
+/**
+ * ConversationPublic
+ */
+export type ConversationPublic = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Title
+     */
+    title: string | null;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ConversationsPublic
+ */
+export type ConversationsPublic = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Data
+     */
+    data: Array<ConversationPublic>;
+};
+
+/**
  * Credentials
  */
 export type Credentials = {
@@ -287,6 +391,213 @@ export type ValidationError = {
      */
     type: string;
 };
+
+export type ChatRunChatData = {
+    body: ChatRun;
+    path?: never;
+    query?: never;
+    url: '/api/v1/chat';
+};
+
+export type ChatRunChatErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpError;
+    /**
+     * Unauthorized
+     */
+    401: HttpError;
+    /**
+     * Forbidden
+     */
+    403: HttpError;
+    /**
+     * Not Found
+     */
+    404: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Too Many Requests
+     */
+    429: HttpError;
+    /**
+     * Service Unavailable
+     */
+    503: HttpError;
+};
+
+export type ChatRunChatError = ChatRunChatErrors[keyof ChatRunChatErrors];
+
+export type ChatRunChatResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ChatReadConversationsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/chat/conversations';
+};
+
+export type ChatReadConversationsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: HttpError;
+    /**
+     * Forbidden
+     */
+    403: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChatReadConversationsError = ChatReadConversationsErrors[keyof ChatReadConversationsErrors];
+
+export type ChatReadConversationsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConversationsPublic;
+};
+
+export type ChatReadConversationsResponse = ChatReadConversationsResponses[keyof ChatReadConversationsResponses];
+
+export type ChatCreateConversationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/chat/conversations';
+};
+
+export type ChatCreateConversationErrors = {
+    /**
+     * Unauthorized
+     */
+    401: HttpError;
+    /**
+     * Forbidden
+     */
+    403: HttpError;
+};
+
+export type ChatCreateConversationError = ChatCreateConversationErrors[keyof ChatCreateConversationErrors];
+
+export type ChatCreateConversationResponses = {
+    /**
+     * Successful Response
+     */
+    201: ConversationPublic;
+};
+
+export type ChatCreateConversationResponse = ChatCreateConversationResponses[keyof ChatCreateConversationResponses];
+
+export type ChatReadConversationData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/chat/conversations/{id}';
+};
+
+export type ChatReadConversationErrors = {
+    /**
+     * Unauthorized
+     */
+    401: HttpError;
+    /**
+     * Forbidden
+     */
+    403: HttpError;
+    /**
+     * Not Found
+     */
+    404: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChatReadConversationError = ChatReadConversationErrors[keyof ChatReadConversationErrors];
+
+export type ChatReadConversationResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConversationPublic;
+};
+
+export type ChatReadConversationResponse = ChatReadConversationResponses[keyof ChatReadConversationResponses];
+
+export type ChatReadMessagesData = {
+    body?: never;
+    path: {
+        /**
+         * Id
+         */
+        id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/chat/conversations/{id}/messages';
+};
+
+export type ChatReadMessagesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: HttpError;
+    /**
+     * Forbidden
+     */
+    403: HttpError;
+    /**
+     * Not Found
+     */
+    404: HttpError;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChatReadMessagesError = ChatReadMessagesErrors[keyof ChatReadMessagesErrors];
+
+export type ChatReadMessagesResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatMessagesPublic;
+};
+
+export type ChatReadMessagesResponse = ChatReadMessagesResponses[keyof ChatReadMessagesResponses];
 
 export type ItemsReadItemsData = {
     body?: never;

@@ -21,6 +21,9 @@ x-backend: &backend
     EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL:?Variable not set}
     DATABASE_URL: postgresql://app:${APP_DB_PASSWORD:?Variable not set}@db:5432/app
     SENTRY_DSN: ${SENTRY_DSN:-}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    CHAT_MODEL: ${CHAT_MODEL:-}
+    CHAT_RUNS_PER_HOUR: ${CHAT_RUNS_PER_HOUR:-}
 
 services:
 

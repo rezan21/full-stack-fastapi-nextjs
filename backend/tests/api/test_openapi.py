@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from app.main import app
-from app.models import EMAIL_PATTERN
+from app.models import EMAIL_PATTERN, MAX_MESSAGE_CHARS
 
 SPEC_PATH = Path(__file__).parents[2] / "openapi.json"
 
@@ -47,3 +47,9 @@ def test_response_models_require_every_field_and_carry_no_input_limits(
     assert set(schema["required"]) == set(schema["properties"])
     for field in schema["properties"].values():
         assert not {"minLength", "maxLength", "pattern"} & set(field)
+
+
+def test_the_chat_run_publishes_how_long_a_message_may_be() -> None:
+    messages = current_schemas()["ChatRun"]["properties"]["messages"]
+
+    assert messages["x-max-user-message-length"] == MAX_MESSAGE_CHARS == 4000

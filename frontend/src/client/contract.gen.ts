@@ -8,6 +8,12 @@ type Matches<S extends z.ZodType, T> = Same<z.input<S>, T>
 
 export type ContractTypes = [
   Expect<Matches<typeof Schemas.zAccountDeletion, Types.AccountDeletion>>,
+  Expect<Matches<typeof Schemas.zChatMessagePublic, Types.ChatMessagePublic>>,
+  Expect<Matches<typeof Schemas.zChatMessagesPublic, Types.ChatMessagesPublic>>,
+  Expect<Matches<typeof Schemas.zChatRun, Types.ChatRun>>,
+  Expect<Matches<typeof Schemas.zChatRunMessage, Types.ChatRunMessage>>,
+  Expect<Matches<typeof Schemas.zConversationPublic, Types.ConversationPublic>>,
+  Expect<Matches<typeof Schemas.zConversationsPublic, Types.ConversationsPublic>>,
   Expect<Matches<typeof Schemas.zCredentials, Types.Credentials>>,
   Expect<Matches<typeof Schemas.zEmailChange, Types.EmailChange>>,
   Expect<Matches<typeof Schemas.zEmailChangeConfirm, Types.EmailChangeConfirm>>,
