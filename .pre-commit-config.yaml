@@ -18,6 +18,7 @@ repos:
             )$
       # Trim trailing whitespace
       - id: trailing-whitespace
+        exclude: ^backend/README\.md$
   - repo: https://github.com/crate-ci/typos
     rev: bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # frozen: v1.48.0
     hooks:
