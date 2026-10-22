@@ -38,7 +38,11 @@ export async function createUser({
 
 // Deletes an item as the token's user.
 export async function deleteItemAs(token: string, id: string) {
-  await itemsDeleteItem({ path: { id }, auth: token, throwOnError: true })
+  await itemsDeleteItem({
+    path: { item_id: id },
+    auth: token,
+    throwOnError: true,
+  })
 }
 
 // Creates items as the token's user.

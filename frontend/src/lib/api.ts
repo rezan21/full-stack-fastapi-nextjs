@@ -141,7 +141,7 @@ export function resetPassword(token: string, newPassword: string) {
 }
 
 export function getItem(id: string) {
-  return unwrap(itemsReadItem({ path: { id } }))
+  return unwrap(itemsReadItem({ path: { item_id: id } }))
 }
 
 // Fetches one page of items.
@@ -158,11 +158,11 @@ export function createItem(body: ItemCreate) {
 }
 
 export function updateItem(id: string, body: ItemUpdate) {
-  return unwrap(itemsUpdateItem({ path: { id }, body }))
+  return unwrap(itemsUpdateItem({ path: { item_id: id }, body }))
 }
 
 export function deleteItem(id: string) {
-  return unwrap(itemsDeleteItem({ path: { id } }))
+  return unwrap(itemsDeleteItem({ path: { item_id: id } }))
 }
 
 export function updateProfile(body: UserUpdateMe) {
@@ -190,11 +190,11 @@ export function getConversations() {
 }
 
 export function getConversation(id: string) {
-  return unwrap(chatReadConversation({ path: { id } }))
+  return unwrap(chatReadConversation({ path: { conversation_id: id } }))
 }
 
 export function getConversationMessages(id: string) {
-  return unwrap(chatReadMessages({ path: { id } }))
+  return unwrap(chatReadMessages({ path: { conversation_id: id } }))
 }
 
 // Starts a chat run and returns the API's response, a live stream when it succeeds.

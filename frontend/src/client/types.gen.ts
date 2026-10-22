@@ -514,12 +514,12 @@ export type ChatReadConversationData = {
     body?: never;
     path: {
         /**
-         * Id
+         * Conversation Id
          */
-        id: string;
+        conversation_id: string;
     };
     query?: never;
-    url: '/api/v1/chat/conversations/{id}';
+    url: '/api/v1/chat/conversations/{conversation_id}';
 };
 
 export type ChatReadConversationErrors = {
@@ -556,9 +556,9 @@ export type ChatReadMessagesData = {
     body?: never;
     path: {
         /**
-         * Id
+         * Conversation Id
          */
-        id: string;
+        conversation_id: string;
     };
     query?: {
         /**
@@ -566,7 +566,7 @@ export type ChatReadMessagesData = {
          */
         limit?: number;
     };
-    url: '/api/v1/chat/conversations/{id}/messages';
+    url: '/api/v1/chat/conversations/{conversation_id}/messages';
 };
 
 export type ChatReadMessagesErrors = {
@@ -678,12 +678,12 @@ export type ItemsDeleteItemData = {
     body?: never;
     path: {
         /**
-         * Id
+         * Item Id
          */
-        id: string;
+        item_id: string;
     };
     query?: never;
-    url: '/api/v1/items/{id}';
+    url: '/api/v1/items/{item_id}';
 };
 
 export type ItemsDeleteItemErrors = {
@@ -720,12 +720,12 @@ export type ItemsReadItemData = {
     body?: never;
     path: {
         /**
-         * Id
+         * Item Id
          */
-        id: string;
+        item_id: string;
     };
     query?: never;
-    url: '/api/v1/items/{id}';
+    url: '/api/v1/items/{item_id}';
 };
 
 export type ItemsReadItemErrors = {
@@ -762,12 +762,12 @@ export type ItemsUpdateItemData = {
     body: ItemUpdate;
     path: {
         /**
-         * Id
+         * Item Id
          */
-        id: string;
+        item_id: string;
     };
     query?: never;
-    url: '/api/v1/items/{id}';
+    url: '/api/v1/items/{item_id}';
 };
 
 export type ItemsUpdateItemErrors = {

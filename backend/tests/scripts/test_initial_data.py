@@ -1,22 +1,22 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-from app.initial_data import init, main
+from src.scripts.initial_data import init, main
 
 
-def test_init_creates_the_initial_data_in_a_session() -> None:
-    session = MagicMock()
+async def test_init_creates_the_initial_data_in_a_session() -> None:
+    session = AsyncMock()
     with (
-        patch("app.initial_data.Session") as session_class,
-        patch("app.initial_data.init_db") as init_db,
+        patch("src.scripts.initial_data.SessionFactory") as session_factory,
+        patch("src.scripts.initial_data.init_db") as init_db,
     ):
-        session_class.return_value.__enter__.return_value = session
-        init()
+        session_factory.return_value.__aenter__.return_value = session
+        await init()
 
-    init_db.assert_called_once_with(session)
+    init_db.assert_awaited_once_with(session)
 
 
 def test_main_creates_the_initial_data() -> None:
-    with patch("app.initial_data.init") as init_mock:
+    with patch("src.scripts.initial_data.init") as init_mock:
         main()
 
     init_mock.assert_called_once()

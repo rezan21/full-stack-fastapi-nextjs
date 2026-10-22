@@ -6,7 +6,7 @@
     "build": "email build",
     "dev": "email dev --port 3333",
     "lint": "biome check --write --unsafe --no-errors-on-unmatched --files-ignore-unknown=true ./",
-    "export": "email export --outDir ../../backend/app/email-templates"
+    "export": "email export --outDir ../../backend/templates/email"
   },
   "dependencies": {
     "@react-email/components": "1.0.12",

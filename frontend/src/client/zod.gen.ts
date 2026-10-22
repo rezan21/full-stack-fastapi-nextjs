@@ -219,11 +219,11 @@ export const zChatReadConversationsQuery = z.object({
 });
 
 export const zChatReadConversationPath = z.object({
-    id: z.uuid()
+    conversation_id: z.uuid()
 });
 
 export const zChatReadMessagesPath = z.object({
-    id: z.uuid()
+    conversation_id: z.uuid()
 });
 
 export const zChatReadMessagesQuery = z.object({
@@ -238,17 +238,17 @@ export const zItemsReadItemsQuery = z.object({
 export const zItemsCreateItemBody = zItemCreate;
 
 export const zItemsDeleteItemPath = z.object({
-    id: z.uuid()
+    item_id: z.uuid()
 });
 
 export const zItemsReadItemPath = z.object({
-    id: z.uuid()
+    item_id: z.uuid()
 });
 
 export const zItemsUpdateItemBody = zItemUpdate;
 
 export const zItemsUpdateItemPath = z.object({
-    id: z.uuid()
+    item_id: z.uuid()
 });
 
 export const zLoginLoginAccessTokenBody = zCredentials;

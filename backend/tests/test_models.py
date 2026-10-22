@@ -1,7 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import Credentials, EmailChange, PasswordRecovery, UserRegister
+from src.auth.schemas import Credentials, PasswordRecovery
+from src.users.schemas import EmailChange, UserRegister
 
 
 @pytest.mark.parametrize(

@@ -3,6 +3,6 @@
 set -e
 set -x
 
-python app/tests_pre_start.py
+python -m src.scripts.wait_for_db
 
 bash scripts/test.sh "$@"

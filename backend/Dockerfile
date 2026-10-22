@@ -26,7 +26,11 @@ COPY ./scripts /app/scripts
 
 COPY ./pyproject.toml ./alembic.ini /app/
 
-COPY ./app /app/app
+COPY ./src /app/src
+
+COPY ./alembic /app/alembic
+
+COPY ./templates /app/templates
 
 # Sync the project
 RUN --mount=type=cache,target=/root/.cache/uv \

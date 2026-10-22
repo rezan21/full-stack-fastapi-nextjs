@@ -1,4 +1,4 @@
-from app.utils import event_scrubber
+from src.utils import event_scrubber
 
 FILTERED = "[Filtered]"
 

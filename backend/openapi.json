@@ -846,18 +846,18 @@
         ]
       }
     },
-    "/api/v1/chat/conversations/{id}": {
+    "/api/v1/chat/conversations/{conversation_id}": {
       "get": {
         "description": "Get a conversation by ID.",
         "operationId": "chat-read_conversation",
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "conversation_id",
             "required": true,
             "schema": {
               "format": "uuid",
-              "title": "Id",
+              "title": "Conversation Id",
               "type": "string"
             }
           }
@@ -925,18 +925,18 @@
         ]
       }
     },
-    "/api/v1/chat/conversations/{id}/messages": {
+    "/api/v1/chat/conversations/{conversation_id}/messages": {
       "get": {
         "description": "Get what was said in a conversation, latest messages last.",
         "operationId": "chat-read_messages",
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "conversation_id",
             "required": true,
             "schema": {
               "format": "uuid",
-              "title": "Id",
+              "title": "Conversation Id",
               "type": "string"
             }
           },
@@ -1163,18 +1163,18 @@
         ]
       }
     },
-    "/api/v1/items/{id}": {
+    "/api/v1/items/{item_id}": {
       "delete": {
         "description": "Delete an item.",
         "operationId": "items-delete_item",
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "item_id",
             "required": true,
             "schema": {
               "format": "uuid",
-              "title": "Id",
+              "title": "Item Id",
               "type": "string"
             }
           }
@@ -1240,11 +1240,11 @@
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "item_id",
             "required": true,
             "schema": {
               "format": "uuid",
-              "title": "Id",
+              "title": "Item Id",
               "type": "string"
             }
           }
@@ -1317,11 +1317,11 @@
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "item_id",
             "required": true,
             "schema": {
               "format": "uuid",
-              "title": "Id",
+              "title": "Item Id",
               "type": "string"
             }
           }

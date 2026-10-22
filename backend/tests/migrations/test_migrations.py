@@ -7,11 +7,11 @@ from alembic import command
 from alembic.config import Config
 from dotenv import dotenv_values
 from langgraph.checkpoint.postgres import PostgresSaver
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
 
-from app.core.config import settings
+from src.config import settings
 
 BACKEND = Path(__file__).parents[2]
 BEFORE_FULL_NAME_REQUIRED = "fe56fa70289e"
@@ -24,6 +24,8 @@ CREATED_AT_REQUIRED = "165d280e56b9"
 AUTH_THROTTLED = "979b1f68212c"
 CHAT_ADDED = "ae666eac2868"
 CHAT_MESSAGE_ADDED = "c16abe1c9cbf"
+NAMING_CONVENTIONS = "671f8739157f"
+OWNER_KEYED = "3a7c1e9d4b20"
 
 
 @pytest.fixture
@@ -50,7 +52,7 @@ def migration_db() -> Generator[str]:
 
 def alembic_config(url: str) -> Config:
     config = Config(str(BACKEND / "alembic.ini"))
-    config.set_main_option("script_location", str(BACKEND / "app" / "alembic"))
+    config.set_main_option("script_location", str(BACKEND / "alembic"))
     config.set_main_option("sqlalchemy.url", url)
     return config
 
@@ -313,3 +315,71 @@ def test_the_chat_message_table_is_created_and_dropped(migration_db: str) -> Non
     command.downgrade(config, CHAT_ADDED)
     assert "chat_message" not in table_names(migration_db)
     assert "conversation" in table_names(migration_db)
+
+
+def index_names(url: str) -> set[str]:
+    engine = create_engine(url)
+    names = {
+        index["name"]
+        for table in inspect(engine).get_table_names()
+        for index in inspect(engine).get_indexes(table)
+        if index["name"]
+    }
+    engine.dispose()
+    return names
+
+
+def column_names(url: str, table: str) -> set[str]:
+    engine = create_engine(url)
+    names = {column["name"] for column in inspect(engine).get_columns(table)}
+    engine.dispose()
+    return names
+
+
+def test_names_follow_the_postgres_conventions_and_can_be_reverted(
+    migration_db: str,
+) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, NAMING_CONVENTIONS)
+    assert "chat_conversation" in table_names(migration_db)
+    assert "conversation" not in table_names(migration_db)
+    assert {
+        "user_email_idx",
+        "item_owner_id_created_at_idx",
+        "auth_throttle_last_failure_at_idx",
+        "chat_conversation_owner_id_updated_at_idx",
+        "chat_message_conversation_id_seq_idx",
+    } <= index_names(migration_db)
+    assert "window_started_at" in column_names(migration_db, "chat_usage")
+    assert "lock_expires_at" in column_names(migration_db, "auth_throttle")
+
+    command.downgrade(config, CHAT_MESSAGE_ADDED)
+    assert "conversation" in table_names(migration_db)
+    assert {
+        "ix_user_email",
+        "ix_item_owner_id_created_at",
+        "ix_auth_throttle_last_failure_at",
+        "ix_conversation_owner_id_updated_at",
+        "ix_chat_message_conversation_id_seq",
+    } <= index_names(migration_db)
+    assert "window_start" in column_names(migration_db, "chat_usage")
+    assert "locked_until" in column_names(migration_db, "auth_throttle")
+
+
+def foreign_key_names(url: str, table: str) -> set[str]:
+    engine = create_engine(url)
+    names = {key["name"] for key in inspect(engine).get_foreign_keys(table)}
+    engine.dispose()
+    return names
+
+
+def test_chat_usage_is_keyed_by_owner_id_and_can_be_reverted(migration_db: str) -> None:
+    config = alembic_config(migration_db)
+    command.upgrade(config, OWNER_KEYED)
+    assert "owner_id" in column_names(migration_db, "chat_usage")
+    assert "user_id" not in column_names(migration_db, "chat_usage")
+    assert foreign_key_names(migration_db, "chat_usage") == {"chat_usage_owner_id_fkey"}
+
+    command.downgrade(config, NAMING_CONVENTIONS)
+    assert "user_id" in column_names(migration_db, "chat_usage")
+    assert foreign_key_names(migration_db, "chat_usage") == {"chat_usage_user_id_fkey"}

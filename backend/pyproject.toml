@@ -21,6 +21,7 @@ dependencies = [
     "ag-ui-langgraph>=0.0.46,<0.1.0",
     "langgraph-checkpoint-postgres>=3.1.2,<4.0.0",
     "langchain-openai>=1.6.7,<2.0.0",
+    "sqlalchemy[asyncio]>=2.0.54",
 ]
 
 [dependency-groups]
@@ -32,7 +33,11 @@ dev = [
     "ruff<1.0.0,>=0.2.2",
     "coverage<8.0.0,>=7.4.3",
     "python-dotenv>=1.2.3",
+    "pytest-asyncio>=1.4.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [build-system]
 requires = ["hatchling"]
@@ -71,13 +76,21 @@ ignore = [
     "B904",  # Allow raising exceptions without from e, for HTTPException
 ]
 
+[tool.ruff.lint.isort]
+known-third-party = ["alembic"]
+
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+
 [tool.coverage.run]
-source = ["app"]
-omit = ["app/alembic/*"]
+source = ["src"]
+concurrency = ["greenlet", "thread"]
 dynamic_context = "test_function"
 
 [tool.coverage.report]
@@ -92,4 +105,4 @@ show_contexts = true
 error-on-warning = true
 
 [tool.fastapi]
-entrypoint = "app.main:app"
+entrypoint = "src.main:app"

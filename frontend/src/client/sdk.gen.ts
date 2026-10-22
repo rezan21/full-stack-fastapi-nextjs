@@ -85,7 +85,7 @@ export const chatReadConversation = <ThrowOnError extends boolean = false>(optio
         query: z.never().optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/chat/conversations/{id}',
+    url: '/api/v1/chat/conversations/{conversation_id}',
     ...options
 });
 
@@ -101,7 +101,7 @@ export const chatReadMessages = <ThrowOnError extends boolean = false>(options: 
         query: zChatReadMessagesQuery.optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/chat/conversations/{id}/messages',
+    url: '/api/v1/chat/conversations/{conversation_id}/messages',
     ...options
 });
 
@@ -153,7 +153,7 @@ export const itemsDeleteItem = <ThrowOnError extends boolean = false>(options: O
         query: z.never().optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/items/{id}',
+    url: '/api/v1/items/{item_id}',
     ...options
 });
 
@@ -169,7 +169,7 @@ export const itemsReadItem = <ThrowOnError extends boolean = false>(options: Opt
         query: z.never().optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/items/{id}',
+    url: '/api/v1/items/{item_id}',
     ...options
 });
 
@@ -185,7 +185,7 @@ export const itemsUpdateItem = <ThrowOnError extends boolean = false>(options: O
         query: z.never().optional()
     }).parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/items/{id}',
+    url: '/api/v1/items/{item_id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

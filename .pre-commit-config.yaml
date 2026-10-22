@@ -14,7 +14,7 @@ repos:
       - id: end-of-file-fixer
         exclude: |
             (?x)^(
-                backend/app/email-templates/.*
+                backend/templates/email/.*
             )$
       # Trim trailing whitespace
       - id: trailing-whitespace
@@ -64,7 +64,7 @@ repos:
         entry: bash scripts/generate-client.sh
         language: system
         pass_filenames: false
-        files: ^(backend/app/|backend/openapi\.json|frontend/openapi-ts\.config\.ts|frontend/src/client/)
+        files: ^(backend/src/|backend/openapi\.json|frontend/openapi-ts\.config\.ts|frontend/src/client/)
 
       # Lint the backend
       - id: local-ruff-check
@@ -85,7 +85,7 @@ repos:
       # Type-check the backend
       - id: local-mypy
         name: mypy check
-        entry: uv run --project backend mypy --config-file backend/pyproject.toml backend/app
+        entry: uv run --project backend mypy --config-file backend/pyproject.toml backend/src
         require_serial: true
         language: unsupported
         pass_filenames: false
@@ -93,7 +93,7 @@ repos:
       # Second type-check of the backend
       - id: local-ty
         name: ty check
-        entry: uv run --project backend ty check backend/app
+        entry: uv run --project backend ty check backend/src
         require_serial: true
         language: unsupported
         pass_filenames: false

@@ -1,9 +1,10 @@
 import random
 import string
 
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
-from app.core.config import settings
+from src.config import settings
+from src.users.config import users_settings
 
 EMAIL_TEST_USER = "test@example.com"
 
@@ -16,12 +17,12 @@ def random_email() -> str:
     return f"{random_lower_string()}@{random_lower_string()}.com"
 
 
-def get_superuser_token_headers(client: TestClient) -> dict[str, str]:
+async def get_superuser_token_headers(client: AsyncClient) -> dict[str, str]:
     login_data = {
-        "username": settings.FIRST_SUPERUSER,
-        "password": settings.FIRST_SUPERUSER_PASSWORD,
+        "username": users_settings.FIRST_SUPERUSER,
+        "password": users_settings.FIRST_SUPERUSER_PASSWORD,
     }
-    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
+    r = await client.post(f"{settings.API_V1_STR}/login/access-token", data=login_data)
     tokens = r.json()
     a_token = tokens["access_token"]
     headers = {"Authorization": f"Bearer {a_token}"}

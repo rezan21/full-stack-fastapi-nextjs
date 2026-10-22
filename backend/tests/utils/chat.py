@@ -13,10 +13,10 @@ from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResu
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import Field
 
-from app.api.deps import get_chat
-from app.core.chat import Chat, build_agent
-from app.main import app
-from app.models import ChatRun
+from src.chat.client import Chat, build_agent
+from src.chat.dependencies import get_chat
+from src.chat.schemas import ChatRun
+from src.main import app
 
 PROVIDER_ERROR = "Incorrect API key provided: sk-proj-secret1234 for org-abc"
 
@@ -77,11 +77,8 @@ def client_input(**overrides: Any) -> ChatRun:
     return ChatRun.model_validate({**payload, **overrides})
 
 
-def collect(stream: AsyncIterator[BaseEvent]) -> list[BaseEvent]:
-    async def drain() -> list[BaseEvent]:
-        return [event async for event in stream]
-
-    return asyncio.run(drain())
+async def collect(stream: AsyncIterator[BaseEvent]) -> list[BaseEvent]:
+    return [event async for event in stream]
 
 
 class ScriptedModel(BaseChatModel):
@@ -96,6 +93,27 @@ class ScriptedModel(BaseChatModel):
 
     def _generate(self, *args: Any, **kwargs: Any) -> ChatResult:
         return ChatResult(generations=[ChatGeneration(message=self.replies.pop(0))])
+
+
+class BlockingModel(BaseChatModel):
+    started: Any = Field(default_factory=asyncio.Event)
+    release: Any = Field(default_factory=asyncio.Event)
+
+    @property
+    def _llm_type(self) -> str:
+        return "blocking"
+
+    def bind_tools(self, tools: Any, **kwargs: Any) -> Self:
+        return self
+
+    def _generate(self, *args: Any, **kwargs: Any) -> ChatResult:
+        raise NotImplementedError
+
+    async def _agenerate(self, *args: Any, **kwargs: Any) -> ChatResult:
+        self.started.set()
+        await self.release.wait()
+        message = AIMessage(content="finally")
+        return ChatResult(generations=[ChatGeneration(message=message)])
 
 
 class RecordingModel(BaseChatModel):

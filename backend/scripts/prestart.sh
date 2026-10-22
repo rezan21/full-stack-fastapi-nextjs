@@ -4,10 +4,10 @@
 set -e
 set -x
 
-python app/backend_pre_start.py
+python -m src.scripts.wait_for_db
 
 alembic upgrade head
 
-python app/chat_setup.py
+python -m src.scripts.chat_setup
 
-python app/initial_data.py
+python -m src.scripts.initial_data
