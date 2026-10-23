@@ -1,10 +1,9 @@
 from src.exceptions import BadRequest, PermissionDenied
-from src.users.constants import ErrorCode
 
 
 class SuperuserCannotDelete(PermissionDenied):
-    DETAIL = ErrorCode.SUPERUSER_CANNOT_DELETE
+    DETAIL = "Super users are not allowed to delete themselves"
 
 
 class PasswordUnchanged(BadRequest):
-    DETAIL = ErrorCode.PASSWORD_UNCHANGED
+    DETAIL = "New password cannot be the same as the current one"

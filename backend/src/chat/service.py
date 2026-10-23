@@ -1,7 +1,7 @@
 import logging
 import uuid
 from collections.abc import Iterable, Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import ceil
 from typing import Any
 
@@ -13,19 +13,27 @@ from sqlmodel import col, delete, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.chat import client as chat_client
-from src.chat import constants as chat_constants
 from src.chat.config import chat_settings
-from src.chat.constants import ErrorCode
 from src.chat.exceptions import (
     ChatQuotaExceeded,
     ConversationNotFound,
-    InvalidChatInput,
+    EmptyMessage,
+    MessageTooLong,
+    NoUserMessage,
 )
-from src.chat.models import ChatMessage, ChatUsage, Conversation
-from src.chat.schemas import AgentMessage, ChatRun
+from src.chat.models import (
+    CONVERSATION_TITLE_MAX_LENGTH,
+    ChatMessage,
+    ChatUsage,
+    Conversation,
+)
+from src.chat.schemas import MAX_MESSAGE_CHARS, AgentMessage, ChatRun
 from src.database import SessionFactory
 from src.models import get_datetime_utc
 from src.pagination import Pagination
+
+RUN_ID_MAX_LENGTH = 100
+QUOTA_WINDOW = timedelta(hours=1)
 
 logger = logging.getLogger(__name__)
 
@@ -90,30 +98,24 @@ def newest_user_text(body: ChatRun) -> str:
     """Return the text of the newest user message in the request."""
     user_messages = [message for message in body.messages if message.role == "user"]
     if not user_messages:
-        raise InvalidChatInput(ErrorCode.NO_USER_MESSAGE)
+        raise NoUserMessage()
     content = user_messages[-1].content
     if not isinstance(content, str) or not content.strip():
-        raise InvalidChatInput(ErrorCode.EMPTY_MESSAGE)
-    if len(content) > chat_constants.MAX_MESSAGE_CHARS:
-        raise InvalidChatInput(
-            ErrorCode.MESSAGE_TOO_LONG.format(limit=chat_constants.MAX_MESSAGE_CHARS)
-        )
+        raise EmptyMessage()
+    if len(content) > MAX_MESSAGE_CHARS:
+        raise MessageTooLong(MAX_MESSAGE_CHARS)
     return content
 
 
 def conversation_title(text: str) -> str:
     """Return a conversation's title, taken from its first message."""
-    return " ".join(text.split())[: chat_constants.CONVERSATION_TITLE_MAX_LENGTH]
+    return " ".join(text.split())[:CONVERSATION_TITLE_MAX_LENGTH]
 
 
 def build_run_input(body: ChatRun, conversation_id: uuid.UUID) -> RunAgentInput:
     """Build a conversation's run from the newest user message, ignoring the rest."""
     text = newest_user_text(body)
-    run_id = (
-        body.run_id
-        if len(body.run_id) <= chat_constants.RUN_ID_MAX_LENGTH
-        else str(uuid.uuid4())
-    )
+    run_id = body.run_id if len(body.run_id) <= RUN_ID_MAX_LENGTH else str(uuid.uuid4())
     return RunAgentInput(
         thread_id=str(conversation_id),
         run_id=run_id,
@@ -207,9 +209,7 @@ async def count_run(
     ).first()
     await session.commit()
     if counted is None:
-        raise ChatQuotaExceeded(
-            ceil((start + chat_constants.QUOTA_WINDOW - now).total_seconds())
-        )
+        raise ChatQuotaExceeded(ceil((start + QUOTA_WINDOW - now).total_seconds()))
 
 
 async def start_run(

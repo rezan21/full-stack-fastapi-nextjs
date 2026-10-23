@@ -2,7 +2,6 @@ import pytest
 from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.auth import constants as auth_constants
 from src.auth import service as auth_service
 from src.auth.utils import verify_password
 from src.users import service as users_service
@@ -50,7 +49,7 @@ async def test_authenticate_unknown_email_still_verifies_a_password_hash(
     )
 
     assert user is None
-    assert verified_hashes == [auth_constants.DUMMY_HASH]
+    assert verified_hashes == [auth_service.DUMMY_HASH]
 
 
 async def test_authenticate_user_with_bcrypt_upgrades_to_argon2(

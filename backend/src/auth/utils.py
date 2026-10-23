@@ -8,8 +8,11 @@ from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
 
-from src.auth import constants as auth_constants
 from src.auth.config import auth_settings
+
+ALGORITHM = "HS256"
+ACCESS_AUDIENCE = "access"
+PASSWORD_RESET_AUDIENCE = "password-reset"
 
 password_hash = PasswordHash(
     (
@@ -26,12 +29,10 @@ def create_access_token(
     to_encode = {
         "exp": datetime.now(UTC) + expires_delta,
         "sub": str(subject),
-        "aud": auth_constants.ACCESS_AUDIENCE,
+        "aud": ACCESS_AUDIENCE,
         "ver": token_version,
     }
-    return jwt.encode(
-        to_encode, auth_settings.SECRET_KEY, algorithm=auth_constants.ALGORITHM
-    )
+    return jwt.encode(to_encode, auth_settings.SECRET_KEY, algorithm=ALGORITHM)
 
 
 def verify_password(
@@ -59,7 +60,7 @@ def generate_email_token(
     return jwt.encode(
         {**claims, "aud": audience, "nbf": now, "exp": now + expires_in},
         auth_settings.SECRET_KEY,
-        algorithm=auth_constants.ALGORITHM,
+        algorithm=ALGORITHM,
     )
 
 
@@ -69,7 +70,7 @@ def verify_email_token(token: str, *, audience: str) -> dict[str, Any] | None:
         return jwt.decode(
             token,
             auth_settings.SECRET_KEY,
-            algorithms=[auth_constants.ALGORITHM],
+            algorithms=[ALGORITHM],
             audience=audience,
         )
     except InvalidTokenError:
@@ -79,7 +80,7 @@ def verify_email_token(token: str, *, audience: str) -> dict[str, Any] | None:
 def generate_password_reset_token(email: str, hashed_password: str) -> str:
     """Create a password reset token for the email."""
     return generate_email_token(
-        audience=auth_constants.PASSWORD_RESET_AUDIENCE,
+        audience=PASSWORD_RESET_AUDIENCE,
         claims={"sub": email, "pwd": password_fingerprint(hashed_password)},
         expires_in=timedelta(minutes=auth_settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES),
     )
@@ -87,7 +88,7 @@ def generate_password_reset_token(email: str, hashed_password: str) -> str:
 
 def verify_password_reset_token(token: str) -> tuple[str, str] | None:
     """Return the email and password fingerprint in a valid reset token, otherwise None."""
-    claims = verify_email_token(token, audience=auth_constants.PASSWORD_RESET_AUDIENCE)
+    claims = verify_email_token(token, audience=PASSWORD_RESET_AUDIENCE)
     if not claims or "sub" not in claims or "pwd" not in claims:
         return None
     return str(claims["sub"]), str(claims["pwd"])

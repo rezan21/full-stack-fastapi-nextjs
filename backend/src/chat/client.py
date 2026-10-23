@@ -25,10 +25,17 @@ from psycopg.rows import DictRow, dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import SecretStr
 
-from src.chat import constants as chat_constants
 from src.chat.config import chat_settings
 from src.chat.schemas import AgentMessage
 from src.config import settings
+
+MAX_OUTPUT_TOKENS = 8192
+MODEL_TIMEOUT_SECONDS = 60
+MODEL_MAX_RETRIES = 2
+POOL_MAX_SIZE = 4
+RECURSION_LIMIT = 30
+GENERIC_ERROR = "The assistant ran into a problem. Please try again."
+SYSTEM_PROMPT = "You are a helpful assistant. Keep answers concise."
 
 logger = logging.getLogger(__name__)
 
@@ -45,14 +52,14 @@ def build_agent(
     """Build the chat agent over the model, remembering conversations in the checkpointer."""
     graph = create_deep_agent(
         model=model,
-        system_prompt=chat_constants.SYSTEM_PROMPT,
+        system_prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
         name="chat",
     )
     return LangGraphAgent(
         name="chat",
         graph=graph,
-        config={"recursion_limit": chat_constants.RECURSION_LIMIT},
+        config={"recursion_limit": RECURSION_LIMIT},
         emit_raw_events=False,
     )
 
@@ -68,7 +75,7 @@ async def stream_events(
         async for event in agent.clone().run(run_input):
             started = started or event.type == EventType.RUN_STARTED
             if event.type == EventType.RUN_ERROR:
-                yield event.model_copy(update={"message": chat_constants.GENERIC_ERROR})
+                yield event.model_copy(update={"message": GENERIC_ERROR})
                 continue
             if event.type == EventType.RUN_FINISHED and on_finished:
                 await on_finished()
@@ -81,9 +88,7 @@ async def stream_events(
                 thread_id=run_input.thread_id,
                 run_id=run_input.run_id,
             )
-        yield RunErrorEvent(
-            type=EventType.RUN_ERROR, message=chat_constants.GENERIC_ERROR
-        )
+        yield RunErrorEvent(type=EventType.RUN_ERROR, message=GENERIC_ERROR)
 
 
 def agent_message(message: BaseMessage) -> AgentMessage | None:
@@ -133,9 +138,9 @@ def build_model(api_key: SecretStr, name: str) -> ChatOpenAI:
     return ChatOpenAI(
         model=name,
         api_key=api_key,
-        max_completion_tokens=chat_constants.MAX_OUTPUT_TOKENS,
-        timeout=chat_constants.MODEL_TIMEOUT_SECONDS,
-        max_retries=chat_constants.MODEL_MAX_RETRIES,
+        max_completion_tokens=MAX_OUTPUT_TOKENS,
+        timeout=MODEL_TIMEOUT_SECONDS,
+        max_retries=MODEL_MAX_RETRIES,
         use_responses_api=False,
         store=False,
     )
@@ -152,7 +157,7 @@ async def chat_lifespan(app: FastAPI) -> AsyncIterator[None]:
     pool = AsyncConnectionPool[AsyncConnection[DictRow]](
         conninfo(),
         min_size=0,
-        max_size=chat_constants.POOL_MAX_SIZE,
+        max_size=POOL_MAX_SIZE,
         open=False,
         check=check_connection,
         kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},

@@ -9,10 +9,9 @@ from langchain_core.messages import AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from src.chat import client as chat_client
-from src.chat import constants as chat_constants
 from src.chat import service as chat_service
 from src.chat.exceptions import InvalidChatInput
-from src.chat.schemas import AgentMessage
+from src.chat.schemas import MAX_MESSAGE_CHARS, AgentMessage
 from tests.utils.chat import (
     PROVIDER_ERROR,
     ExplodingModel,
@@ -90,7 +89,7 @@ def test_an_overlong_run_id_is_replaced() -> None:
     result = chat_service.build_run_input(client_input(runId="r" * 101), CONVERSATION)
 
     assert result.run_id != "r" * 101
-    assert len(result.run_id) <= chat_constants.RUN_ID_MAX_LENGTH
+    assert len(result.run_id) <= chat_service.RUN_ID_MAX_LENGTH
 
 
 @pytest.mark.parametrize(
@@ -117,7 +116,7 @@ def test_input_without_a_plain_text_user_message_is_refused(
 
 
 def test_a_message_at_the_length_limit_is_accepted_and_one_over_is_not() -> None:
-    at_limit = "x" * chat_constants.MAX_MESSAGE_CHARS
+    at_limit = "x" * MAX_MESSAGE_CHARS
     accepted = run_input(at_limit)
     assert accepted.messages[0].content == at_limit
 
@@ -145,7 +144,7 @@ async def test_a_provider_error_reaches_the_client_only_as_a_generic_message() -
 
     final = events[-1]
     assert isinstance(final, RunErrorEvent)
-    assert final.message == chat_constants.GENERIC_ERROR
+    assert final.message == chat_client.GENERIC_ERROR
     serialized = " ".join(event.model_dump_json() for event in events)
     assert "sk-proj" not in serialized
     assert PROVIDER_ERROR not in serialized
@@ -165,7 +164,7 @@ async def test_a_failure_before_the_run_starts_still_gets_a_start_and_a_generic_
     events = await collect(chat_client.stream_events(Broken(), run_input("hi")))  # type: ignore[arg-type]
 
     assert types(events) == [EventType.RUN_STARTED, EventType.RUN_ERROR]
-    assert events[-1].message == chat_constants.GENERIC_ERROR  # type: ignore[attr-defined]
+    assert events[-1].message == chat_client.GENERIC_ERROR  # type: ignore[attr-defined]
 
 
 async def test_a_runaway_agent_is_stopped_by_the_recursion_limit() -> None:
@@ -176,7 +175,7 @@ async def test_a_runaway_agent_is_stopped_by_the_recursion_limit() -> None:
     )
 
     assert types(events)[-1] == EventType.RUN_ERROR
-    assert model.calls <= chat_constants.RECURSION_LIMIT
+    assert model.calls <= chat_client.RECURSION_LIMIT
 
 
 async def test_history_lists_the_user_and_assistant_text_of_a_conversation() -> None:
@@ -321,5 +320,5 @@ async def test_a_run_whose_answer_could_not_be_saved_ends_in_a_generic_error() -
 
     assert types(events)[-1] == EventType.RUN_ERROR
     assert EventType.RUN_FINISHED not in types(events)
-    assert events[-1].message == chat_constants.GENERIC_ERROR  # type: ignore[attr-defined]
+    assert events[-1].message == chat_client.GENERIC_ERROR  # type: ignore[attr-defined]
     assert PROVIDER_ERROR not in " ".join(e.model_dump_json() for e in events)

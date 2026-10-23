@@ -4,8 +4,9 @@ from datetime import datetime
 from sqlalchemy import BigInteger, Column, Identity, Index, Text, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
-from src.chat.constants import CONVERSATION_TITLE_MAX_LENGTH
 from src.models import get_datetime_utc
+
+CONVERSATION_TITLE_MAX_LENGTH = 60
 
 
 class Conversation(SQLModel, table=True):

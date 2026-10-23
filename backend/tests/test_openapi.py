@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.chat.constants import MAX_MESSAGE_CHARS
+from src.chat.schemas import MAX_MESSAGE_CHARS
 from src.main import app
 from src.models import EMAIL_PATTERN
 

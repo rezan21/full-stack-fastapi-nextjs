@@ -8,7 +8,6 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from src.auth import dependencies as auth_dependencies
 from src.chat import client as chat_client
-from src.chat import constants as chat_constants
 from src.chat import service as chat_service
 from src.chat.dependencies import (
     AgentDep,
@@ -25,6 +24,9 @@ from src.chat.schemas import (
 from src.database import SessionDep
 from src.exceptions import AUTH_ERRORS, error_responses
 from src.pagination import PaginationDep
+
+MESSAGES_PAGE_SIZE = 100
+MAX_MESSAGES_PAGE_SIZE = 500
 
 router = APIRouter(
     prefix="/chat",
@@ -73,8 +75,8 @@ async def read_conversation(conversation: OwnedConversation) -> Conversation:
 async def read_messages(
     conversation: OwnedConversation,
     session: SessionDep,
-    limit: Annotated[int, Query(ge=1, le=chat_constants.MAX_MESSAGES_PAGE_SIZE)] = (
-        chat_constants.MESSAGES_PAGE_SIZE
+    limit: Annotated[int, Query(ge=1, le=MAX_MESSAGES_PAGE_SIZE)] = (
+        MESSAGES_PAGE_SIZE
     ),
 ) -> dict[str, object]:
     """Get what was said in a conversation, latest messages last."""

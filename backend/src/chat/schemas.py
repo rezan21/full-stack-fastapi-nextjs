@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from pydantic import Field as PydanticField
 from sqlmodel import Field, SQLModel
 
-from src.chat.constants import MAX_MESSAGE_CHARS
+MAX_MESSAGE_CHARS = 4000
 
 
 @dataclass(frozen=True)

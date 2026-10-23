@@ -1,10 +1,9 @@
 from src.exceptions import NotFound, PermissionDenied
-from src.items.constants import ErrorCode
 
 
 class ItemNotFound(NotFound):
-    DETAIL = ErrorCode.ITEM_NOT_FOUND
+    DETAIL = "Item not found"
 
 
 class NotEnoughPermissions(PermissionDenied):
-    DETAIL = ErrorCode.NOT_ENOUGH_PERMISSIONS
+    DETAIL = "Not enough permissions"

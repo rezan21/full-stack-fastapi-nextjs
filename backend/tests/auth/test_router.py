@@ -8,8 +8,8 @@ from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.auth.config import auth_settings
-from src.auth.constants import ALGORITHM
 from src.auth.utils import (
+    ALGORITHM,
     generate_password_reset_token,
     get_password_hash,
     verify_password,

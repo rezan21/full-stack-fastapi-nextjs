@@ -1,6 +1,12 @@
 from sentry_sdk.scrubber import DEFAULT_DENYLIST, EventScrubber
 
-from src.constants import SECRET_FIELDS
+SECRET_FIELDS = [
+    "new_password",
+    "current_password",
+    "access_token",
+    "messages",
+    "content",
+]
 
 
 def event_scrubber() -> EventScrubber:

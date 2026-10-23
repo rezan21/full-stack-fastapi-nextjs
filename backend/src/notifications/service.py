@@ -1,22 +1,25 @@
 import logging
 import smtplib
 import ssl
+from pathlib import Path
 from typing import Any
 
 import emails
 from jinja2 import Template
 
 from src.config import settings
-from src.notifications import constants as notifications_constants
 from src.notifications.config import notifications_settings
 from src.utils import describe_duration
+
+SMTP_TIMEOUT_SECONDS = 10
+TEMPLATES_DIR = Path(__file__).parents[2] / "templates" / "email"
 
 logger = logging.getLogger(__name__)
 
 
 def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
     """Render an email template with the context."""
-    template_str = (notifications_constants.TEMPLATES_DIR / template_name).read_text()
+    template_str = (TEMPLATES_DIR / template_name).read_text()
     html_content: str = Template(template_str).render(context)
     return html_content
 
@@ -43,7 +46,7 @@ def send_email(
     )
     message.mail_to = email_to
     context = ssl.create_default_context()
-    timeout = notifications_constants.SMTP_TIMEOUT_SECONDS
+    timeout = SMTP_TIMEOUT_SECONDS
     if notifications_settings.SMTP_SSL and not notifications_settings.SMTP_TLS:
         server: smtplib.SMTP = smtplib.SMTP_SSL(
             notifications_settings.SMTP_HOST,

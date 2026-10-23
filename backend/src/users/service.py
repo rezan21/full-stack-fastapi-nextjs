@@ -11,11 +11,13 @@ from src.auth import utils as auth_utils
 from src.auth.exceptions import InvalidToken
 from src.config import settings
 from src.notifications import service as notifications_service
-from src.users import constants as users_constants
 from src.users.config import users_settings
 from src.users.exceptions import PasswordUnchanged, SuperuserCannotDelete
 from src.users.models import User
 from src.users.schemas import UserCreate, UserUpdateMe
+
+SIGNUP_AUDIENCE = "signup"
+EMAIL_CHANGE_AUDIENCE = "email-change"
 
 
 async def create_user(*, session: AsyncSession, user_create: UserCreate) -> User:
@@ -80,9 +82,7 @@ def revoke_tokens(user: User) -> None:
 
 async def complete_signup(*, session: AsyncSession, token: str, password: str) -> User:
     """Create the user a sign-up link was sent for."""
-    claims = auth_utils.verify_email_token(
-        token, audience=users_constants.SIGNUP_AUDIENCE
-    )
+    claims = auth_utils.verify_email_token(token, audience=SIGNUP_AUDIENCE)
     if not claims or await get_user_by_email(session=session, email=claims["sub"]):
         raise InvalidToken()
     user_create = UserCreate(
@@ -106,9 +106,7 @@ async def update_user(session: AsyncSession, user: User, user_in: UserUpdateMe) 
 
 async def confirm_email_change(*, session: AsyncSession, token: str) -> tuple[str, str]:
     """Apply a confirmed email change, returning the previous and the new address."""
-    claims = auth_utils.verify_email_token(
-        token, audience=users_constants.EMAIL_CHANGE_AUDIENCE
-    )
+    claims = auth_utils.verify_email_token(token, audience=EMAIL_CHANGE_AUDIENCE)
     user = await session.get(User, claims["sub"]) if claims else None
     if (
         not claims
@@ -159,7 +157,7 @@ async def delete_user(session: AsyncSession, user: User) -> None:
 def send_signup_email(*, email_to: str, full_name: str) -> None:
     """Send the link that completes a sign-up."""
     token = auth_utils.generate_email_token(
-        audience=users_constants.SIGNUP_AUDIENCE,
+        audience=SIGNUP_AUDIENCE,
         claims={"sub": email_to, "name": full_name},
         expires_in=timedelta(minutes=users_settings.SIGNUP_TOKEN_EXPIRE_MINUTES),
     )
@@ -178,7 +176,7 @@ def send_email_change_email(
 ) -> None:
     """Send the link that confirms a new email address."""
     token = auth_utils.generate_email_token(
-        audience=users_constants.EMAIL_CHANGE_AUDIENCE,
+        audience=EMAIL_CHANGE_AUDIENCE,
         claims={"sub": str(user_id), "email": email_to, "from": current_email},
         expires_in=timedelta(minutes=users_settings.EMAIL_CHANGE_TOKEN_EXPIRE_MINUTES),
     )

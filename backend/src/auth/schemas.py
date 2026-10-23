@@ -2,8 +2,9 @@ from typing import Annotated
 
 from sqlmodel import Field, SQLModel
 
-from src.auth.constants import PASSWORD_MAX_LENGTH
 from src.models import Email
+
+PASSWORD_MAX_LENGTH = 128
 
 Password = Annotated[str, Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)]
 CurrentPassword = Annotated[str, Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)]

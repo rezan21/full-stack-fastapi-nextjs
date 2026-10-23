@@ -10,8 +10,9 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.auth.config import auth_settings
-from src.auth.constants import ACCESS_AUDIENCE, ALGORITHM
 from src.auth.utils import (
+    ACCESS_AUDIENCE,
+    ALGORITHM,
     create_access_token,
     generate_email_token,
     generate_password_reset_token,
@@ -21,7 +22,6 @@ from src.auth.utils import (
 from src.config import settings
 from src.users import service as users_service
 from src.users.config import users_settings
-from src.users.constants import EMAIL_CHANGE_AUDIENCE, SIGNUP_AUDIENCE
 from src.users.models import User
 from src.users.schemas import UserCreate
 from tests.utils.user import (
@@ -326,7 +326,7 @@ def sent_to(send: MagicMock, address: str) -> list[str]:
 
 def signup_token(email: str) -> str:
     return generate_email_token(
-        audience=SIGNUP_AUDIENCE,
+        audience=users_service.SIGNUP_AUDIENCE,
         claims={"sub": email, "name": "New User"},
         expires_in=timedelta(hours=1),
     )
@@ -476,7 +476,7 @@ async def test_a_signup_link_works_once(client: AsyncClient) -> None:
 
 async def test_complete_signup_rejects_an_expired_token(client: AsyncClient) -> None:
     token = generate_email_token(
-        audience=SIGNUP_AUDIENCE,
+        audience=users_service.SIGNUP_AUDIENCE,
         claims={"sub": random_email(), "name": "New User"},
         expires_in=timedelta(seconds=-1),
     )
@@ -502,7 +502,7 @@ async def test_complete_signup_rejects_tokens_made_for_another_purpose(
     tokens = [
         generate_password_reset_token(email=email, hashed_password="hash"),
         generate_email_token(
-            audience=EMAIL_CHANGE_AUDIENCE,
+            audience=users_service.EMAIL_CHANGE_AUDIENCE,
             claims={"sub": email, "name": "New User"},
             expires_in=timedelta(hours=1),
         ),
@@ -809,7 +809,7 @@ async def test_confirming_an_email_change_that_loses_the_race_answers_400(
     taken, _, _ = await user_with_headers(client, db)
     original_email, original_version = user.email, user.token_version
     token = generate_email_token(
-        audience=EMAIL_CHANGE_AUDIENCE,
+        audience=users_service.EMAIL_CHANGE_AUDIENCE,
         claims={"sub": str(user.id), "email": taken.email, "from": user.email},
         expires_in=timedelta(hours=1),
     )

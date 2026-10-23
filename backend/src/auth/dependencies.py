@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 
-from src.auth import constants as auth_constants
+from src.auth import utils as auth_utils
 from src.auth.config import auth_settings
 from src.auth.exceptions import InactiveUser, InvalidCredentials
 from src.auth.schemas import TokenPayload
@@ -27,8 +27,8 @@ async def parse_jwt_data(token: TokenDep) -> TokenPayload:
         payload = jwt.decode(
             token,
             auth_settings.SECRET_KEY,
-            algorithms=[auth_constants.ALGORITHM],
-            audience=auth_constants.ACCESS_AUDIENCE,
+            algorithms=[auth_utils.ALGORITHM],
+            audience=auth_utils.ACCESS_AUDIENCE,
         )
         return TokenPayload(**payload)
     except InvalidTokenError, ValidationError:

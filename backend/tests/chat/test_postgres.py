@@ -8,7 +8,6 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import SecretStr
 
 from src.chat import client as chat_client
-from src.chat import constants as chat_constants
 from src.chat import service as chat_service
 from src.chat.config import chat_settings
 from tests.utils.chat import client_input, replying
@@ -37,9 +36,9 @@ def test_the_openai_model_is_bounded_and_keeps_nothing_at_the_provider() -> None
     model = chat_client.build_model(SecretStr("sk-test-key"), "gpt-test")
 
     assert model.model_name == "gpt-test"
-    assert model.max_tokens == chat_constants.MAX_OUTPUT_TOKENS
-    assert model.max_retries == chat_constants.MODEL_MAX_RETRIES
-    assert model.request_timeout == chat_constants.MODEL_TIMEOUT_SECONDS
+    assert model.max_tokens == chat_client.MAX_OUTPUT_TOKENS
+    assert model.max_retries == chat_client.MODEL_MAX_RETRIES
+    assert model.request_timeout == chat_client.MODEL_TIMEOUT_SECONDS
     assert model.store is False
     assert model.use_responses_api is False
     assert "sk-test-key" not in repr(model)

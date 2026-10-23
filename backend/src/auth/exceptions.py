@@ -1,6 +1,5 @@
 from math import ceil
 
-from src.auth.constants import ErrorCode
 from src.exceptions import (
     BadRequest,
     NotAuthenticated,
@@ -11,32 +10,32 @@ from src.utils import describe_duration
 
 
 class InvalidCredentials(NotAuthenticated):
-    DETAIL = ErrorCode.INVALID_CREDENTIALS
+    DETAIL = "Could not validate credentials"
 
 
 class InactiveUser(PermissionDenied):
-    DETAIL = ErrorCode.INACTIVE_USER
+    DETAIL = "Inactive user"
 
 
 class AccountInactive(BadRequest):
-    DETAIL = ErrorCode.INACTIVE_USER
+    DETAIL = "Inactive user"
 
 
 class IncorrectLogin(BadRequest):
-    DETAIL = ErrorCode.INCORRECT_LOGIN
+    DETAIL = "Incorrect email or password"
 
 
 class IncorrectPassword(BadRequest):
-    DETAIL = ErrorCode.INCORRECT_PASSWORD
+    DETAIL = "Incorrect password"
 
 
 class InvalidToken(BadRequest):
-    DETAIL = ErrorCode.INVALID_TOKEN
+    DETAIL = "Invalid token"
 
 
 class AccountLocked(TooManyRequests):
     def __init__(self, retry_after: int) -> None:
         wait = describe_duration(ceil(retry_after / 60))
         super().__init__(
-            ErrorCode.ACCOUNT_LOCKED.format(wait=wait), retry_after=retry_after
+            f"Too many failed attempts. Try again in {wait}.", retry_after=retry_after
         )

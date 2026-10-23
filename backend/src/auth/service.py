@@ -10,7 +10,6 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import col, delete, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.auth import constants as auth_constants
 from src.auth.config import auth_settings
 from src.auth.exceptions import (
     AccountInactive,
@@ -36,6 +35,8 @@ from src.notifications.schemas import EmailData
 from src.users import service as users_service
 from src.users.models import User
 from src.utils import describe_duration
+
+DUMMY_HASH = "$argon2id$v=19$m=65536,t=3,p=4$MjQyZWE1MzBjYjJlZTI0Yw$YTU4NGM5ZTZmYjE2NzZlZjY0ZWY3ZGRkY2U2OWFjNjk"
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ async def authenticate(
     """Return the user when the credentials are valid, otherwise None."""
     db_user = await users_service.get_user_by_email(session=session, email=email)
     if not db_user:
-        await run_in_threadpool(verify_password, password, auth_constants.DUMMY_HASH)
+        await run_in_threadpool(verify_password, password, DUMMY_HASH)
         return None
     verified, updated_password_hash = await run_in_threadpool(
         verify_password, password, db_user.hashed_password

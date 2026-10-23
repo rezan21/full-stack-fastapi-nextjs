@@ -9,13 +9,12 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.chat import client as chat_client
-from src.chat import constants as chat_constants
 from src.chat import service as chat_service
 from src.chat.client import Chat
 from src.chat.config import chat_settings
 from src.chat.dependencies import prepare_run
 from src.chat.models import ChatMessage, Conversation
-from src.chat.schemas import AgentMessage, ChatRun
+from src.chat.schemas import MAX_MESSAGE_CHARS, AgentMessage, ChatRun
 from src.config import settings
 from src.database import SessionFactory, engine
 from src.main import app
@@ -322,7 +321,7 @@ async def test_the_first_message_names_the_conversation_and_each_run_bumps_it(
             {
                 "id": "a",
                 "role": "user",
-                "content": "x" * (chat_constants.MAX_MESSAGE_CHARS + 1),
+                "content": "x" * (MAX_MESSAGE_CHARS + 1),
             }
         ],
         [{"id": "a", "role": "user", "content": [{"type": "text", "text": "parts"}]}],
@@ -398,7 +397,7 @@ async def test_a_provider_error_ends_the_stream_with_a_generic_error(
     assert r.status_code == 200
     final = sse_events(r)[-1]
     assert final["type"] == "RUN_ERROR"
-    assert final["message"] == chat_constants.GENERIC_ERROR
+    assert final["message"] == chat_client.GENERIC_ERROR
     assert PROVIDER_ERROR not in r.text
     assert "sk-proj" not in r.text
 
@@ -516,7 +515,7 @@ async def test_an_answer_that_cannot_be_saved_is_reported_and_not_shown_as_finis
 
     events = sse_events(r)
     assert events[-1]["type"] == "RUN_ERROR"
-    assert events[-1]["message"] == chat_constants.GENERIC_ERROR
+    assert events[-1]["message"] == chat_client.GENERIC_ERROR
     assert "RUN_FINISHED" not in [e["type"] for e in events]
     assert "the database is down" not in r.text
     monkeypatch.undo()
