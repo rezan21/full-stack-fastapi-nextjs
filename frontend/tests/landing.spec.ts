@@ -13,11 +13,15 @@ test.describe("signed out", () => {
   })
 })
 
-test("A signed-in visitor who follows the login lands on the dashboard", async ({
-  page,
-}) => {
-  await page.goto("/")
-  await page.getByRole("button", { name: "Log in" }).click()
+test.describe("signed in", () => {
+  test.use({ storageState: "playwright/.auth/user.json" })
 
-  await expect(page).toHaveURL(/\/dashboard$/)
+  test("A signed-in visitor who follows the login lands on the dashboard", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await page.getByRole("button", { name: "Log in" }).click()
+
+    await expect(page).toHaveURL(/\/dashboard$/)
+  })
 })

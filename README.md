@@ -51,6 +51,7 @@ The FastAPI and SQLModel packages ship agent skills. `backend/.agents/skills` an
 - Backend: `bash scripts/test.sh` (from the project root); it fails below 90% coverage, and also runs the migration tests against a throwaway database.
 - Frontend unit tests: `bun run test:unit` (from `frontend/`); they fail below 90% coverage of the modules they load.
 - Frontend end-to-end: `docker compose run --rm playwright bunx playwright test`.
+  The suite logs in as two dedicated accounts, `e2e-admin@example.com` (superuser) and `e2e-user@example.com`. The `e2e-seed` service creates them before each run from `E2E_PASSWORD` in `backend/.env`; the backend itself has no test code.
 
 ## Deployment
 

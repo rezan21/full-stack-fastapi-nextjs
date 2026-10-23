@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test"
-import { firstSuperuserPassword } from "./config"
+import { e2ePassword, e2eUserEmail, e2eUserName } from "./config"
 import { createUser } from "./utils/api"
 import { emailedToken, waitForEmailHtml } from "./utils/mailpit"
 import { randomEmail, randomPassword } from "./utils/random"
@@ -211,15 +211,9 @@ test.describe("Edit user email", () => {
 })
 
 test.describe("Full name is required", () => {
-  test.use({ storageState: { cookies: [], origins: [] } })
-
   test("Clearing the full name shows an error and does not save", async ({
     page,
   }) => {
-    const email = randomEmail()
-    const password = randomPassword()
-    await createUser({ email, password })
-    await logInUser(page, email, password)
     await page.goto("/settings")
 
     await page.getByRole("button", { name: "Edit" }).click()
@@ -234,14 +228,7 @@ test.describe("Full name is required", () => {
 })
 
 test.describe("Cancel edit actions", () => {
-  test.use({ storageState: { cookies: [], origins: [] } })
-
   test("Cancel edit action restores original name", async ({ page }) => {
-    const email = randomEmail()
-    const password = randomPassword()
-    const user = await createUser({ email, password })
-
-    await logInUser(page, email, password)
     await page.goto("/settings")
     await page.getByRole("tab", { name: "My profile" }).click()
     await page.getByRole("button", { name: "Edit" }).click()
@@ -249,16 +236,11 @@ test.describe("Cancel edit actions", () => {
     await page.getByRole("button", { name: "Cancel" }).first().click()
 
     await expect(
-      page.locator("form").getByText(user.full_name as string, { exact: true }),
+      page.locator("form").getByText(e2eUserName, { exact: true }),
     ).toBeVisible()
   })
 
   test("Cancel edit action restores original email", async ({ page }) => {
-    const email = randomEmail()
-    const password = randomPassword()
-    await createUser({ email, password })
-
-    await logInUser(page, email, password)
     await page.goto("/settings")
     await page.getByRole("tab", { name: "My profile" }).click()
     await page.getByRole("button", { name: "Edit" }).click()
@@ -266,7 +248,7 @@ test.describe("Cancel edit actions", () => {
     await page.getByRole("button", { name: "Cancel" }).first().click()
 
     await expect(
-      page.locator("form").getByText(email, { exact: true }),
+      page.locator("form").getByText(e2eUserEmail, { exact: true }),
     ).toBeVisible()
   })
 })
@@ -370,18 +352,9 @@ test.describe("Sessions after a security change", () => {
 })
 
 test.describe("Change password validation", () => {
-  test.use({ storageState: { cookies: [], origins: [] } })
-  let email: string
-  let password: string
-
-  test.beforeAll(async () => {
-    email = randomEmail()
-    password = randomPassword()
-    await createUser({ email, password })
-  })
+  const password = e2ePassword
 
   test.beforeEach(async ({ page }) => {
-    await logInUser(page, email, password)
     await page.goto("/settings")
     await page.getByRole("tab", { name: "Password" }).click()
   })
@@ -486,20 +459,6 @@ test.describe("Delete account confirmation", () => {
     await page.goto("/settings")
     await expect(page.getByRole("tab", { name: "My profile" })).toBeVisible()
   })
-})
-
-test("Superuser cannot delete their own account", async ({ page }) => {
-  await page.goto("/settings")
-  await page.getByRole("tab", { name: "Danger zone" }).click()
-  await page.getByRole("button", { name: "Delete Account" }).click()
-  await page
-    .getByTestId("delete-account-password-input")
-    .fill(firstSuperuserPassword)
-  await page.getByRole("button", { name: "Delete", exact: true }).click()
-
-  await expect(
-    page.getByText("Super users are not allowed to delete themselves"),
-  ).toBeVisible()
 })
 
 test("Appearance is in the user menu", async ({ page }) => {

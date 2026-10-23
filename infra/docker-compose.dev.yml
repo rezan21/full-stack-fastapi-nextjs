@@ -90,6 +90,45 @@ services:
     environment:
       MP_QUIET: "true"
 
+  frontend-e2e:
+    profiles: ["test"]
+    image: frontend-e2e:latest
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    environment:
+      API_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/login || exit 1"]
+      interval: 2s
+      retries: 30
+    ports:
+      - "127.0.0.1:9323:9323"
+
+  e2e-seed:
+    profiles: ["test"]
+    image: backend:latest
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    command: python e2e_seed.py
+    volumes:
+      - ../infra/e2e/seed.py:/app/e2e_seed.py:ro
+    environment:
+      FASTAPI_ENV: "development"
+      PROJECT_NAME: ${PROJECT_NAME:?Variable not set}
+      SECRET_KEY: ${SECRET_KEY:?Variable not set}
+      FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Variable not set}
+      FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Variable not set}
+      DATABASE_URL: postgresql://app:${APP_DB_PASSWORD:?Variable not set}@db:5432/app
+      E2E_PASSWORD: ${E2E_PASSWORD:?Variable not set}
+    depends_on:
+      prestart:
+        condition: service_completed_successfully
+
   playwright:
     profiles: ["test"]
     build:
@@ -98,14 +137,19 @@ services:
       args:
         - NODE_ENV=production
     ipc: host
+    network_mode: "service:frontend-e2e"
     depends_on:
-      - backend
-      - frontend
-      - mailpit
+      backend:
+        condition: service_started
+      frontend-e2e:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+      e2e-seed:
+        condition: service_completed_successfully
     environment:
-      - FIRST_SUPERUSER=${FIRST_SUPERUSER:?Variable not set}
-      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD:?Variable not set}
-      - PLAYWRIGHT_BASE_URL=http://frontend:3000
+      - E2E_PASSWORD=${E2E_PASSWORD:?Variable not set}
+      - PLAYWRIGHT_BASE_URL=http://localhost:3000
       - API_URL=http://backend:8000
       - MAILPIT_HOST=http://mailpit:8025
       - PLAYWRIGHT_HTML_HOST=0.0.0.0
@@ -113,5 +157,3 @@ services:
     volumes:
       - ../frontend/blob-report:/app/blob-report
       - ../frontend/test-results:/app/test-results
-    ports:
-      - "127.0.0.1:9323:9323"

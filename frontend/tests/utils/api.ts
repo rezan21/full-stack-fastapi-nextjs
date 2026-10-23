@@ -3,6 +3,7 @@ import {
   chatCreateConversation,
   itemsCreateItem,
   itemsDeleteItem,
+  loginLoginAccessToken,
   usersCompleteSignup,
   usersRegisterUser,
 } from "../../src/client"
@@ -34,6 +35,23 @@ export async function createUser({
     throwOnError: true,
   })
   return data
+}
+
+export async function loginAs(email: string, password: string) {
+  const { data } = await loginLoginAccessToken({
+    body: { username: email, password },
+    throwOnError: true,
+  })
+  return data.access_token
+}
+
+export async function createItemAs(token: string, title: string) {
+  const { data } = await itemsCreateItem({
+    body: { title },
+    auth: token,
+    throwOnError: true,
+  })
+  return data.id
 }
 
 // Deletes an item as the token's user.

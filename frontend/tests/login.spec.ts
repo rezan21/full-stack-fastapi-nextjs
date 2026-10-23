@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 import { SESSION_COOKIE } from "../src/lib/config"
-import { firstSuperuser, firstSuperuserPassword } from "./config"
+import { e2eAdminEmail, e2ePassword } from "./config"
 import { createUser } from "./utils/api"
 import { randomEmail, randomPassword } from "./utils/random"
 
@@ -42,7 +42,7 @@ test("Forgot Password link is visible", async ({ page }) => {
 test("Log in with valid email and password ", async ({ page }) => {
   await page.goto("/login")
 
-  await fillForm(page, firstSuperuser, firstSuperuserPassword)
+  await fillForm(page, e2eAdminEmail, e2ePassword)
   await page.getByRole("button", { name: "Log In" }).click()
 
   await page.waitForURL("/dashboard")
@@ -55,7 +55,7 @@ test("Log in with valid email and password ", async ({ page }) => {
 test("Log in with invalid email", async ({ page }) => {
   await page.goto("/login")
 
-  await fillForm(page, "invalidemail", firstSuperuserPassword)
+  await fillForm(page, "invalidemail", e2ePassword)
   await page.getByRole("button", { name: "Log In" }).click()
 
   await expect(page.getByText("Invalid email")).toBeVisible()

@@ -1,6 +1,12 @@
 import { expect, type Page, test } from "@playwright/test"
 import { ITEMS_PAGE_SIZE } from "../src/lib/config"
-import { createItemsAs, createUser, deleteItemAs } from "./utils/api"
+import {
+  createItemAs,
+  createItemsAs,
+  createUser,
+  deleteItemAs,
+  loginAs,
+} from "./utils/api"
 import {
   randomEmail,
   randomItemDescription,
@@ -369,4 +375,39 @@ test.describe("Items paging", () => {
       page.getByRole("navigation", { name: "pagination" }),
     ).toHaveCount(0)
   })
+})
+
+async function itemOfAnotherUser(title: string) {
+  const owner = randomEmail()
+  const password = randomPassword()
+  await createUser({ email: owner, password })
+  const token = await loginAs(owner, password)
+  const id = await createItemAs(token, title)
+  return { token, id }
+}
+
+test("A user's items list leaves out items of other users", async ({
+  page,
+}) => {
+  const title = randomItemTitle()
+  const { token, id } = await itemOfAnotherUser(title)
+  try {
+    await page.goto("/items")
+    await expect(page.getByRole("heading", { name: "Items" })).toBeVisible()
+    await expect(page.getByText(title)).toHaveCount(0)
+  } finally {
+    await deleteItemAs(token, id)
+  }
+})
+
+test("A user cannot open another user's item", async ({ page }) => {
+  const { token, id } = await itemOfAnotherUser(randomItemTitle())
+  try {
+    await page.goto(`/items/${id}`)
+    await expect(
+      page.getByRole("heading", { name: "Page not found" }),
+    ).toBeVisible()
+  } finally {
+    await deleteItemAs(token, id)
+  }
 })
