@@ -114,6 +114,7 @@ source = { editable = "." }
 dependencies = [
     { name = "ag-ui-langgraph" },
     { name = "alembic" },
+    { name = "anyio" },
     { name = "deepagents" },
     { name = "emails" },
     { name = "fastapi", extra = ["standard-no-fastapi-cloud-cli"] },
@@ -148,6 +149,7 @@ dev = [
 requires-dist = [
     { name = "ag-ui-langgraph", specifier = ">=0.0.46,<0.1.0" },
     { name = "alembic", specifier = ">=1.12.1,<2.0.0" },
+    { name = "anyio", specifier = ">=4.15.1,<5.0.0" },
     { name = "deepagents", specifier = ">=0.7.21,<1.0.0" },
     { name = "emails", specifier = ">=1.1.2,<2.0" },
     { name = "fastapi", extras = ["standard-no-fastapi-cloud-cli"], specifier = ">=0.141.1,<1.0.0" },

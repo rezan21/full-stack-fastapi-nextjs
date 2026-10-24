@@ -5,6 +5,7 @@ description = ""
 requires-python = ">=3.14,<4.0"
 dependencies = [
     "fastapi[standard-no-fastapi-cloud-cli]>=0.141.1,<1.0.0",
+    "anyio>=4.15.1,<5.0.0",
     "python-multipart<1.0.0,>=0.0.27",
     "tenacity<10.0.0,>=8.2.3",
     "pydantic<3.0.0,>=2.12.0",

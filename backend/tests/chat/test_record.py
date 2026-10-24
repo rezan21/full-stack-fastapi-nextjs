@@ -1,3 +1,5 @@
+from functools import partial
+
 import pytest
 from ag_ui.core import RunAgentInput
 from langgraph.checkpoint.memory import InMemorySaver
@@ -7,7 +9,7 @@ from src.chat import client as chat_client
 from src.chat import service as chat_service
 from src.chat.models import Conversation
 from src.chat.schemas import AgentMessage
-from tests.utils.chat import collect, replying
+from tests.utils.chat import PartialModel, collect, replying, stop_midway
 from tests.utils.user import create_random_user
 
 
@@ -68,3 +70,30 @@ async def test_recording_the_same_run_twice_does_not_repeat_the_answer(
 
     messages, _ = await chat_service.read_messages(db, conversation.id, limit=10)
     assert [m.content for m in messages] == ["Only once."]
+
+
+async def test_a_reply_cut_off_midway_is_recorded_in_the_transcript(
+    db: AsyncSession, conversation: Conversation
+) -> None:
+    model = PartialModel(chunks=["Once upon ", "a time"])
+    agent = chat_client.build_agent(model, InMemorySaver())
+    run_input = run_for(conversation, "tell me a story")
+    await chat_service.add_messages(
+        db,
+        conversation.id,
+        [AgentMessage(run_input.messages[0].id, "user", "tell me a story")],
+    )
+    await db.commit()
+
+    await stop_midway(
+        agent,
+        run_input,
+        len(model.chunks),
+        partial(chat_service.record_replies, agent, run_input),
+    )
+
+    messages, _ = await chat_service.read_messages(db, conversation.id, limit=10)
+    assert [(m.role, m.content) for m in messages] == [
+        ("user", "tell me a story"),
+        ("assistant", "Once upon a time"),
+    ]

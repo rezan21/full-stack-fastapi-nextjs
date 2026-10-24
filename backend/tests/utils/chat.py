@@ -1,10 +1,12 @@
 import asyncio
 import json
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from contextlib import contextmanager
 from typing import Any, Self
 
-from ag_ui.core import BaseEvent
+import anyio
+from ag_ui.core import BaseEvent, EventType, RunAgentInput
+from ag_ui_langgraph import LangGraphAgent
 from httpx import Response
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -13,7 +15,7 @@ from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResu
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import Field
 
-from src.chat.client import Chat, build_agent
+from src.chat.client import Chat, build_agent, stream_events
 from src.chat.dependencies import get_chat
 from src.chat.schemas import ChatRun
 from src.main import app
@@ -81,6 +83,21 @@ async def collect(stream: AsyncIterator[BaseEvent]) -> list[BaseEvent]:
     return [event async for event in stream]
 
 
+async def stop_midway(
+    agent: LangGraphAgent,
+    run_input: RunAgentInput,
+    deltas: int,
+    on_finished: Callable[[], Awaitable[None]] | None = None,
+) -> None:
+    seen = 0
+    with anyio.CancelScope() as scope:
+        async for event in stream_events(agent, run_input, on_finished):
+            if event.type == EventType.TEXT_MESSAGE_CONTENT:
+                seen += 1
+                if seen == deltas:
+                    scope.cancel()
+
+
 class ScriptedModel(BaseChatModel):
     replies: list[AIMessage]
 
@@ -114,6 +131,30 @@ class BlockingModel(BaseChatModel):
         await self.release.wait()
         message = AIMessage(content="finally")
         return ChatResult(generations=[ChatGeneration(message=message)])
+
+
+class PartialModel(BaseChatModel):
+    chunks: list[str]
+    then_fail: bool = False
+
+    @property
+    def _llm_type(self) -> str:
+        return "partial"
+
+    def bind_tools(self, tools: Any, **kwargs: Any) -> Self:
+        return self
+
+    def _generate(self, *args: Any, **kwargs: Any) -> ChatResult:
+        raise NotImplementedError
+
+    async def _astream(
+        self, *args: Any, **kwargs: Any
+    ) -> AsyncIterator[ChatGenerationChunk]:
+        for chunk in self.chunks:
+            yield ChatGenerationChunk(message=AIMessageChunk(content=chunk))
+        if self.then_fail:
+            raise RuntimeError(PROVIDER_ERROR)
+        await asyncio.Event().wait()
 
 
 class RecordingModel(BaseChatModel):

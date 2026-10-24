@@ -9,6 +9,7 @@ from langchain_core.messages import AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from src.chat import client as chat_client
+from src.chat import notes
 from src.chat import service as chat_service
 from src.chat.exceptions import InvalidChatInput
 from src.chat.schemas import MAX_MESSAGE_CHARS, AgentMessage
@@ -16,10 +17,13 @@ from tests.utils.chat import (
     PROVIDER_ERROR,
     ExplodingModel,
     LoopingToolModel,
+    PartialModel,
+    RecordingModel,
     ScriptedModel,
     client_input,
     collect,
     replying,
+    stop_midway,
 )
 
 CONVERSATION = uuid.uuid4()
@@ -322,3 +326,126 @@ async def test_a_run_whose_answer_could_not_be_saved_ends_in_a_generic_error() -
     assert EventType.RUN_FINISHED not in types(events)
     assert events[-1].message == chat_client.GENERIC_ERROR  # type: ignore[attr-defined]
     assert PROVIDER_ERROR not in " ".join(e.model_dump_json() for e in events)
+
+
+async def remembered(agent: LangGraphAgent) -> list[tuple[str, str]]:
+    state = await agent.graph.aget_state(chat_client.thread_config(CONVERSATION))
+    return [(m.type, str(m.content)) for m in state.values["messages"]]
+
+
+async def test_a_reply_cut_off_midway_is_kept_in_the_agent_memory_with_a_note() -> None:
+    model = PartialModel(chunks=["Once upon ", "a time"])
+    agent = agent_for(model)
+
+    await stop_midway(agent, run_input("tell me a story"), len(model.chunks))
+
+    assert await remembered(agent) == [
+        ("human", "tell me a story"),
+        ("ai", "Once upon a time"),
+        ("human", notes.reply_stopped().content),
+    ]
+
+
+async def test_the_next_run_sees_the_cut_off_reply_and_that_it_was_stopped() -> None:
+    saver = InMemorySaver()
+    model = PartialModel(chunks=["Once upon ", "a time"])
+    await stop_midway(
+        chat_client.build_agent(model, saver),
+        run_input("tell me a story"),
+        len(model.chunks),
+    )
+    recorder = RecordingModel()
+
+    await collect(
+        chat_client.stream_events(
+            chat_client.build_agent(recorder, saver), run_input("continue")
+        )
+    )
+
+    assert [(m.type, m.content) for m in recorder.seen[0] if m.type != "system"] == [
+        ("human", "tell me a story"),
+        ("ai", "Once upon a time"),
+        ("human", notes.reply_stopped().content),
+        ("human", "continue"),
+    ]
+
+
+async def test_the_model_is_told_what_the_applications_notes_are() -> None:
+    recorder = RecordingModel()
+
+    await collect(
+        chat_client.stream_events(
+            chat_client.build_agent(recorder, InMemorySaver()), run_input("hi")
+        )
+    )
+
+    system = next(m for m in recorder.seen[0] if m.type == "system")
+    assert f"<{notes.NOTE_TAG}>" in str(system.content)
+
+
+async def test_a_reply_that_fails_midway_is_kept_in_the_agent_memory_with_a_note() -> (
+    None
+):
+    agent = agent_for(PartialModel(chunks=["Once upon ", "a time"], then_fail=True))
+
+    events = await collect(
+        chat_client.stream_events(agent, run_input("tell me a story"))
+    )
+
+    assert types(events)[-1] == EventType.RUN_ERROR
+    assert await remembered(agent) == [
+        ("human", "tell me a story"),
+        ("ai", "Once upon a time"),
+        ("human", notes.reply_failed().content),
+    ]
+
+
+async def test_history_leaves_out_the_applications_notes() -> None:
+    model = PartialModel(chunks=["Once upon ", "a time"])
+    agent = agent_for(model)
+    await stop_midway(agent, run_input("tell me a story"), len(model.chunks))
+
+    history = await chat_client.read_history(agent, CONVERSATION)
+
+    assert [(m.role, m.content) for m in history] == [
+        ("user", "tell me a story"),
+        ("assistant", "Once upon a time"),
+    ]
+
+
+async def test_a_reply_that_is_already_in_the_agent_memory_is_not_added_again() -> None:
+    agent = agent_for(replying("Hello there!"))
+    await collect(chat_client.stream_events(agent, run_input("hi")))
+    reply = (await chat_client.read_history(agent, CONVERSATION))[-1]
+
+    await chat_client.keep_streamed_text(
+        agent, CONVERSATION, {reply.id: reply.content}, notes.reply_stopped()
+    )
+
+    assert len(await remembered(agent)) == 2
+
+
+async def test_text_is_not_added_when_no_model_call_was_cut_off() -> None:
+    agent = agent_for(replying("Hello there!"))
+    await collect(chat_client.stream_events(agent, run_input("hi")))
+
+    await chat_client.keep_streamed_text(
+        agent, CONVERSATION, {"unknown": "text"}, notes.reply_stopped()
+    )
+
+    assert len(await remembered(agent)) == 2
+
+
+async def test_a_failure_to_keep_the_reply_is_logged_and_does_not_break_the_stream(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    async def on_finished() -> None:
+        raise RuntimeError(PROVIDER_ERROR)
+
+    model = PartialModel(chunks=["Once upon ", "a time"])
+
+    await stop_midway(
+        agent_for(model), run_input("tell me a story"), len(model.chunks), on_finished
+    )
+
+    assert "Could not keep an unfinished reply" in caplog.text
