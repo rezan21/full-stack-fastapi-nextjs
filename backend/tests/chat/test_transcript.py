@@ -4,9 +4,9 @@ import pytest
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.agent.schemas import AgentMessage
 from src.chat import service as chat_service
 from src.chat.models import ChatMessage, Conversation
-from src.chat.schemas import AgentMessage
 from tests.utils.user import create_random_user
 
 

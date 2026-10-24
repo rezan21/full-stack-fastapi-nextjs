@@ -3,31 +3,22 @@ from typing import Annotated
 
 from ag_ui.core import RunAgentInput
 from ag_ui_langgraph import LangGraphAgent
-from fastapi import Depends, Request
+from fastapi import Depends
 
+from src.agent import dependencies as agent_dependencies
 from src.auth import dependencies as auth_dependencies
 from src.chat import service as chat_service
-from src.chat.client import Chat
 from src.chat.exceptions import ChatNotConfigured, ConversationNotFound
 from src.chat.models import Conversation
 from src.chat.schemas import ChatRun
 from src.database import SessionDep
 
 
-async def get_chat(request: Request) -> Chat:
-    """Return the chat the app opened at startup."""
-    chat: Chat = request.app.state.chat
-    return chat
-
-
-ChatDep = Annotated[Chat, Depends(get_chat)]
-
-
-async def valid_chat_agent(chat: ChatDep) -> LangGraphAgent:
+async def valid_chat_agent(runtime: agent_dependencies.RuntimeDep) -> LangGraphAgent:
     """Return the chat agent, or raise a 503 when no model is configured."""
-    if chat.agent is None:
+    if runtime.agent is None:
         raise ChatNotConfigured()
-    return chat.agent
+    return runtime.agent
 
 
 AgentDep = Annotated[LangGraphAgent, Depends(valid_chat_agent)]

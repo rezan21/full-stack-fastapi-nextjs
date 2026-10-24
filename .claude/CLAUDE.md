@@ -6,6 +6,7 @@
     - [2. Simplicity First](#2-simplicity-first)
     - [3. Surgical Changes](#3-surgical-changes)
     - [4. Goal-Driven Execution](#4-goal-driven-execution)
+    - [5. Consistent and Idiomatic](#5-consistent-and-idiomatic)
   - [Next js 16](#next-js-16)
   - [IMPORTANT RULES](#important-rules)
 
@@ -74,9 +75,25 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+### 5. Consistent and Idiomatic
+
+**One way to do each thing, applied everywhere. Use each tool the way it was designed to be used.**
+
+Before choosing a pattern (import direction, naming, file layout, error handling, test style):
+
+- Find how the codebase already does it and reuse that. If there is no precedent, choose deliberately and apply it everywhere it applies, in the same change.
+- Never leave two ways to do the same thing. Either migrate every instance of a pattern or don't introduce the new one.
+- Keep dependencies pointing one way: a lower layer never imports a higher one. Pin the direction with a test when it can be checked mechanically.
+- Use one name per concept across code, tests, config and docs. Rename the whole set or none of it.
+- For a library or framework, use its documented mechanism, read from the current official docs rather than from memory. If the docs are silent, or you must work around the library, say so, keep the workaround in one place and cover it with a test.
+
+Before finishing, search for both the old and the new form of whatever you changed. No half-migrated leftovers in code, tests, scripts, config or docs.
+
+The test: a reader can't tell which parts were written first.
+
 ---
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, clarifying questions come before implementation rather than after mistakes, and new code reads as if one hand wrote all of it.
 
 ## Next js 16
 

@@ -5,14 +5,16 @@ from datetime import datetime, timedelta
 from math import ceil
 from typing import Any
 
-from ag_ui.core import RunAgentInput, UserMessage
+from ag_ui.core import RunAgentInput
 from ag_ui_langgraph import LangGraphAgent
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import col, delete, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.chat import client as chat_client
+from src.agent import streaming as agent_streaming
+from src.agent import threads as agent_threads
+from src.agent.schemas import AgentMessage
 from src.chat.config import chat_settings
 from src.chat.exceptions import (
     ChatQuotaExceeded,
@@ -27,12 +29,11 @@ from src.chat.models import (
     ChatUsage,
     Conversation,
 )
-from src.chat.schemas import MAX_MESSAGE_CHARS, AgentMessage, ChatRun
+from src.chat.schemas import MAX_MESSAGE_CHARS, ChatRun
 from src.database import SessionFactory
 from src.models import get_datetime_utc
 from src.pagination import Pagination
 
-RUN_ID_MAX_LENGTH = 100
 QUOTA_WINDOW = timedelta(hours=1)
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,9 @@ async def delete_user_threads(
     result = await session.exec(
         select(Conversation.id).where(col(Conversation.owner_id) == user_id)
     )
-    await chat_client.delete_threads(checkpointer, result.all())
+    await agent_threads.delete_threads(
+        checkpointer, [str(conversation_id) for conversation_id in result.all()]
+    )
 
 
 def newest_user_text(body: ChatRun) -> str:
@@ -110,22 +113,6 @@ def newest_user_text(body: ChatRun) -> str:
 def conversation_title(text: str) -> str:
     """Return a conversation's title, taken from its first message."""
     return " ".join(text.split())[:CONVERSATION_TITLE_MAX_LENGTH]
-
-
-def build_run_input(body: ChatRun, conversation_id: uuid.UUID) -> RunAgentInput:
-    """Build a conversation's run from the newest user message, ignoring the rest."""
-    text = newest_user_text(body)
-    run_id = body.run_id if len(body.run_id) <= RUN_ID_MAX_LENGTH else str(uuid.uuid4())
-    return RunAgentInput(
-        thread_id=str(conversation_id),
-        run_id=run_id,
-        messages=[UserMessage(id=str(uuid.uuid4()), role="user", content=text)],
-        state={},
-        tools=[],
-        context=[],
-        forwarded_props={},
-        resume=None,
-    )
 
 
 def message_id(agent_message_id: str) -> uuid.UUID:
@@ -216,8 +203,9 @@ async def start_run(
     session: AsyncSession, conversation: Conversation, body: ChatRun
 ) -> RunAgentInput:
     """Count a run against the owner's quota and store its user message, returning the agent's input."""
-    run_input = build_run_input(body, conversation.id)
+    text = newest_user_text(body)
     await count_run(session, conversation.owner_id)
+    run_input = agent_streaming.build_run_input(str(conversation.id), body.run_id, text)
     message = run_input.messages[0]
     await add_messages(
         session,
@@ -254,6 +242,6 @@ async def save_replies(conversation_id: uuid.UUID, replies: list[AgentMessage]) 
 async def record_replies(agent: LangGraphAgent, run_input: RunAgentInput) -> None:
     """Add the assistant's answers to a run's message to the conversation's transcript."""
     conversation_id = uuid.UUID(run_input.thread_id)
-    history = await chat_client.read_history(agent, conversation_id)
+    history = await agent_threads.read_history(agent, run_input.thread_id)
     replies = replies_after(history, run_input.messages[0].id)
     await save_replies(conversation_id, replies)

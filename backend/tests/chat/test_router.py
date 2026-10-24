@@ -8,27 +8,29 @@ from httpx import AsyncClient, Response
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.chat import client as chat_client
+from src.agent import streaming as agent_streaming
+from src.agent import threads as agent_threads
+from src.agent.context import AgentContext
+from src.agent.runtime import AgentRuntime
+from src.agent.schemas import AgentMessage
 from src.chat import service as chat_service
-from src.chat.client import Chat
 from src.chat.config import chat_settings
 from src.chat.dependencies import prepare_run
 from src.chat.models import ChatMessage, Conversation
-from src.chat.schemas import MAX_MESSAGE_CHARS, AgentMessage, ChatRun
+from src.chat.schemas import MAX_MESSAGE_CHARS, ChatRun
 from src.config import settings
 from src.database import SessionFactory, engine
-from src.main import app
 from src.users import service as users_service
 from src.users.models import User
 from src.users.schemas import UserCreate
-from tests.utils.chat import (
+from tests.utils.agent import (
     PROVIDER_ERROR,
     BlockingModel,
     ExplodingModel,
     RecordingModel,
-    chat_using,
-    sse_events,
+    runtime_using,
 )
+from tests.utils.chat import sse_events
 from tests.utils.user import (
     authentication_token_from_email,
     create_random_user,
@@ -107,7 +109,7 @@ async def test_a_new_conversation_belongs_to_the_user_who_created_it(
     assert stored.owner_id == user.id
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_conversations_are_listed_by_latest_activity_and_only_for_their_owner(
     client: AsyncClient,
     db: AsyncSession,
@@ -162,7 +164,7 @@ async def test_an_owner_can_read_their_conversation(
     assert r.json()["id"] == created["id"]
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_nobody_else_can_reach_a_conversation_not_even_a_superuser(
     client: AsyncClient,
     db: AsyncSession,
@@ -192,7 +194,7 @@ async def test_nobody_else_can_reach_a_conversation_not_even_a_superuser(
     assert private["id"] not in [c["id"] for c in others_view["data"]]
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_a_conversation_that_does_not_exist_is_not_found(
     client: AsyncClient,
     normal_user_token_headers: dict[str, str],
@@ -210,8 +212,8 @@ async def test_a_conversation_that_does_not_exist_is_not_found(
     ).status_code == 422
 
 
-@pytest.mark.usefixtures("fake_chat")
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_messages_are_empty_at_first_and_then_list_the_transcript(
     client: AsyncClient, db: AsyncSession
 ) -> None:
@@ -231,7 +233,7 @@ async def test_messages_are_empty_at_first_and_then_list_the_transcript(
     assert all(m["created_at"] and uuid.UUID(m["id"]) for m in history["data"])
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_a_run_streams_the_reply_as_ag_ui_events(
     client: AsyncClient,
     db: AsyncSession,
@@ -253,7 +255,7 @@ async def test_a_run_streams_the_reply_as_ag_ui_events(
     assert all(e["type"] != "RAW" for e in events)
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_the_model_only_ever_sees_the_new_user_message(
     client: AsyncClient, db: AsyncSession, chat_model: RecordingModel
 ) -> None:
@@ -288,7 +290,7 @@ async def test_the_model_only_ever_sees_the_new_user_message(
     assert humans == ["the real question"]
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_the_first_message_names_the_conversation_and_each_run_bumps_it(
     client: AsyncClient,
     db: AsyncSession,
@@ -327,7 +329,7 @@ async def test_the_first_message_names_the_conversation_and_each_run_bumps_it(
         [{"id": "a", "role": "user", "content": [{"type": "text", "text": "parts"}]}],
     ],
 )
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_a_run_without_a_usable_user_message_is_refused(
     client: AsyncClient,
     db: AsyncSession,
@@ -345,7 +347,7 @@ async def test_a_run_without_a_usable_user_message_is_refused(
     assert chat_model.seen == []
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_the_hourly_quota_is_per_user_and_refused_requests_do_not_use_it(
     client: AsyncClient,
     db: AsyncSession,
@@ -373,7 +375,7 @@ async def test_without_an_openai_key_the_transcript_is_still_readable_but_runs_a
     client: AsyncClient, db: AsyncSession
 ) -> None:
     _, headers = await new_user(client, db)
-    with chat_using(None):
+    with runtime_using(None):
         created = await create_conversation(client, headers)
 
         history = await client.get(
@@ -391,13 +393,13 @@ async def test_a_provider_error_ends_the_stream_with_a_generic_error(
     _, headers = await new_user(client, db)
     created = await create_conversation(client, headers)
 
-    with chat_using(ExplodingModel(messages=iter([]))):
+    with runtime_using(ExplodingModel(messages=iter([]))):
         r = await run(client, headers, created["id"])
 
     assert r.status_code == 200
     final = sse_events(r)[-1]
     assert final["type"] == "RUN_ERROR"
-    assert final["message"] == chat_client.GENERIC_ERROR
+    assert final["message"] == agent_streaming.GENERIC_ERROR
     assert PROVIDER_ERROR not in r.text
     assert "sk-proj" not in r.text
 
@@ -422,7 +424,7 @@ async def test_preparing_a_run_leaves_no_database_transaction_open(
 
 
 async def test_deleting_the_account_removes_its_conversations_and_their_history(
-    client: AsyncClient, db: AsyncSession, fake_chat: Chat
+    client: AsyncClient, db: AsyncSession, fake_runtime: AgentRuntime
 ) -> None:
     password = random_lower_string()
     email = random_email()
@@ -436,8 +438,8 @@ async def test_deleting_the_account_removes_its_conversations_and_their_history(
     created = await create_conversation(client, headers)
     conversation_id = uuid.UUID(created["id"])
     await run(client, headers, created["id"], "remember me")
-    assert fake_chat.agent
-    assert await chat_client.read_history(fake_chat.agent, conversation_id)
+    assert fake_runtime.agent
+    assert await agent_threads.read_history(fake_runtime.agent, str(conversation_id))
 
     r = await client.request(
         "DELETE",
@@ -447,7 +449,9 @@ async def test_deleting_the_account_removes_its_conversations_and_their_history(
     )
 
     assert r.status_code == 204
-    assert await chat_client.read_history(fake_chat.agent, conversation_id) == []
+    assert (
+        await agent_threads.read_history(fake_runtime.agent, str(conversation_id)) == []
+    )
     assert (
         await db.exec(select(Conversation).where(Conversation.id == conversation_id))
     ).first() is None
@@ -469,7 +473,7 @@ async def test_the_users_message_is_kept_even_when_the_run_fails(
     _, headers = await new_user(client, db)
     created = await create_conversation(client, headers)
 
-    with chat_using(ExplodingModel(messages=iter([]))):
+    with runtime_using(ExplodingModel(messages=iter([]))):
         await run(client, headers, created["id"], "a question that fails")
 
     history = await history_of(client, headers, created["id"])
@@ -479,19 +483,17 @@ async def test_the_users_message_is_kept_even_when_the_run_fails(
 
 
 async def test_the_transcript_survives_the_agent_forgetting_the_conversation(
-    client: AsyncClient, db: AsyncSession, fake_chat: Chat
+    client: AsyncClient, db: AsyncSession, fake_runtime: AgentRuntime
 ) -> None:
     _, headers = await new_user(client, db)
     created = await create_conversation(client, headers)
     await run(client, headers, created["id"], "remember this")
-    assert fake_chat.agent
-    assert await chat_client.read_history(fake_chat.agent, uuid.UUID(created["id"]))
+    assert fake_runtime.agent
+    assert await agent_threads.read_history(fake_runtime.agent, created["id"])
 
-    await chat_client.delete_threads(fake_chat.checkpointer, [uuid.UUID(created["id"])])
+    await agent_threads.delete_threads(fake_runtime.checkpointer, [created["id"]])
 
-    assert (
-        await chat_client.read_history(fake_chat.agent, uuid.UUID(created["id"])) == []
-    )
+    assert await agent_threads.read_history(fake_runtime.agent, created["id"]) == []
     history = await history_of(client, headers, created["id"])
     assert [(m["role"], m["content"]) for m in history["data"]] == [
         ("user", "remember this"),
@@ -499,7 +501,7 @@ async def test_the_transcript_survives_the_agent_forgetting_the_conversation(
     ]
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_an_answer_that_cannot_be_saved_is_reported_and_not_shown_as_finished(
     client: AsyncClient, db: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -515,7 +517,7 @@ async def test_an_answer_that_cannot_be_saved_is_reported_and_not_shown_as_finis
 
     events = sse_events(r)
     assert events[-1]["type"] == "RUN_ERROR"
-    assert events[-1]["message"] == chat_client.GENERIC_ERROR
+    assert events[-1]["message"] == agent_streaming.GENERIC_ERROR
     assert "RUN_FINISHED" not in [e["type"] for e in events]
     assert "the database is down" not in r.text
     monkeypatch.undo()
@@ -562,7 +564,7 @@ async def test_the_number_of_messages_asked_for_is_bounded(
     assert r.status_code == 422
 
 
-@pytest.mark.usefixtures("fake_chat")
+@pytest.mark.usefixtures("fake_runtime")
 async def test_deleting_the_account_removes_the_transcript_too(
     client: AsyncClient, db: AsyncSession
 ) -> None:
@@ -594,11 +596,6 @@ async def test_deleting_the_account_removes_the_transcript_too(
     ).all() == []
 
 
-@pytest.mark.usefixtures("client")
-def test_the_test_suite_never_builds_the_real_model() -> None:
-    assert app.state.chat.agent is None
-
-
 async def test_the_api_keeps_answering_while_a_reply_is_streaming(
     client: AsyncClient, db: AsyncSession
 ) -> None:
@@ -607,7 +604,7 @@ async def test_the_api_keeps_answering_while_a_reply_is_streaming(
     await db.close()
     model = BlockingModel()
 
-    with chat_using(model):
+    with runtime_using(model):
         streaming = asyncio.create_task(run(client, headers, created["id"]))
         await asyncio.wait_for(model.started.wait(), timeout=10)
 
@@ -622,3 +619,23 @@ async def test_the_api_keeps_answering_while_a_reply_is_streaming(
     assert checked_out == 0
     assert response.status_code == 200
     assert sse_events(response)[-1]["type"] == "RUN_FINISHED"
+
+
+@pytest.mark.usefixtures("fake_runtime")
+async def test_a_run_is_made_for_the_user_who_sends_it(
+    client: AsyncClient, db: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    contexts: list[AgentContext] = []
+
+    async def spy(*args: Any) -> Any:
+        contexts.append(args[2])
+        return
+        yield
+
+    monkeypatch.setattr(agent_streaming, "stream_events", spy)
+    user, headers = await new_user(client, db)
+    created = await create_conversation(client, headers)
+
+    await run(client, headers, created["id"])
+
+    assert contexts == [AgentContext(user_id=user.id)]

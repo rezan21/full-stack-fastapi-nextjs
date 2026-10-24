@@ -1,5 +1,4 @@
 import uuid
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
@@ -7,13 +6,6 @@ from pydantic import Field as PydanticField
 from sqlmodel import Field, SQLModel
 
 MAX_MESSAGE_CHARS = 4000
-
-
-@dataclass(frozen=True)
-class AgentMessage:
-    id: str
-    role: Literal["user", "assistant"]
-    content: str
 
 
 class ConversationPublic(SQLModel):

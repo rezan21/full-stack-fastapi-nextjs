@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
+from src.agent.config import AgentConfig
 from src.auth.config import AuthConfig
 from src.chat.config import ChatConfig
 from src.config import Config, settings
@@ -92,21 +93,21 @@ def test_a_long_secret_key_is_accepted_outside_development() -> None:
 def test_the_openai_key_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
-    assert ChatConfig(_env_file=None).OPENAI_API_KEY is None
+    assert AgentConfig(_env_file=None).OPENAI_API_KEY is None
 
 
 def test_an_empty_openai_key_counts_as_unset(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "")
 
-    assert ChatConfig(_env_file=None).OPENAI_API_KEY is None
+    assert AgentConfig(_env_file=None).OPENAI_API_KEY is None
 
 
 def test_the_openai_key_is_kept_out_of_reprs() -> None:
-    chat = ChatConfig(_env_file=None, OPENAI_API_KEY="sk-a-key-nobody-should-see")  # type: ignore[arg-type]
+    agent = AgentConfig(_env_file=None, OPENAI_API_KEY="sk-a-key-nobody-should-see")  # type: ignore[arg-type]
 
-    assert chat.OPENAI_API_KEY is not None
-    assert chat.OPENAI_API_KEY.get_secret_value() == "sk-a-key-nobody-should-see"
-    assert "sk-a-key-nobody-should-see" not in repr(chat)
+    assert agent.OPENAI_API_KEY is not None
+    assert agent.OPENAI_API_KEY.get_secret_value() == "sk-a-key-nobody-should-see"
+    assert "sk-a-key-nobody-should-see" not in repr(agent)
 
 
 def test_the_chat_run_quota_must_be_positive() -> None:

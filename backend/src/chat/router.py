@@ -6,8 +6,9 @@ from ag_ui.core import RunAgentInput
 from fastapi import APIRouter, Depends, Query
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
+from src.agent import streaming as agent_streaming
+from src.agent.context import AgentContext
 from src.auth import dependencies as auth_dependencies
-from src.chat import client as chat_client
 from src.chat import service as chat_service
 from src.chat.dependencies import (
     AgentDep,
@@ -91,9 +92,14 @@ async def read_messages(
     responses=error_responses(400, 404, 429, 503),
 )
 async def run_chat(
-    run_input: Annotated[RunAgentInput, Depends(prepare_run)], agent: AgentDep
+    run_input: Annotated[RunAgentInput, Depends(prepare_run)],
+    agent: AgentDep,
+    current_user: auth_dependencies.CurrentUser,
 ) -> AsyncIterable[ServerSentEvent]:
     """Stream the assistant's reply to a message as AG-UI events."""
+    context = AgentContext(user_id=current_user.id)
     on_finished = partial(chat_service.record_replies, agent, run_input)
-    async for event in chat_client.stream_events(agent, run_input, on_finished):
+    async for event in agent_streaming.stream_events(
+        agent, run_input, context, on_finished
+    ):
         yield ServerSentEvent(raw_data=event.model_dump_json(by_alias=True))

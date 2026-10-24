@@ -5,32 +5,32 @@ from httpx import ASGITransport, AsyncClient
 from sqlmodel import delete
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.agent.config import agent_settings
+from src.agent.runtime import AgentRuntime
 from src.auth.models import AuthThrottle
-from src.chat.client import Chat
-from src.chat.config import chat_settings
 from src.database import SessionFactory, engine
 from src.items.models import Item
 from src.main import app
-from src.scripts.chat_setup import setup as setup_chat_tables
+from src.scripts.agent_setup import setup as setup_agent_tables
 from src.scripts.initial_data import init_db
 from src.users.models import User
-from tests.utils.chat import RecordingModel, chat_using
+from tests.utils.agent import RecordingModel, runtime_using
 from tests.utils.user import authentication_token_from_email
 from tests.utils.utils import EMAIL_TEST_USER, get_superuser_token_headers
 
 
 @pytest.fixture(scope="session", autouse=True)
 def no_real_model() -> Generator[None]:
-    key = chat_settings.OPENAI_API_KEY
-    chat_settings.OPENAI_API_KEY = None
+    key = agent_settings.OPENAI_API_KEY
+    agent_settings.OPENAI_API_KEY = None
     yield
-    chat_settings.OPENAI_API_KEY = key
+    agent_settings.OPENAI_API_KEY = key
 
 
 @pytest.fixture(scope="session", autouse=True)
 async def database() -> AsyncGenerator[None]:
     """Prepare the test database and clear what the tests added."""
-    await setup_chat_tables()
+    await setup_agent_tables()
     async with SessionFactory() as session:
         await init_db(session)
     yield
@@ -78,6 +78,6 @@ def chat_model() -> RecordingModel:
 
 
 @pytest.fixture
-def fake_chat(chat_model: RecordingModel) -> Generator[Chat]:
-    with chat_using(chat_model) as chat:
-        yield chat
+def fake_runtime(chat_model: RecordingModel) -> Generator[AgentRuntime]:
+    with runtime_using(chat_model) as runtime:
+        yield runtime

@@ -3,7 +3,7 @@ from unittest.mock import patch
 from sqlmodel import text
 
 from src.database import SessionFactory
-from src.scripts.chat_setup import main, setup
+from src.scripts.agent_setup import main, setup
 
 
 async def checkpoint_tables() -> set[str]:
@@ -26,8 +26,8 @@ async def test_setup_creates_the_checkpoint_tables_and_can_run_again() -> None:
     )
 
 
-def test_main_creates_the_chat_tables() -> None:
-    with patch("src.scripts.chat_setup.setup") as setup_mock:
+def test_main_creates_the_agent_tables() -> None:
+    with patch("src.scripts.agent_setup.setup") as setup_mock:
         main()
 
     setup_mock.assert_called_once()

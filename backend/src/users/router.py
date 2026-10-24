@@ -1,9 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks
 
+from src.agent import dependencies as agent_dependencies
 from src.auth import dependencies as auth_dependencies
 from src.auth import service as auth_service
 from src.auth.schemas import NewPassword, Token
-from src.chat import dependencies as chat_dependencies
 from src.chat import service as chat_service
 from src.database import SessionDep
 from src.exceptions import AUTH_ERRORS, error_responses
@@ -131,12 +131,14 @@ async def delete_user_me(
     session: SessionDep,
     body: AccountDeletion,
     current_user: auth_dependencies.CurrentUser,
-    chat: chat_dependencies.ChatDep,
+    runtime: agent_dependencies.RuntimeDep,
 ) -> None:
     """Delete own user."""
     await auth_service.require_current_password(
         session, current_user, body.current_password
     )
     users_service.ensure_deletable(current_user)
-    await chat_service.delete_user_threads(session, current_user.id, chat.checkpointer)
+    await chat_service.delete_user_threads(
+        session, current_user.id, runtime.checkpointer
+    )
     await users_service.delete_user(session, current_user)

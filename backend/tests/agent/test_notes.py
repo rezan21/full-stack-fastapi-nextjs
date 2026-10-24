@@ -1,6 +1,6 @@
 from langchain_core.messages import HumanMessage
 
-from src.chat import notes
+from src.agent import notes
 
 
 def test_an_application_note_carries_its_kind_in_a_tag() -> None:
