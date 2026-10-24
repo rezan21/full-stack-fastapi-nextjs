@@ -1,11 +1,31 @@
 import asyncio
+import json
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable, Generator, Iterator
+from collections.abc import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Generator,
+    Iterator,
+    Sequence,
+)
 from contextlib import contextmanager
 from typing import Any, Self
 
 import anyio
-from ag_ui.core import BaseEvent, EventType, RunAgentInput
+from ag_ui.core import (
+    BaseEvent,
+    EventType,
+    Interrupt,
+    ResumeEntry,
+    RunAgentInput,
+    RunFinishedEvent,
+    RunFinishedInterruptOutcome,
+    Tool,
+    ToolCallResultEvent,
+    ToolMessage,
+    UserMessage,
+)
 from ag_ui_langgraph import LangGraphAgent
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -19,7 +39,9 @@ from src.agent import streaming as agent_streaming
 from src.agent.context import AgentContext
 from src.agent.dependencies import get_runtime
 from src.agent.runtime import AgentRuntime
+from src.items.models import Item
 from src.main import app
+from src.users.models import User
 
 PROVIDER_ERROR = "Incorrect API key provided: sk-proj-secret1234 for org-abc"
 CONTEXT = AgentContext(user_id=uuid.uuid4())
@@ -69,12 +91,42 @@ def agent_for(model: BaseChatModel) -> LangGraphAgent:
     return agent_factory.build_agent(model, InMemorySaver())
 
 
-def run_input(text: str, thread_id: str = THREAD) -> RunAgentInput:
-    return agent_streaming.build_run_input(thread_id, "run-1", text)
+def run_input(
+    text: str,
+    thread_id: str = THREAD,
+    tools: Sequence[Tool] = (),
+    run_id: str = "run-1",
+) -> RunAgentInput:
+    message = UserMessage(id=str(uuid.uuid4()), role="user", content=text)
+    return agent_streaming.build_run_input(thread_id, run_id, [message], tools)
+
+
+def resume_input(
+    answers: Sequence[ResumeEntry], run_id: str = "run-2"
+) -> RunAgentInput:
+    return agent_streaming.build_run_input(THREAD, run_id, [], resume=answers)
+
+
+def browser_answer_input(
+    content: str,
+    tools: Sequence[Tool] = (),
+    tool_call_id: str = "call-1",
+    thread_id: str = THREAD,
+) -> RunAgentInput:
+    message = ToolMessage(
+        id=str(uuid.uuid4()), role="tool", content=content, tool_call_id=tool_call_id
+    )
+    return agent_streaming.build_run_input(thread_id, "r2", [message], tools)
 
 
 async def collect(stream: AsyncIterator[BaseEvent]) -> list[BaseEvent]:
     return [event async for event in stream]
+
+
+def tool_results(events: list[BaseEvent]) -> list[dict[str, Any]]:
+    return [
+        json.loads(str(e.content)) for e in events if isinstance(e, ToolCallResultEvent)
+    ]
 
 
 async def stop_midway(
@@ -96,6 +148,7 @@ async def stop_midway(
 
 class ScriptedModel(BaseChatModel):
     replies: list[AIMessage]
+    seen: list[list[BaseMessage]] = Field(default_factory=list)
 
     @property
     def _llm_type(self) -> str:
@@ -104,8 +157,77 @@ class ScriptedModel(BaseChatModel):
     def bind_tools(self, tools: Any, **kwargs: Any) -> Self:
         return self
 
-    def _generate(self, *args: Any, **kwargs: Any) -> ChatResult:
+    def _generate(
+        self, messages: list[BaseMessage], *args: Any, **kwargs: Any
+    ) -> ChatResult:
+        self.seen.append(list(messages))
         return ChatResult(generations=[ChatGeneration(message=self.replies.pop(0))])
+
+
+class StreamingScriptedModel(ScriptedModel):
+    def _stream(
+        self, messages: list[BaseMessage], *args: Any, **kwargs: Any
+    ) -> Iterator[ChatGenerationChunk]:
+        self.seen.append(list(messages))
+        reply = self.replies.pop(0)
+        chunk = AIMessageChunk(content=reply.content, tool_calls=reply.tool_calls)
+        yield ChatGenerationChunk(message=chunk)
+
+
+def tool_call(name: str, args: dict[str, Any], call_id: str = "call-1") -> Any:
+    return {"name": name, "args": args, "id": call_id}
+
+
+def calling(calls: list[Any], *texts: str) -> StreamingScriptedModel:
+    replies = [AIMessage(content="", tool_calls=calls)]
+    return StreamingScriptedModel(
+        replies=[*replies, *(AIMessage(content=t) for t in texts)]
+    )
+
+
+def deleting(
+    *items: Item, texts: tuple[str, ...] = ("done",)
+) -> StreamingScriptedModel:
+    calls = [
+        tool_call("delete_item", {"item_id": str(item.id)}, f"call-{number}")
+        for number, item in enumerate(items)
+    ]
+    return calling(calls, *texts)
+
+
+async def run_as(
+    owner: User, agent: LangGraphAgent, run: RunAgentInput
+) -> list[BaseEvent]:
+    return await collect(
+        agent_streaming.stream_events(agent, run, AgentContext(user_id=owner.id))
+    )
+
+
+async def ask_to_delete(
+    owner: User, model: StreamingScriptedModel
+) -> tuple[LangGraphAgent, list[BaseEvent]]:
+    agent = agent_for(model)
+    return agent, await run_as(owner, agent, run_input("delete it"))
+
+
+def interrupts_of(events: list[BaseEvent]) -> list[Interrupt]:
+    finished = events[-1]
+    assert isinstance(finished, RunFinishedEvent)
+    assert isinstance(finished.outcome, RunFinishedInterruptOutcome)
+    return finished.outcome.interrupts
+
+
+def answer(interrupt: Interrupt, approved: bool | None) -> ResumeEntry:
+    if approved is None:
+        return ResumeEntry(interrupt_id=interrupt.id, status="cancelled")
+    return ResumeEntry(
+        interrupt_id=interrupt.id, status="resolved", payload={"approved": approved}
+    )
+
+
+def flying_to_london(*texts: str) -> StreamingScriptedModel:
+    place = {"place": "London", "lat": 51.5, "lng": -0.12}
+    return calling([tool_call("fly_to", place)], *texts)
 
 
 class BlockingModel(BaseChatModel):

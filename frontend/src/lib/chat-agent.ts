@@ -4,12 +4,15 @@ import {
   type RunAgentInput,
 } from "@ag-ui/client"
 
-// Chat agent that sends only the newest message and keeps its own order of messages.
+// Agent that runs a conversation against the chat endpoint.
 export class ChatAgent extends HttpAgent {
   constructor(config: HttpAgentConfig) {
     super(config)
     this.subscribe({
       onMessagesSnapshotEvent: () => ({ stopPropagation: true }),
+      onRunFailed: () => {
+        this.pendingInterrupts = []
+      },
     })
   }
 

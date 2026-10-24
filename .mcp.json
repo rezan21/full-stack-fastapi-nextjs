@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "assistant-ui-mcp": {
+      "type": "http",
+      "url": "https://www.assistant-ui.com/mcp"
+    },
     "lanchain-mcp": {
       "type": "http",
       "url": "https://docs.langchain.com/mcp"

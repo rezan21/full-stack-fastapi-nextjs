@@ -1,17 +1,22 @@
 import logging
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from contextlib import aclosing
 
 import anyio
 from ag_ui.core import (
     BaseEvent,
     EventType,
+    Message,
+    ResumeEntry,
     RunAgentInput,
     RunErrorEvent,
     RunStartedEvent,
     TextMessageContentEvent,
-    UserMessage,
+    Tool,
+    ToolCallArgsEvent,
+    ToolCallEndEvent,
+    ToolCallStartEvent,
 )
 from ag_ui_langgraph import LangGraphAgent
 from langchain_core.messages import AIMessage, HumanMessage
@@ -21,22 +26,29 @@ from src.agent.context import AgentContext
 from src.agent.notes import reply_failed, reply_stopped
 
 RUN_ID_MAX_LENGTH = 100
+CALL_ANNOUNCEMENTS = (ToolCallStartEvent, ToolCallArgsEvent, ToolCallEndEvent)
 GENERIC_ERROR = "The assistant ran into a problem. Please try again."
 
 logger = logging.getLogger(__name__)
 
 
-def build_run_input(thread_id: str, run_id: str, text: str) -> RunAgentInput:
-    """Return the input of a run answering the text in the thread, with nothing else to steer it."""
+def build_run_input(
+    thread_id: str,
+    run_id: str,
+    messages: list[Message],
+    tools: Sequence[Tool] = (),
+    resume: Sequence[ResumeEntry] = (),
+) -> RunAgentInput:
+    """Return the input of a run with these messages, browser tools and answers, and nothing else to steer it."""
     return RunAgentInput(
         thread_id=thread_id,
         run_id=run_id if len(run_id) <= RUN_ID_MAX_LENGTH else str(uuid.uuid4()),
-        messages=[UserMessage(id=str(uuid.uuid4()), role="user", content=text)],
+        messages=messages,
         state={},
-        tools=[],
+        tools=list(tools),
         context=[],
         forwarded_props={},
-        resume=None,
+        resume=list(resume) or None,
     )
 
 
@@ -62,9 +74,19 @@ async def stream_events(
     finished = False
     failed = False
     streamed: dict[str, str] = {}
+    resumed_calls = await agent_threads.interrupted_tool_call_ids(
+        agent,
+        run_input.thread_id,
+        {entry.interrupt_id for entry in run_input.resume or []},
+    )
     try:
         async with aclosing(run_for(agent, context).run(run_input)) as events:
             async for event in events:
+                if (
+                    isinstance(event, CALL_ANNOUNCEMENTS)
+                    and event.tool_call_id in resumed_calls
+                ):
+                    continue
                 started = started or event.type == EventType.RUN_STARTED
                 if isinstance(event, TextMessageContentEvent):
                     text = streamed.get(event.message_id, "")

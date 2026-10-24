@@ -27,6 +27,16 @@ async def list_items(
     return result.all(), count
 
 
+async def get_owned_item(
+    session: AsyncSession, item_id: uuid.UUID, owner_id: uuid.UUID
+) -> Item | None:
+    """Return the owner's item with the id, or None when the owner has no such item."""
+    result = await session.exec(
+        select(Item).where(col(Item.id) == item_id, col(Item.owner_id) == owner_id)
+    )
+    return result.first()
+
+
 async def create_item(
     session: AsyncSession, item_in: ItemCreate, owner_id: uuid.UUID
 ) -> Item:

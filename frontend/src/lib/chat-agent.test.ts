@@ -16,6 +16,25 @@ const answer = (text: string) =>
     { type: "RUN_FINISHED", threadId: "t-1", runId: "r-1" },
   )
 
+const interrupted = () =>
+  stream(
+    { type: "RUN_STARTED", threadId: "t-1", runId: "r-1" },
+    {
+      type: "RUN_FINISHED",
+      threadId: "t-1",
+      runId: "r-1",
+      outcome: {
+        type: "interrupt",
+        interrupts: [
+          { id: "i-1", reason: "tool_call", toolCallId: "c-1", message: "Ok?" },
+        ],
+      },
+    },
+  )
+
+const refused = () =>
+  Response.json({ detail: "Too many messages." }, { status: 429 })
+
 function agentThatRecords(reply: () => Response) {
   const sent: Record<string, unknown>[] = []
   const agent = new ChatAgent({
@@ -104,9 +123,7 @@ describe("ChatAgent", () => {
   })
 
   test("fails with the API's status and reason when it refuses", async () => {
-    const { agent } = agentThatRecords(() =>
-      Response.json({ detail: "Too many messages." }, { status: 429 }),
-    )
+    const { agent } = agentThatRecords(refused)
     agent.addMessage({ id: "u-2", role: "user", content: "again" })
 
     const error = await agent.runAgent().catch((e: unknown) => e)
@@ -115,5 +132,27 @@ describe("ChatAgent", () => {
       status: 429,
       payload: { detail: "Too many messages." },
     })
+  })
+
+  test("takes a new message after the answer to its interrupt was refused", async () => {
+    const replies = [interrupted, refused, () => answer("Hi")]
+    const { agent, sent } = agentThatRecords(
+      () => replies.shift()?.() ?? refused(),
+    )
+    agent.addMessage({ id: "u-2", role: "user", content: "delete it" })
+    await agent.runAgent()
+    const approval = [
+      { interruptId: "i-1", status: "resolved" as const, payload: {} },
+    ]
+    await agent.runAgent({ resume: approval }).catch(() => undefined)
+    expect(agent.pendingInterrupts).toEqual([])
+    agent.addMessage({ id: "u-3", role: "user", content: "never mind" })
+
+    await agent.runAgent()
+
+    expect(sent).toHaveLength(3)
+    expect(sent[2].messages).toEqual([
+      { id: "u-3", role: "user", content: "never mind" },
+    ])
   })
 })

@@ -10,6 +10,32 @@ export const zAccountDeletion = z.object({
 });
 
 /**
+ * AgentItem
+ */
+export const zAgentItem = z.object({
+    description: z.string().max(255).nullable(),
+    id: z.string(),
+    title: z.string().min(1).max(255)
+});
+
+/**
+ * AgentItemChange
+ */
+export const zAgentItemChange = z.object({
+    changed: z.boolean(),
+    item: zAgentItem.nullish().default(null),
+    message: z.string()
+});
+
+/**
+ * AgentItems
+ */
+export const zAgentItems = z.object({
+    count: z.int(),
+    data: z.array(zAgentItem)
+});
+
+/**
  * ChatMessagePublic
  */
 export const zChatMessagePublic = z.object({
@@ -32,7 +58,24 @@ export const zChatMessagesPublic = z.object({
  */
 export const zChatRunMessage = z.object({
     content: z.unknown().optional(),
-    role: z.string()
+    role: z.string(),
+    toolCallId: z.string().nullish()
+});
+
+/**
+ * ChatRunResume
+ */
+export const zChatRunResume = z.object({
+    interruptId: z.string().max(100),
+    payload: z.record(z.string(), z.unknown()).nullish(),
+    status: z.enum(['resolved', 'cancelled'])
+});
+
+/**
+ * ChatRunTool
+ */
+export const zChatRunTool = z.object({
+    name: z.string()
 });
 
 /**
@@ -40,8 +83,10 @@ export const zChatRunMessage = z.object({
  */
 export const zChatRun = z.object({
     messages: z.array(zChatRunMessage),
+    resume: z.array(zChatRunResume).max(10).optional(),
     runId: z.string(),
-    threadId: z.string()
+    threadId: z.string(),
+    tools: z.array(zChatRunTool).max(10).optional()
 });
 
 /**
@@ -150,6 +195,15 @@ export const zPasswordRecovery = z.object({
 });
 
 /**
+ * Place
+ */
+export const zPlace = z.object({
+    lat: z.number().gte(-90).lte(90),
+    lng: z.number().gte(-180).lte(180),
+    place: z.string().min(1).max(80)
+});
+
+/**
  * Token
  */
 export const zToken = z.object({
@@ -157,6 +211,19 @@ export const zToken = z.object({
     expires_in: z.int(),
     token_type: z.string()
 });
+
+/**
+ * ToolName
+ *
+ * The names of the tools the agent runs and the browser draws or runs.
+ */
+export const zToolName = z.enum([
+    'list_items',
+    'create_item',
+    'update_item',
+    'delete_item',
+    'fly_to'
+]);
 
 /**
  * UpdatePassword

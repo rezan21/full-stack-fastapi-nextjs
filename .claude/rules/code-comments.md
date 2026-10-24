@@ -8,7 +8,7 @@ paths:
 
 ## Comments & Doc strings — default to none
 
-Default to no code comments or docstrings. The code itself should be readable. The vendored `frontend/src/components/ui/` and the generated `frontend/src/client/` are out of scope, and so is boilerplate a tool writes into a file, such as the banner comments `alembic revision --autogenerate` puts in a new migration.
+Default to no code comments or docstrings. The code itself should be readable. Vendored and generated code are out of scope, and so is boilerplate a tool writes into a file, such as the banner comments `alembic revision --autogenerate` puts in a new migration.
 Most comments mask a design problem. Before writing one, dissolve the need:
 
 <!-- prettier-ignore -->

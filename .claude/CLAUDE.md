@@ -109,3 +109,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - never git commit nor push automatically, unless explicitly asked. confirm with user.
 - do not create documentation or markdown files unless explicitly asked.
+- Never read or write Claude memory (`~/.claude/projects/*/memory`). Durable guidance lives in the repo.
+- Code comments, docs, rules and this file state what is true now. Leave out history, rejected alternatives and dismissed ideas; those belong in commit messages.
+- Test runs wait until the work is finished and come last. Writing tests first (TDD) is fine; running them is not, until the end.
+- Never run Playwright e2e tests, or any single e2e spec, unless the user explicitly asks.
+- Run backend tests only through `bash scripts/test.sh`, never `pytest` directly: `backend/.env` points at the dev database, and the suite deletes data.

@@ -17,7 +17,9 @@
     "prepare": "test -f ../scripts/install-hooks.sh && bash ../scripts/install-hooks.sh || true"
   },
   "dependencies": {
-    "@ag-ui/client": "^1.0.1",
+    "@ag-ui/client": "^1.0.3",
+    "@assistant-ui/react": "^0.15.31",
+    "@assistant-ui/react-ag-ui": "^0.1.0",
     "@base-ui/react": "^1.8.0",
     "@hookform/resolvers": "^5.7.1",
     "@shadcn/react": "^0.3.1",
@@ -34,6 +36,7 @@
     "server-only": "^0.0.1",
     "shadcn": "^4.21.0",
     "sonner": "^2.0.7",
+    "tw-shimmer": "^0.4.14",
     "zod": "^4.4.3"
   },
   "devDependencies": {

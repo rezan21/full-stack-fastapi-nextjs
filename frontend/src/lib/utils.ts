@@ -1,5 +1,14 @@
 export { cn } from "cn"
 
+// Returns the parsed JSON, or undefined when the text isn't JSON.
+export function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    return undefined
+  }
+}
+
 // Returns the initials for a name.
 export function getInitials(name: string): string {
   return name

@@ -15,6 +15,53 @@ export type AccountDeletion = {
 };
 
 /**
+ * AgentItem
+ */
+export type AgentItem = {
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Title
+     */
+    title: string;
+};
+
+/**
+ * AgentItemChange
+ */
+export type AgentItemChange = {
+    /**
+     * Changed
+     */
+    changed: boolean;
+    item?: AgentItem | null;
+    /**
+     * Message
+     */
+    message: string;
+};
+
+/**
+ * AgentItems
+ */
+export type AgentItems = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Data
+     */
+    data: Array<AgentItem>;
+};
+
+/**
  * ChatMessagePublic
  */
 export type ChatMessagePublic = {
@@ -59,6 +106,10 @@ export type ChatRun = {
      */
     messages: Array<ChatRunMessage>;
     /**
+     * Resume
+     */
+    resume?: Array<ChatRunResume>;
+    /**
      * Runid
      */
     runId: string;
@@ -66,6 +117,10 @@ export type ChatRun = {
      * Threadid
      */
     threadId: string;
+    /**
+     * Tools
+     */
+    tools?: Array<ChatRunTool>;
 };
 
 /**
@@ -80,6 +135,40 @@ export type ChatRunMessage = {
      * Role
      */
     role: string;
+    /**
+     * Toolcallid
+     */
+    toolCallId?: string | null;
+};
+
+/**
+ * ChatRunResume
+ */
+export type ChatRunResume = {
+    /**
+     * Interruptid
+     */
+    interruptId: string;
+    /**
+     * Payload
+     */
+    payload?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Status
+     */
+    status: 'resolved' | 'cancelled';
+};
+
+/**
+ * ChatRunTool
+ */
+export type ChatRunTool = {
+    /**
+     * Name
+     */
+    name: string;
 };
 
 /**
@@ -279,6 +368,26 @@ export type PasswordRecovery = {
 };
 
 /**
+ * Place
+ */
+export type Place = {
+    /**
+     * Lat
+     */
+    lat: number;
+    /**
+     * Lng
+     */
+    lng: number;
+    /**
+     * Place
+     *
+     * The place's name, such as London
+     */
+    place: string;
+};
+
+/**
  * Token
  */
 export type Token = {
@@ -295,6 +404,13 @@ export type Token = {
      */
     token_type: string;
 };
+
+/**
+ * ToolName
+ *
+ * The names of the tools the agent runs and the browser draws or runs.
+ */
+export type ToolName = 'list_items' | 'create_item' | 'update_item' | 'delete_item' | 'fly_to';
 
 /**
  * UpdatePassword

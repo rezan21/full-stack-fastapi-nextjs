@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs"
 import ts from "typescript"
 
 const CHECKED_FILES =
-  /^(frontend|packages)\/(?!src\/(components\/ui|client)\/).*\.(ts|tsx|js|jsx|mjs|cjs|css)$/
+  /^(frontend|packages)\/(?!src\/(components\/(ui|assistant-ui)|client)\/).*\.(ts|tsx|js|jsx|mjs|cjs|css)$/
 const TOOL_DIRECTIVE =
   /^(\/\/\/|\/\/|\/\*+)\s*(biome-ignore|@ts-|eslint-|prettier-ignore|istanbul|c8 |<reference)/
 

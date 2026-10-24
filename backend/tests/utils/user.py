@@ -31,6 +31,14 @@ async def create_random_user(db: AsyncSession) -> User:
     return user
 
 
+async def create_random_superuser(db: AsyncSession) -> User:
+    user = await create_random_user(db)
+    user.is_superuser = True
+    db.add(user)
+    await db.commit()
+    return user
+
+
 async def authentication_token_from_email(
     *, client: AsyncClient, email: str, db: AsyncSession
 ) -> dict[str, str]:

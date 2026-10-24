@@ -28,7 +28,7 @@ def reply_text(events: list[Any]) -> str:
 
 
 def test_a_run_answers_the_text_it_is_given_in_the_thread_it_is_given() -> None:
-    result = agent_streaming.build_run_input(THREAD, "run-1", "a question")
+    result = run_input("a question", THREAD)
 
     assert result.thread_id == THREAD
     assert [(m.role, m.content) for m in result.messages] == [("user", "a question")]
@@ -52,11 +52,11 @@ def test_a_run_carries_nothing_a_client_could_steer_it_with() -> None:
 
 
 def test_a_short_run_id_is_kept() -> None:
-    assert agent_streaming.build_run_input(THREAD, "run-1", "hi").run_id == "run-1"
+    assert run_input("hi").run_id == "run-1"
 
 
 def test_an_overlong_run_id_is_replaced() -> None:
-    result = agent_streaming.build_run_input(THREAD, "r" * 101, "hi")
+    result = run_input("hi", run_id="r" * 101)
 
     assert result.run_id != "r" * 101
     assert len(result.run_id) <= agent_streaming.RUN_ID_MAX_LENGTH

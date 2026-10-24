@@ -32,6 +32,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/19/9e/19f7cd9755d6cab8a676a47e38b9cf3c594256e0f9bb41cdf059f6e8f966/ag_ui_langgraph-0.0.46-py3-none-any.whl", hash = "sha256:9ca0f2c4d0d4a4af89238c64da1f574acd774bb08ad948c7e7be38b68f5dfd89", size = 110410, upload-time = "2026-10-01T16:21:09.812Z" },
 ]
 
+[package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
+]
+
 [[package]]
 name = "ag-ui-protocol"
 version = "1.0.0"
@@ -115,6 +120,7 @@ dependencies = [
     { name = "ag-ui-langgraph" },
     { name = "alembic" },
     { name = "anyio" },
+    { name = "copilotkit" },
     { name = "deepagents" },
     { name = "emails" },
     { name = "fastapi", extra = ["standard-no-fastapi-cloud-cli"] },
@@ -150,6 +156,7 @@ requires-dist = [
     { name = "ag-ui-langgraph", specifier = ">=0.0.46,<0.1.0" },
     { name = "alembic", specifier = ">=1.12.1,<2.0.0" },
     { name = "anyio", specifier = ">=4.15.1,<5.0.0" },
+    { name = "copilotkit", specifier = ">=0.1.96,<0.2.0" },
     { name = "deepagents", specifier = ">=0.7.21,<1.0.0" },
     { name = "emails", specifier = ">=1.1.2,<2.0" },
     { name = "fastapi", extras = ["standard-no-fastapi-cloud-cli"], specifier = ">=0.141.1,<1.0.0" },
@@ -536,6 +543,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697, upload-time = "2022-10-25T02:36:22.414Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
+]
+
+[[package]]
+name = "copilotkit"
+version = "0.1.96"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ag-ui-langgraph", extra = ["fastapi"] },
+    { name = "ag-ui-protocol" },
+    { name = "fastapi" },
+    { name = "langchain" },
+    { name = "langgraph" },
+    { name = "partialjson" },
+    { name = "pydantic-core" },
+    { name = "toml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5f/d4/f842fd48a6a17cf587fdf28add74ae90cc84152e0245dfe659105c716b4e/copilotkit-0.1.96.tar.gz", hash = "sha256:9c3c2450f64caf1bcc435ba0b300fb2b065e60263756db997071d06eaf158116", size = 52100, upload-time = "2026-08-26T22:32:00.113Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1c/1f/e1cc2399f96484a0501c64810461d68cf14892975f634a36276c515666b3/copilotkit-0.1.96-py3-none-any.whl", hash = "sha256:31cdf4bb581f25fa2b2784adf772d86dd8438456322376774b1d5b92c1228b35", size = 61126, upload-time = "2026-08-26T22:31:59.098Z" },
 ]
 
 [[package]]
@@ -1556,6 +1582,15 @@ wheels = [
 ]
 
 [[package]]
+name = "partialjson"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/6e/52bd71f17ba73eb18a474b7cdfe3d7bcc4822369b86870b3598a2a13acee/partialjson-1.2.0.tar.gz", hash = "sha256:64fda6610d8a203b8cc4034369c799f1d5d279f4134c81f4d85a1b1342ae72a9", size = 21607, upload-time = "2026-09-11T22:46:56.18Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/9f/f0545a26dbaf3caf2915037448def3410697392b266ebb0dfec3ec894684/partialjson-1.2.0-py3-none-any.whl", hash = "sha256:42e5ef4a862c32febbc20a7279ddcb6bf740f1417468053cb9afcab30b969f35", size = 11061, upload-time = "2026-09-11T22:46:55.211Z" },
+]
+
+[[package]]
 name = "pathspec"
 version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2176,6 +2211,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/f6/80760e98a08e6649d2d68afb6035af713121dfb615acce8c4f73810ec438/tiktoken-0.14.0-cp315-cp315t-musllinux_1_2_aarch64.whl", hash = "sha256:86f66c85e796f5d05d5c4a60ec1d40cbfebc47a32464053528c797163fa9ab89", size = 1251479, upload-time = "2026-08-17T19:49:36.419Z" },
     { url = "https://files.pythonhosted.org/packages/c5/84/50966fb6918a0fb9b32721277e5342bf729a2d74350074d662fbedf9772e/tiktoken-0.14.0-cp315-cp315t-musllinux_1_2_x86_64.whl", hash = "sha256:149d97453c4c98c04b081d64a85e635921269b532710d6faf81e9e82b790e7d3", size = 1316673, upload-time = "2026-08-17T19:49:37.756Z" },
     { url = "https://files.pythonhosted.org/packages/35/5e/9b01afd037bfa22a0033963fa091e0f75b6fb15cd85bffb42ff86e697323/tiktoken-0.14.0-cp315-cp315t-win_amd64.whl", hash = "sha256:561e7580f84a79859af1ef6f676968e9030fcc3fe195700b15235bca64f009c9", size = 987929, upload-time = "2026-08-17T19:49:38.947Z" },
+]
+
+[[package]]
+name = "toml"
+version = "0.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
 ]
 
 [[package]]

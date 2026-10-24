@@ -16,6 +16,89 @@
         "title": "AccountDeletion",
         "type": "object"
       },
+      "AgentItem": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description"
+        ],
+        "title": "AgentItem",
+        "type": "object"
+      },
+      "AgentItemChange": {
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentItem"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "changed",
+          "message"
+        ],
+        "title": "AgentItemChange",
+        "type": "object"
+      },
+      "AgentItems": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AgentItem"
+            },
+            "title": "Data",
+            "type": "array"
+          }
+        },
+        "required": [
+          "data",
+          "count"
+        ],
+        "title": "AgentItems",
+        "type": "object"
+      },
       "ChatMessagePublic": {
         "properties": {
           "content": {
@@ -81,6 +164,14 @@
             "type": "array",
             "x-max-user-message-length": 4000
           },
+          "resume": {
+            "items": {
+              "$ref": "#/components/schemas/ChatRunResume"
+            },
+            "maxItems": 10,
+            "title": "Resume",
+            "type": "array"
+          },
           "runId": {
             "title": "Runid",
             "type": "string"
@@ -88,6 +179,14 @@
           "threadId": {
             "title": "Threadid",
             "type": "string"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ChatRunTool"
+            },
+            "maxItems": 10,
+            "title": "Tools",
+            "type": "array"
           }
         },
         "required": [
@@ -106,12 +205,71 @@
           "role": {
             "title": "Role",
             "type": "string"
+          },
+          "toolCallId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toolcallid"
           }
         },
         "required": [
           "role"
         ],
         "title": "ChatRunMessage",
+        "type": "object"
+      },
+      "ChatRunResume": {
+        "properties": {
+          "interruptId": {
+            "maxLength": 100,
+            "title": "Interruptid",
+            "type": "string"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "status": {
+            "enum": [
+              "resolved",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interruptId",
+          "status"
+        ],
+        "title": "ChatRunResume",
+        "type": "object"
+      },
+      "ChatRunTool": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ChatRunTool",
         "type": "object"
       },
       "ConversationPublic": {
@@ -419,6 +577,36 @@
         "title": "PasswordRecovery",
         "type": "object"
       },
+      "Place": {
+        "properties": {
+          "lat": {
+            "maximum": 90,
+            "minimum": -90,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "maximum": 180,
+            "minimum": -180,
+            "title": "Lng",
+            "type": "number"
+          },
+          "place": {
+            "description": "The place's name, such as London",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Place",
+            "type": "string"
+          }
+        },
+        "required": [
+          "place",
+          "lat",
+          "lng"
+        ],
+        "title": "Place",
+        "type": "object"
+      },
       "Token": {
         "properties": {
           "access_token": {
@@ -441,6 +629,18 @@
         ],
         "title": "Token",
         "type": "object"
+      },
+      "ToolName": {
+        "description": "The names of the tools the agent runs and the browser draws or runs.",
+        "enum": [
+          "list_items",
+          "create_item",
+          "update_item",
+          "delete_item",
+          "fly_to"
+        ],
+        "title": "ToolName",
+        "type": "string"
       },
       "UpdatePassword": {
         "properties": {

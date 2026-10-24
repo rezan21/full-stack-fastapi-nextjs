@@ -43,6 +43,12 @@ def test_the_openai_model_is_bounded_and_keeps_nothing_at_the_provider() -> None
     assert "sk-test-key" not in repr(model)
 
 
+def test_the_openai_model_calls_one_tool_at_a_time() -> None:
+    model = agent_factory.build_model(SecretStr("sk-test-key"), "gpt-test")
+
+    assert model.model_kwargs == {"parallel_tool_calls": False}
+
+
 async def test_the_agent_is_not_configured_without_an_openai_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

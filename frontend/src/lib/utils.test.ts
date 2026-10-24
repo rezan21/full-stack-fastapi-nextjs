@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test"
-import { formatActivity, formatCreated, getInitials } from "@/lib/utils"
+import {
+  formatActivity,
+  formatCreated,
+  getInitials,
+  parseJson,
+} from "@/lib/utils"
 
 describe("getInitials", () => {
   test("takes the first letters of the first two words", () => {
@@ -25,5 +30,16 @@ describe("formatCreated", () => {
 describe("formatActivity", () => {
   test("formats the date of the last activity in UTC", () => {
     expect(formatActivity("2026-10-03T23:59:59Z")).toBe("Oct 3, 2026")
+  })
+})
+
+describe("parseJson", () => {
+  test("reads JSON text", () => {
+    expect(parseJson('{"a":[1,null]}')).toEqual({ a: [1, null] })
+  })
+
+  test("returns nothing for text that is not JSON", () => {
+    expect(parseJson("not json")).toBeUndefined()
+    expect(parseJson("")).toBeUndefined()
   })
 })

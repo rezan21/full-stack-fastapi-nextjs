@@ -2,6 +2,7 @@ import "server-only"
 import { streamChat } from "@/lib/api"
 import { chatRunSchema } from "@/lib/schemas"
 import { deleteSession, getToken } from "@/lib/session"
+import { parseJson } from "@/lib/utils"
 
 export const MAX_BODY_BYTES = 64 * 1024
 
@@ -23,15 +24,6 @@ function isSameOrigin(request: Request) {
     return new URL(origin).host === host
   } catch {
     return false
-  }
-}
-
-// Returns the parsed JSON, or undefined when the text isn't JSON.
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text)
-  } catch {
-    return undefined
   }
 }
 

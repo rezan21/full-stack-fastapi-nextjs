@@ -25,33 +25,33 @@ paths:
 
 ## Reusable Components
 
-- Reusable components are those in `components/common/` and `components/ui/`; feature components (`items/`, `settings/`, `auth/`, …) may call Server Actions and know their routes.
+- Reusable components are the shared common and UI components; feature components (grouped by feature) may call Server Actions and know their routes.
 - Extract to a shared location only after use in two or more places, not on first write.
 - Reusable components take data/callbacks as props; they don't fetch, mutate, or know about routes.
 - No implicit coupling via shared mutable state between reusable components; use explicit props/context contracts.
 - Control variants via a constrained prop (enum/`cva`-style), not open strings or scattered conditional classes.
 - Never copy-paste a component with small tweaks; add a prop or composition slot instead.
-- Form fields use `FormField` (`components/common/FormField.tsx`), not a hand-written `Controller`.
+- Form fields use the shared form-field component, not a hand-written `Controller`.
 
 ## Naming & Exports
 
-- Directories under `frontend/src` are lowercase, and a component directory groups by feature (`components/items`), not by component.
-- Component files are PascalCase and named after the component they export (`ItemsTable.tsx`). The shadcn-vendored `components/ui/` keeps the registry's kebab-case.
-- Hook files in `hooks/` are kebab-case `use-*.ts`, matching the shadcn-generated `use-mobile.ts`; the exported function is camelCase (`useCustomToast`).
+- Directories are lowercase, and a component directory groups by feature, not by component.
+- Component files are PascalCase and named after the component they export. Vendored registry components keep the registry's file names.
+- Hook files are kebab-case `use-*.ts`; the exported function is camelCase.
 - Every other module (`lib/`, `actions/`, scripts, tests) is kebab-case.
 - Named exports only. Default exports are for files Next.js or a tool requires (`app/` route files, `*.config.*`). Biome fails a stray default export or a file name that breaks these cases; directory casing is not machine-checked.
 
 ## Business Logic & Data
 
 - Components render; business rules live in plain functions outside the component.
-- Data access (fetch, SDK calls) lives in `lib/`, never inline in components. Server Actions live in `actions/` and stay thin: they call `lib/` through `authenticated()` or `attempt()` and revalidate, nothing more.
+- Data access (fetch, SDK calls) lives in `lib/`, never inline in components. Server Actions live in `actions/` and stay thin: they call `lib/` through the shared wrappers and revalidate, nothing more.
 - Derived data is computed in a named function/hook, not inline via nested ternaries or chained `.filter().map()`.
 - Components reach the server through Server Components (reads) and Server Actions (writes); custom hooks wrap browser-only APIs such as the clipboard, media queries and toasts.
-- Every authenticated Server Action runs inside `authenticated()` and every public one inside `attempt()` (`lib/action-result.ts`), so the session guard and the error-to-result conversion are written once.
+- Every authenticated Server Action runs inside the shared session-guard wrapper and every public one inside the shared error-to-result wrapper, so both are written once.
 - Don't duplicate server-side validation on the client; share a schema (e.g. Zod) or defer to the server.
 - More than one or two `useEffect` blocks per component signals logic that should move to a hook.
 
 ## Full-Stack
 
-- Share types (or a schema) between client and server; never redeclare shapes that can drift. API calls and types come from the generated SDK in `frontend/src/client/` (`bash scripts/generate-client.sh`), called through `lib/api.ts`; never hand-write URLs or API types. The one exception is a streamed response forwarded as it is: the generated SSE client parses every event and retries a POST, which a pass-through proxy must not do, so `lib/api.ts` calls the generated client with `parseAs: "stream"` and a test ties its path to `backend/openapi.json`.
+- Share types (or a schema) between client and server; never redeclare shapes that can drift. API calls and types come from the generated SDK (regenerate it, never edit it), called through the shared API module; never hand-write URLs or API types. The one exception is a streamed response forwarded as it is: the generated SSE client parses every event and retries a POST, which a pass-through proxy must not do, so the API module calls the generated client in stream mode and a test ties its path to the spec.
 - Keep types strict; avoid `any`/`unknown`/loose dictionaries at API boundaries.

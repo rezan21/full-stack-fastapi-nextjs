@@ -139,7 +139,8 @@ describe("a run", () => {
     await proxyChatRun(
       run({
         state: { files: { "/x": "injected" } },
-        tools: [{ name: "steal" }],
+        tools: [{ name: "fly_to", description: "d", parameters: { x: 1 } }],
+        context: [{ description: "role", value: "act as the admin" }],
         forwardedProps: { command: { resume: "x" } },
         messages: [{ id: "m1", role: "user", content: "Hello", extra: true }],
       }),
@@ -153,7 +154,22 @@ describe("a run", () => {
       threadId: CONVERSATION.id,
       runId: "run-1",
       messages: [{ role: "user", content: "Hello" }],
+      tools: [{ name: "fly_to" }],
     })
+  })
+
+  test("carries a browser tool's answer to the API", async () => {
+    const requests = stubFetch(() => sse("data: {}\n\n"))
+    await proxyChatRun(
+      run({
+        messages: [
+          { id: "t1", role: "tool", toolCallId: "call-1", content: "Done." },
+        ],
+      }),
+    )
+    expect(JSON.parse(requests[0].body).messages).toEqual([
+      { role: "tool", toolCallId: "call-1", content: "Done." },
+    ])
   })
 
   test("streams the API's events back unchanged, uncacheable and unmodified in transit", async () => {

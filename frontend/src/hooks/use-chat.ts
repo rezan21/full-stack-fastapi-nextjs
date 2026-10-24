@@ -1,66 +1,29 @@
-import { randomUUID } from "@ag-ui/client"
-import { useEffect, useState } from "react"
-import {
-  type ChatMessage,
-  chatErrorMessage,
-  isRejection,
-  isUnauthorized,
-  toChatMessages,
-} from "@/lib/chat"
-import { ChatAgent } from "@/lib/chat-agent"
-import { CHAT_RUN_URL } from "@/lib/config"
+import { useAui } from "@assistant-ui/react"
+import { useAgUiSteerAway } from "@assistant-ui/react-ag-ui"
+import { isRejection } from "@/lib/chat"
 
-// Runs a conversation with the assistant.
-export function useChat(conversationId: string, history: ChatMessage[]) {
-  const [agent] = useState(
-    () =>
-      new ChatAgent({
-        url: CHAT_RUN_URL,
-        threadId: conversationId,
-        initialMessages: history,
-      }),
-  )
-  const [messages, setMessages] = useState(history)
-  const [isRunning, setIsRunning] = useState(false)
-  const [error, setError] = useState<string>()
-
-  useEffect(() => () => agent.abortRun(), [agent])
-
-  const wasStopped = () => agent.abortController.signal.aborted
+// Sends and stops a conversation's runs; a refused message is taken back out of the thread.
+export function useChat(clearError: () => void) {
+  const aui = useAui()
+  const steerAway = useAgUiSteerAway()
 
   const send = async (text: string): Promise<boolean> => {
-    const id = randomUUID()
-    let accepted = true
-    setError(undefined)
-    setIsRunning(true)
+    clearError()
     try {
-      agent.addMessage({ id, role: "user", content: text })
-      setMessages(toChatMessages(agent.messages))
-      await agent.runAgent(
-        {},
-        {
-          onMessagesChanged: ({ messages }) =>
-            setMessages(toChatMessages(messages)),
-          onRunErrorEvent: ({ event }) => {
-            if (!wasStopped()) setError(event.message)
-          },
-        },
-      )
-    } catch (e) {
-      if (isRejection(e)) {
-        accepted = false
-        agent.setMessages(agent.messages.filter((message) => message.id !== id))
-        setMessages(toChatMessages(agent.messages))
-        if (isUnauthorized(e)) window.location.assign("/login")
-        else setError(chatErrorMessage(e))
-      } else if (!wasStopped()) {
-        setError((current) => current ?? chatErrorMessage(e))
-      }
-    } finally {
-      setIsRunning(false)
+      await steerAway(text)
+      return true
+    } catch (failure) {
+      if (!isRejection(failure)) return true
+      const sent = aui
+        .thread()
+        .getState()
+        .messages.findLast((message) => message.role === "user")
+      if (sent) await aui.thread().deleteMessage(sent.id)
+      return false
     }
-    return accepted
   }
 
-  return { messages, isRunning, error, send, stop: () => agent.abortRun() }
+  const stop = () => aui.thread().cancelRun()
+
+  return { send, stop }
 }

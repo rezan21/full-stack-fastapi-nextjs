@@ -54,3 +54,24 @@ def test_the_chat_run_publishes_how_long_a_message_may_be() -> None:
     messages = current_schemas()["ChatRun"]["properties"]["messages"]
 
     assert messages["x-max-user-message-length"] == MAX_MESSAGE_CHARS == 4000
+
+
+def test_the_agent_tool_models_are_published_with_their_references_resolved() -> None:
+    schemas = current_schemas()
+
+    assert {"AgentItem", "AgentItems", "AgentItemChange", "Place"} <= set(schemas)
+    assert set(schemas["AgentItemChange"]["required"]) == {"changed", "message"}
+    assert schemas["AgentItemChange"]["properties"]["item"]["anyOf"][0] == {
+        "$ref": "#/components/schemas/AgentItem"
+    }
+    assert schemas["Place"]["properties"]["place"]["maxLength"] == 80
+
+
+def test_the_tool_names_the_agent_and_the_browser_share_are_published() -> None:
+    assert set(current_schemas()["ToolName"]["enum"]) == {
+        "list_items",
+        "create_item",
+        "update_item",
+        "delete_item",
+        "fly_to",
+    }

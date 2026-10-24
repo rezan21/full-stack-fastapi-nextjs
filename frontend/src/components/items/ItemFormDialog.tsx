@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { FormField } from "@/components/common/FormField"
+import { ItemFields } from "@/components/items/ItemFields"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,7 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { FieldGroup } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { useCustomToast } from "@/hooks/use-custom-toast"
 import { formError } from "@/lib/form-errors"
@@ -71,32 +70,7 @@ export function ItemFormDialog({
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <FieldGroup className="py-4">
-            <FormField
-              control={form.control}
-              name="title"
-              label={
-                <>
-                  Title <span className="text-destructive">*</span>
-                </>
-              }
-            >
-              {(field) => <Input {...field} placeholder="Title" type="text" />}
-            </FormField>
-
-            <FormField
-              control={form.control}
-              name="description"
-              label="Description"
-            >
-              {(field) => (
-                <Input
-                  {...field}
-                  value={field.value ?? ""}
-                  placeholder="Description"
-                  type="text"
-                />
-              )}
-            </FormField>
+            <ItemFields control={form.control} />
           </FieldGroup>
 
           <DialogFooter>

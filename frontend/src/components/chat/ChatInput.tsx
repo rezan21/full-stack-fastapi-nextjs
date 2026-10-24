@@ -60,7 +60,7 @@ export function ChatInput({
       <InputGroup>
         <InputGroupTextarea
           aria-label="Message"
-          className="max-h-48 min-w-0 overflow-y-auto wrap-anywhere"
+          className="min-h-10 max-h-48 min-w-0 overflow-y-auto wrap-anywhere"
           aria-invalid={isTooLong}
           placeholder="Ask anything"
           rows={1}

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import uuid
 from typing import Any
 from unittest.mock import Mock
@@ -28,9 +29,13 @@ from tests.utils.agent import (
     BlockingModel,
     ExplodingModel,
     RecordingModel,
+    agent_for,
+    deleting,
+    replying,
     runtime_using,
 )
 from tests.utils.chat import sse_events
+from tests.utils.item import add_items, stored
 from tests.utils.user import (
     authentication_token_from_email,
     create_random_user,
@@ -313,6 +318,27 @@ async def test_the_first_message_names_the_conversation_and_each_run_bumps_it(
     assert second["updated_at"] > first["updated_at"]
 
 
+@pytest.mark.usefixtures("fake_runtime")
+async def test_an_answer_to_a_browser_tool_that_was_never_called_is_refused(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    _, headers = await new_user(client, db)
+    created = await create_conversation(client, headers)
+    body = {
+        "threadId": created["id"],
+        "runId": "run-1",
+        "messages": [
+            {"id": "t1", "role": "tool", "toolCallId": "call-9", "content": "done"}
+        ],
+        "tools": [{"name": "fly_to"}],
+    }
+
+    r = await client.post(BASE, headers=headers, json=body)
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "No browser tool is waiting for that result"
+
+
 @pytest.mark.parametrize(
     "messages",
     [
@@ -417,7 +443,7 @@ async def test_preparing_a_run_leaves_no_database_transaction_open(
         owned = await chat_service.get_owned_conversation(
             session, owner.id, conversation.id
         )
-        prepared = await prepare_run(session, body, owned)
+        prepared = await prepare_run(session, body, owned, agent_for(replying()))
 
         assert not session.in_transaction()
     assert prepared.thread_id == str(conversation.id)
@@ -639,3 +665,114 @@ async def test_a_run_is_made_for_the_user_who_sends_it(
     await run(client, headers, created["id"])
 
     assert contexts == [AgentContext(user_id=user.id)]
+
+
+async def test_the_user_approves_a_delete_over_http(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    user, headers = await new_user(client, db)
+    (item,) = await add_items(db, user, 1)
+    created = await create_conversation(client, headers)
+
+    with runtime_using(deleting(item, texts=("Deleted it.",))):
+        first = await run(client, headers, created["id"], "delete my item")
+        (interrupt,) = sse_events(first)[-1]["outcome"]["interrupts"]
+        answered = await client.post(
+            BASE,
+            headers=headers,
+            json={
+                "threadId": created["id"],
+                "runId": "run-2",
+                "messages": [],
+                "resume": [
+                    {
+                        "interruptId": interrupt["id"],
+                        "status": "resolved",
+                        "payload": {"approved": True},
+                    }
+                ],
+            },
+        )
+
+    assert first.status_code == answered.status_code == 200
+    assert sse_events(first)[-1]["type"] == "RUN_FINISHED"
+    assert sse_events(first)[-1]["outcome"]["type"] == "interrupt"
+    assert (interrupt["reason"], interrupt["toolCallId"]) == ("tool_call", "call-0")
+    assert item.title in interrupt["message"]
+    events = sse_events(answered)
+    (result,) = (e for e in events if e["type"] == "TOOL_CALL_RESULT")
+    assert json.loads(result["content"])["changed"] is True
+    assert await stored(item.id) is None
+    transcript = (
+        await client.get(
+            f"{BASE}/conversations/{created['id']}/messages", headers=headers
+        )
+    ).json()
+    assert [(m["role"], m["content"]) for m in transcript["data"]] == [
+        ("user", "delete my item"),
+        ("assistant", "Deleted it."),
+    ]
+
+
+async def test_an_answer_nobody_waits_for_is_refused_over_http(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    user, headers = await new_user(client, db)
+    (item,) = await add_items(db, user, 1)
+    created = await create_conversation(client, headers)
+
+    with runtime_using(deleting(item)):
+        refused = await client.post(
+            BASE,
+            headers=headers,
+            json={
+                "threadId": created["id"],
+                "runId": "run-1",
+                "messages": [],
+                "resume": [
+                    {
+                        "interruptId": "made-up",
+                        "status": "resolved",
+                        "payload": {"approved": True},
+                    }
+                ],
+            },
+        )
+
+    assert refused.status_code == 400
+    assert refused.json()["detail"] == "No request is waiting for that answer"
+    assert await stored(item.id)
+
+
+async def test_an_approval_sent_with_a_new_message_is_refused_over_http(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    user, headers = await new_user(client, db)
+    (item,) = await add_items(db, user, 1)
+    created = await create_conversation(client, headers)
+
+    with runtime_using(deleting(item)):
+        first = await run(client, headers, created["id"], "delete my item")
+        (interrupt,) = sse_events(first)[-1]["outcome"]["interrupts"]
+        refused = await client.post(
+            BASE,
+            headers=headers,
+            json={
+                "threadId": created["id"],
+                "runId": "run-2",
+                "messages": [{"id": "m2", "role": "user", "content": "never mind"}],
+                "resume": [
+                    {
+                        "interruptId": interrupt["id"],
+                        "status": "resolved",
+                        "payload": {"approved": True},
+                    }
+                ],
+            },
+        )
+
+    assert refused.status_code == 400
+    assert refused.json()["detail"] == (
+        "An answer to a request cannot be sent with a message or a tool result"
+    )
+    assert await stored(item.id)

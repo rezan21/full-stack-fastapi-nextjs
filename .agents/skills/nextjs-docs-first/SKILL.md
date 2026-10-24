@@ -22,8 +22,8 @@ Mechanical edits that touch no Next.js API (renaming a variable, fixing copy) do
 
 These are starting points. Follow links and search until you can ground the decision in the docs.
 
-1. **Docs bundled with the installed version**: `frontend/node_modules/next/dist/docs/` (markdown, matches the installed `next` version exactly). App Router pages live under `01-app/`: guides in `02-guides/` (breaking changes in `02-guides/upgrading/version-16.md`), APIs in `03-api-reference/` (`03-file-conventions/`, `04-functions/`, `05-config/`). Find pages with `rg -il "keyword" frontend/node_modules/next/dist/docs/` instead of guessing paths. If `node_modules` is missing, run `bun install` in `frontend/` or use the web docs below.
-2. **next-devtools MCP** (`next-devtools` in `.mcp.json`):
+1. **Docs bundled with the installed version**: `node_modules/next/dist/docs/` in the frontend (markdown, matches the installed `next` version exactly). Find pages with `rg -il "keyword"` over that folder instead of guessing paths. If `node_modules` is missing, install the frontend dependencies or use the web docs below.
+2. **next-devtools MCP server:**
    - `nextjs_docs` returns where the bundled docs live.
    - `nextjs_index` lists running dev servers and their tools; `nextjs_call` runs one (`get_errors`, `get_routes`, `get_compilation_issues`, `compile_route`, `get_page_metadata`, `get_logs`). These need a running `next dev`; pass `port` if discovery finds nothing.
    - To check a change in the real app, use the `next-dev-loop` skill.
@@ -46,5 +46,5 @@ These are starting points. Follow links and search until you can ground the deci
 
 ## Notes
 
-- Check the installed version (`frontend/node_modules/next/package.json`; `frontend/package.json` only holds a range) when behavior may depend on it.
+- Check the installed version (the dependency manifest only holds a range) when behavior may depend on it.
 - Don't paste long doc excerpts into the codebase or the reply. Summarize, link, and apply.

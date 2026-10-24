@@ -1,10 +1,12 @@
 import logging
+from typing import Any
 
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
+from src.agent import contract as agent_contract
 from src.agent import runtime as agent_runtime
 from src.auth import router as auth_router
 from src.chat import router as chat_router
@@ -30,9 +32,18 @@ if settings.SENTRY_DSN and settings.FASTAPI_ENV != "development":
     )
 
 
+class API(FastAPI):
+    """FastAPI app whose OpenAPI spec also carries the models the agent's tools answer with."""
+
+    def openapi(self) -> dict[str, Any]:
+        spec = super().openapi()
+        spec["components"]["schemas"].update(agent_contract.contract_schemas())
+        return spec
+
+
 def build_app(*, docs: bool) -> FastAPI:
     """Build the API, serving its interactive docs only when asked."""
-    app = FastAPI(
+    app = API(
         title=settings.PROJECT_NAME,
         openapi_url=f"{settings.API_V1_STR}/openapi.json" if docs else None,
         docs_url="/docs" if docs else None,

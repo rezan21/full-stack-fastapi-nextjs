@@ -1,4 +1,3 @@
-import { contentToText, type Message } from "@ag-ui/client"
 import type { ChatMessagePublic } from "@/client"
 
 export type ChatMessage = Pick<ChatMessagePublic, "id" | "role" | "content">
@@ -6,17 +5,6 @@ export type ChatMessage = Pick<ChatMessagePublic, "id" | "role" | "content">
 export const GENERIC_CHAT_ERROR = "Something went wrong. Please try again."
 
 type HttpFailure = Error & { status?: number; payload?: unknown }
-
-// Returns what the user and the assistant said, leaving out tool calls and system messages.
-export function toChatMessages(messages: readonly Message[]): ChatMessage[] {
-  return messages.flatMap((message) => {
-    if (message.role !== "user" && message.role !== "assistant") return []
-    const content = message.content ? contentToText(message.content) : ""
-    return content.trim()
-      ? [{ id: message.id, role: message.role, content }]
-      : []
-  })
-}
 
 // Returns the reason the API gave for a failed run, or a generic message.
 export function chatErrorMessage(error: unknown): string {
