@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import { client } from "@/client/client.gen"
-import { API_URL, CHAT_MESSAGE_MAX_LENGTH, ITEMS_PAGE_SIZE } from "@/lib/config"
+import {
+  API_URL,
+  CHAT_MESSAGE_MAX_LENGTH,
+  CONVERSATIONS_PAGE_SIZE,
+  ITEMS_PAGE_SIZE,
+} from "@/lib/config"
 import {
   CHAT_MESSAGES,
   CONVERSATION,
@@ -324,15 +329,26 @@ describe("conversations", () => {
     })
   })
 
-  test("getConversations lists them", async () => {
+  test("getConversations lists the first page of conversations", async () => {
     const requests = stubFetch(() =>
       Response.json({ data: [CONVERSATION], count: 1 }),
     )
-    expect(await getConversations()).toEqual({ data: [CONVERSATION], count: 1 })
+    expect(await getConversations(1)).toEqual({
+      data: [CONVERSATION],
+      count: 1,
+    })
     expect(requests[0]).toMatchObject({
       method: "GET",
-      url: `${CHAT_BASE}/conversations`,
+      url: `${CHAT_BASE}/conversations?skip=0&limit=${CONVERSATIONS_PAGE_SIZE}`,
     })
+  })
+
+  test("getConversations skips the conversations on the earlier pages", async () => {
+    const requests = stubFetch(() => Response.json({ data: [], count: 0 }))
+    await getConversations(3)
+    expect(requests[0].url).toBe(
+      `${CHAT_BASE}/conversations?skip=${2 * CONVERSATIONS_PAGE_SIZE}&limit=${CONVERSATIONS_PAGE_SIZE}`,
+    )
   })
 
   test("getConversation reads one", async () => {

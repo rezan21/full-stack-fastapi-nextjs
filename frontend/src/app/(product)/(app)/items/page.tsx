@@ -2,8 +2,8 @@ import { Search } from "lucide-react"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { PageHeader } from "@/components/common/PageHeader"
+import { PagePagination } from "@/components/common/PagePagination"
 import { AddItem } from "@/components/items/AddItem"
-import { ItemsPagination } from "@/components/items/ItemsPagination"
 import { ItemsTable } from "@/components/items/ItemsTable"
 import {
   Empty,
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/empty"
 import { getItems } from "@/lib/api"
 import { ITEMS_PAGE_SIZE } from "@/lib/config"
-import { itemsPageHref, pageCount, parsePage } from "@/lib/pagination"
+import { pageCount, pageHref, parsePage } from "@/lib/pagination"
 
 export const metadata: Metadata = { title: "Items - FastAPI Template" }
 
@@ -27,7 +27,7 @@ export default async function Page({
   const page = parsePage((await searchParams).page)
   const items = await getItems(page)
   const pages = pageCount(items.count, ITEMS_PAGE_SIZE)
-  if (page > pages) redirect(itemsPageHref(pages))
+  if (page > pages) redirect(pageHref("/items", pages))
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,7 +48,7 @@ export default async function Page({
       ) : (
         <>
           <ItemsTable items={items.data} />
-          <ItemsPagination page={page} pages={pages} />
+          <PagePagination basePath="/items" page={page} pages={pages} />
         </>
       )}
     </div>

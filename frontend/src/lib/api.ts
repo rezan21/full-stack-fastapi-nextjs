@@ -39,7 +39,8 @@ import {
   usersUpdateUserMe,
 } from "@/client"
 import { client } from "@/client/client.gen"
-import { API_URL, ITEMS_PAGE_SIZE } from "@/lib/config"
+import { API_URL, CONVERSATIONS_PAGE_SIZE, ITEMS_PAGE_SIZE } from "@/lib/config"
+import { pageQuery } from "@/lib/pagination"
 import { getToken } from "@/lib/session"
 
 export type {
@@ -146,11 +147,7 @@ export function getItem(id: string) {
 
 // Fetches one page of items.
 export function getItems(page: number) {
-  return unwrap(
-    itemsReadItems({
-      query: { skip: (page - 1) * ITEMS_PAGE_SIZE, limit: ITEMS_PAGE_SIZE },
-    }),
-  )
+  return unwrap(itemsReadItems({ query: pageQuery(page, ITEMS_PAGE_SIZE) }))
 }
 
 export function createItem(body: ItemCreate) {
@@ -185,8 +182,13 @@ export function createConversation() {
   return unwrap(chatCreateConversation())
 }
 
-export function getConversations() {
-  return unwrap(chatReadConversations())
+// Fetches one page of conversations.
+export function getConversations(page: number) {
+  return unwrap(
+    chatReadConversations({
+      query: pageQuery(page, CONVERSATIONS_PAGE_SIZE),
+    }),
+  )
 }
 
 export function getConversation(id: string) {

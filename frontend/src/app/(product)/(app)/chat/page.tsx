@@ -1,8 +1,10 @@
 import { MessageSquare } from "lucide-react"
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 import { ConversationList } from "@/components/chat/ConversationList"
 import { NewChatButton } from "@/components/chat/NewChatButton"
 import { PageHeader } from "@/components/common/PageHeader"
+import { PagePagination } from "@/components/common/PagePagination"
 import {
   Empty,
   EmptyContent,
@@ -12,12 +14,21 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { getConversations } from "@/lib/api"
+import { CONVERSATIONS_PAGE_SIZE } from "@/lib/config"
+import { pageCount, pageHref, parsePage } from "@/lib/pagination"
 
 export const metadata: Metadata = { title: "AI Chat - FastAPI Template" }
 
 // AI chat page.
-export default async function Page() {
-  const conversations = await getConversations()
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string | string[] }>
+}) {
+  const page = parsePage((await searchParams).page)
+  const conversations = await getConversations(page)
+  const pages = pageCount(conversations.count, CONVERSATIONS_PAGE_SIZE)
+  if (page > pages) redirect(pageHref("/chat", pages))
 
   return (
     <div className="flex flex-col gap-6">
@@ -41,7 +52,10 @@ export default async function Page() {
           </EmptyContent>
         </Empty>
       ) : (
-        <ConversationList conversations={conversations.data} />
+        <>
+          <ConversationList conversations={conversations.data} />
+          <PagePagination basePath="/chat" page={page} pages={pages} />
+        </>
       )}
     </div>
   )

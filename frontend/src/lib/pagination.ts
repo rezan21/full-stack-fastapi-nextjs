@@ -11,7 +11,12 @@ export function pageCount(count: number, pageSize: number): number {
   return Math.max(1, Math.ceil(count / pageSize))
 }
 
-// Returns the link to an items page.
-export function itemsPageHref(page: number): string {
-  return page === 1 ? "/items" : `/items?page=${page}`
+// Returns the skip and limit query for a page of a list.
+export function pageQuery(page: number, pageSize: number) {
+  return { skip: (page - 1) * pageSize, limit: pageSize }
+}
+
+// Returns the link to a page of a list, such as /items.
+export function pageHref(path: string, page: number): string {
+  return page === 1 ? path : `${path}?page=${page}`
 }

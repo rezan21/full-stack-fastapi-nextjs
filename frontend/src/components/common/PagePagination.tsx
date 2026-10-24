@@ -7,14 +7,16 @@ import {
   PaginationContent,
   PaginationItem,
 } from "@/components/ui/pagination"
-import { itemsPageHref } from "@/lib/pagination"
+import { pageHref } from "@/lib/pagination"
 
-// Link to a page of items.
+// Link to a page of a list.
 function PageLink({
+  basePath,
   page,
   label,
   children,
 }: {
+  basePath: string
   page: number | null
   label: string
   children: ReactNode
@@ -30,18 +32,20 @@ function PageLink({
     <Button
       variant="ghost"
       nativeButton={false}
-      render={<Link href={itemsPageHref(page)} aria-label={label} />}
+      render={<Link href={pageHref(basePath, page)} aria-label={label} />}
     >
       {children}
     </Button>
   )
 }
 
-// Pagination for the items list.
-export function ItemsPagination({
+// Pagination for a list, such as the items or the conversations.
+export function PagePagination({
+  basePath,
   page,
   pages,
 }: {
+  basePath: string
   page: number
   pages: number
 }) {
@@ -52,6 +56,7 @@ export function ItemsPagination({
       <PaginationContent>
         <PaginationItem>
           <PageLink
+            basePath={basePath}
             page={page > 1 ? page - 1 : null}
             label="Go to previous page"
           >
@@ -66,6 +71,7 @@ export function ItemsPagination({
         </PaginationItem>
         <PaginationItem>
           <PageLink
+            basePath={basePath}
             page={page < pages ? page + 1 : null}
             label="Go to next page"
           >

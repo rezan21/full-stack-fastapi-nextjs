@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { itemsPageHref, pageCount, parsePage } from "@/lib/pagination"
+import { pageCount, pageHref, pageQuery, parsePage } from "@/lib/pagination"
 
 describe("parsePage", () => {
   test("reads a page number", () => {
@@ -31,9 +31,21 @@ describe("pageCount", () => {
   })
 })
 
-describe("itemsPageHref", () => {
+describe("pageQuery", () => {
+  test("skips the pages before and limits to one page", () => {
+    expect(pageQuery(1, 20)).toEqual({ skip: 0, limit: 20 })
+    expect(pageQuery(3, 20)).toEqual({ skip: 40, limit: 20 })
+  })
+})
+
+describe("pageHref", () => {
   test("leaves the first page without a query", () => {
-    expect(itemsPageHref(1)).toBe("/items")
-    expect(itemsPageHref(4)).toBe("/items?page=4")
+    expect(pageHref("/items", 1)).toBe("/items")
+    expect(pageHref("/chat", 1)).toBe("/chat")
+  })
+
+  test("links later pages with a page query", () => {
+    expect(pageHref("/items", 4)).toBe("/items?page=4")
+    expect(pageHref("/chat", 2)).toBe("/chat?page=2")
   })
 })
