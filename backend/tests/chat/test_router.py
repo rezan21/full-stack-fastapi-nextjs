@@ -28,6 +28,8 @@ from tests.utils.agent import (
     BlockingModel,
     ExplodingModel,
     RecordingModel,
+    agent_for,
+    replying,
     runtime_using,
 )
 from tests.utils.chat import sse_events
@@ -313,6 +315,27 @@ async def test_the_first_message_names_the_conversation_and_each_run_bumps_it(
     assert second["updated_at"] > first["updated_at"]
 
 
+@pytest.mark.usefixtures("fake_runtime")
+async def test_an_answer_to_a_browser_tool_that_was_never_called_is_refused(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    _, headers = await new_user(client, db)
+    created = await create_conversation(client, headers)
+    body = {
+        "threadId": created["id"],
+        "runId": "run-1",
+        "messages": [
+            {"id": "t1", "role": "tool", "toolCallId": "call-9", "content": "done"}
+        ],
+        "tools": [{"name": "fly_to"}],
+    }
+
+    r = await client.post(BASE, headers=headers, json=body)
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == "No browser tool is waiting for that result"
+
+
 @pytest.mark.parametrize(
     "messages",
     [
@@ -417,7 +440,7 @@ async def test_preparing_a_run_leaves_no_database_transaction_open(
         owned = await chat_service.get_owned_conversation(
             session, owner.id, conversation.id
         )
-        prepared = await prepare_run(session, body, owned)
+        prepared = await prepare_run(session, body, owned, agent_for(replying()))
 
         assert not session.in_transaction()
     assert prepared.thread_id == str(conversation.id)

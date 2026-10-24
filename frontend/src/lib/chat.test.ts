@@ -6,6 +6,7 @@ import {
   GENERIC_CHAT_ERROR,
   isRejection,
   isUnauthorized,
+  refusalStatus,
   toChatMessages,
 } from "@/lib/chat"
 
@@ -84,6 +85,20 @@ describe("isUnauthorized", () => {
     expect(isUnauthorized(httpError(403, {}))).toBe(false)
     expect(isUnauthorized(new Error("plain"))).toBe(false)
     expect(isUnauthorized(null)).toBe(false)
+  })
+})
+
+describe("refusalStatus", () => {
+  test("reads the status a run was refused with", () => {
+    expect(refusalStatus("429")).toBe(429)
+    expect(refusalStatus("401")).toBe(401)
+  })
+
+  test("is undefined for any other code, such as a failure after the run began", () => {
+    expect(refusalStatus(undefined)).toBeUndefined()
+    expect(refusalStatus("")).toBeUndefined()
+    expect(refusalStatus("INCOMPLETE_STREAM")).toBeUndefined()
+    expect(refusalStatus("4291")).toBeUndefined()
   })
 })
 

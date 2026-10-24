@@ -6,11 +6,19 @@ from langgraph.checkpoint.memory import InMemorySaver
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.agent import factory as agent_factory
+from src.agent import frontend_tools as agent_frontend_tools
 from src.agent import streaming as agent_streaming
 from src.agent.schemas import AgentMessage
 from src.chat import service as chat_service
 from src.chat.models import Conversation
-from tests.utils.agent import CONTEXT, PartialModel, collect, replying, stop_midway
+from tests.utils.agent import (
+    CONTEXT,
+    PartialModel,
+    collect,
+    flying_to_london,
+    replying,
+    stop_midway,
+)
 from tests.utils.user import create_random_user
 
 
@@ -66,6 +74,35 @@ async def test_recording_the_same_run_twice_does_not_repeat_the_answer(
 
     messages, _ = await chat_service.read_messages(db, conversation.id, limit=10)
     assert [m.content for m in messages] == ["Only once."]
+
+
+async def test_the_answer_after_a_browser_tool_is_recorded_once(
+    db: AsyncSession, conversation: Conversation
+) -> None:
+    agent = agent_factory.build_agent(
+        flying_to_london("Now showing London."), InMemorySaver()
+    )
+    tools = agent_frontend_tools.offered(["fly_to"])
+    first = agent_streaming.build_run_input(str(conversation.id), "r1", "go", tools)
+    await chat_service.add_messages(
+        db, conversation.id, [AgentMessage(first.messages[0].id, "user", "go")]
+    )
+    await db.commit()
+    await collect(agent_streaming.stream_events(agent, first, CONTEXT))
+    await chat_service.record_replies(agent, first)
+    answer = agent_streaming.build_tool_result_input(
+        str(conversation.id), "r2", "call-1", "The map now shows London.", tools
+    )
+    await collect(agent_streaming.stream_events(agent, answer, CONTEXT))
+
+    await chat_service.record_replies(agent, answer)
+    await chat_service.record_replies(agent, answer)
+
+    messages, _ = await chat_service.read_messages(db, conversation.id, limit=10)
+    assert [(m.role, m.content) for m in messages] == [
+        ("user", "go"),
+        ("assistant", "Now showing London."),
+    ]
 
 
 async def test_a_reply_cut_off_midway_is_recorded_in_the_transcript(

@@ -66,6 +66,10 @@ export type ChatRun = {
      * Threadid
      */
     threadId: string;
+    /**
+     * Tools
+     */
+    tools?: Array<ChatRunTool>;
 };
 
 /**
@@ -80,6 +84,20 @@ export type ChatRunMessage = {
      * Role
      */
     role: string;
+    /**
+     * Toolcallid
+     */
+    toolCallId?: string | null;
+};
+
+/**
+ * ChatRunTool
+ */
+export type ChatRunTool = {
+    /**
+     * Name
+     */
+    name: string;
 };
 
 /**

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ChatView } from "@/components/chat/ChatView"
+import { EngineSwitcher } from "@/components/chat/EngineSwitcher"
 import { NewChatButton } from "@/components/chat/NewChatButton"
 import { PageHeader } from "@/components/common/PageHeader"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,7 @@ export default async function Page({
         description="AI Chat"
       >
         <div className="flex gap-2">
+          <EngineSwitcher conversationId={id} current="" />
           <Button
             variant="outline"
             render={<Link href="/chat" />}

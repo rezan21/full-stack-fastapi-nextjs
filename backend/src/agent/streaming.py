@@ -1,16 +1,19 @@
 import logging
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from contextlib import aclosing
 
 import anyio
 from ag_ui.core import (
     BaseEvent,
     EventType,
+    Message,
     RunAgentInput,
     RunErrorEvent,
     RunStartedEvent,
     TextMessageContentEvent,
+    Tool,
+    ToolMessage,
     UserMessage,
 )
 from ag_ui_langgraph import LangGraphAgent
@@ -26,18 +29,42 @@ GENERIC_ERROR = "The assistant ran into a problem. Please try again."
 logger = logging.getLogger(__name__)
 
 
-def build_run_input(thread_id: str, run_id: str, text: str) -> RunAgentInput:
-    """Return the input of a run answering the text in the thread, with nothing else to steer it."""
+def run_input_for(
+    thread_id: str, run_id: str, messages: list[Message], tools: Sequence[Tool]
+) -> RunAgentInput:
+    """Return the input of a run with the messages and the browser tools, and nothing else to steer it."""
     return RunAgentInput(
         thread_id=thread_id,
         run_id=run_id if len(run_id) <= RUN_ID_MAX_LENGTH else str(uuid.uuid4()),
-        messages=[UserMessage(id=str(uuid.uuid4()), role="user", content=text)],
+        messages=messages,
         state={},
-        tools=[],
+        tools=list(tools),
         context=[],
         forwarded_props={},
         resume=None,
     )
+
+
+def build_run_input(
+    thread_id: str, run_id: str, text: str, tools: Sequence[Tool] = ()
+) -> RunAgentInput:
+    """Return the input of a run answering the text in the thread."""
+    message = UserMessage(id=str(uuid.uuid4()), role="user", content=text)
+    return run_input_for(thread_id, run_id, [message], tools)
+
+
+def build_tool_result_input(
+    thread_id: str,
+    run_id: str,
+    tool_call_id: str,
+    content: str,
+    tools: Sequence[Tool] = (),
+) -> RunAgentInput:
+    """Return the input of a run that hands the agent what a browser tool answered."""
+    message = ToolMessage(
+        id=str(uuid.uuid4()), role="tool", content=content, tool_call_id=tool_call_id
+    )
+    return run_input_for(thread_id, run_id, [message], tools)
 
 
 def run_for(agent: LangGraphAgent, context: AgentContext) -> LangGraphAgent:

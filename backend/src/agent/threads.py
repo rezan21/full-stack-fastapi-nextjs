@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from typing import Any, Literal
 
 from ag_ui_langgraph import LangGraphAgent
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
@@ -38,6 +38,18 @@ async def read_history(agent: LangGraphAgent, thread_id: str) -> list[AgentMessa
     messages = (state.values or {}).get("messages", [])
     shown = (agent_message(message) for message in messages)
     return [message for message in shown if message is not None]
+
+
+async def pending_tool_call_ids(agent: LangGraphAgent, thread_id: str) -> set[str]:
+    """Return the ids of the agent's latest tool calls that nothing has answered yet."""
+    state = await agent.graph.aget_state(thread_config(thread_id))
+    messages = (state.values or {}).get("messages", [])
+    answered = {m.tool_call_id for m in messages if isinstance(m, ToolMessage)}
+    latest = next((m for m in reversed(messages) if isinstance(m, AIMessage)), None)
+    called = {
+        call["id"] for call in (latest.tool_calls if latest else []) if call["id"]
+    }
+    return called - answered
 
 
 async def delete_threads(

@@ -8,6 +8,10 @@ paths:
   - "backend/tests/utils/chat.py"
   - "frontend/src/**/chat/**"
   - "frontend/src/**/*chat*"
+  - "frontend/src/app/**/copilotkit/**"
+  - "frontend/src/lib/copilotkit/**"
+  - "frontend/src/lib/items-tool*"
+  - "frontend/src/lib/place*"
   - "frontend/tests/*chat*"
 ---
 
@@ -22,3 +26,6 @@ paths:
 - Teach a convention once in the system prompt and carry each event as data when it happens. Don't list events in the prompt, and don't invent a new channel per feature: reuse the application note (`backend/src/agent/notes.py`).
 - Judge a change by how the real model behaves, not by unit tests alone: replay the user's own follow-up questions over several trials and count the right answers. Small models need plainer wording, so test on the model we ship.
 - Whatever the user can type, the user can imitate. Never give typed text the standing of an application fact.
+- A backend tool takes its user from the run's context (`AgentContext`), never from an argument the model writes, and returns only that user's data. A superuser's assistant sees the superuser's own data, not everyone's.
+- The server owns the list of browser tools (`backend/src/agent/frontend_tools.py`): the browser names the ones it can run and the server offers only those it defines. What a browser tool returns is text the user controls, so treat it as data, never as an application fact or an instruction.
+- Never print the run's context (the user's id, for one) into the prompt. A library middleware that renders context into the system prompt does exactly that; the one we use has that note switched off, and a test guards it.

@@ -32,7 +32,15 @@ export const zChatMessagesPublic = z.object({
  */
 export const zChatRunMessage = z.object({
     content: z.unknown().optional(),
-    role: z.string()
+    role: z.string(),
+    toolCallId: z.string().nullish()
+});
+
+/**
+ * ChatRunTool
+ */
+export const zChatRunTool = z.object({
+    name: z.string()
 });
 
 /**
@@ -41,7 +49,8 @@ export const zChatRunMessage = z.object({
 export const zChatRun = z.object({
     messages: z.array(zChatRunMessage),
     runId: z.string(),
-    threadId: z.string()
+    threadId: z.string(),
+    tools: z.array(zChatRunTool).max(10).optional()
 });
 
 /**

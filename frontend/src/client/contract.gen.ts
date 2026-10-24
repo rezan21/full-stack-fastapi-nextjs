@@ -12,6 +12,7 @@ export type ContractTypes = [
   Expect<Matches<typeof Schemas.zChatMessagesPublic, Types.ChatMessagesPublic>>,
   Expect<Matches<typeof Schemas.zChatRun, Types.ChatRun>>,
   Expect<Matches<typeof Schemas.zChatRunMessage, Types.ChatRunMessage>>,
+  Expect<Matches<typeof Schemas.zChatRunTool, Types.ChatRunTool>>,
   Expect<Matches<typeof Schemas.zConversationPublic, Types.ConversationPublic>>,
   Expect<Matches<typeof Schemas.zConversationsPublic, Types.ConversationsPublic>>,
   Expect<Matches<typeof Schemas.zCredentials, Types.Credentials>>,

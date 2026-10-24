@@ -29,6 +29,15 @@ class MessageTooLong(InvalidChatInput):
         super().__init__(f"The message is over {limit} characters")
 
 
+class InvalidToolResult(InvalidChatInput):
+    def __init__(self, limit: int) -> None:
+        super().__init__(f"The tool result must be text of at most {limit} characters")
+
+
+class NoPendingToolCall(InvalidChatInput):
+    DETAIL = "No browser tool is waiting for that result"
+
+
 class ChatQuotaExceeded(TooManyRequests):
     def __init__(self, retry_after: int) -> None:
         wait = describe_duration(ceil(retry_after / 60))

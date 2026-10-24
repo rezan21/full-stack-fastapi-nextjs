@@ -1,5 +1,13 @@
 {
   "mcpServers": {
+    "assistant-ui-mcp": {
+      "type": "http",
+      "url": "https://www.assistant-ui.com/mcp"
+    },
+    "copilotkit-mcp": {
+      "type": "http",
+      "url": "https://mcp.copilotkit.ai/mcp"
+    },
     "lanchain-mcp": {
       "type": "http",
       "url": "https://docs.langchain.com/mcp"

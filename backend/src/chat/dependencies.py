@@ -55,7 +55,10 @@ RunConversation = Annotated[Conversation, Depends(valid_run_conversation)]
 
 
 async def prepare_run(
-    session: SessionDep, body: ChatRun, conversation: RunConversation
+    session: SessionDep,
+    body: ChatRun,
+    conversation: RunConversation,
+    agent: AgentDep,
 ) -> RunAgentInput:
     """Check a run request and build the input the agent is given."""
-    return await chat_service.start_run(session, conversation, body)
+    return await chat_service.start_run(session, conversation, body, agent)

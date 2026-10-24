@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { readdirSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { NextRequest } from "next/server"
-import { CHAT_RUN_URL, SESSION_COOKIE } from "@/lib/config"
+import { CHAT_RUN_URL, COPILOT_RUNTIME_URL, SESSION_COOKIE } from "@/lib/config"
 import { config, proxy } from "@/proxy"
 
 const ORIGIN = "http://localhost:3000"
@@ -46,6 +46,17 @@ describe("proxy", () => {
     for (const path of ["/chat", "/chat/abc", `${CHAT_RUN_URL}-history`]) {
       expect(covered(path), path).toBe(true)
     }
+  })
+
+  test("leaves the CopilotKit runtime to its own session check, and nothing else like it", () => {
+    for (const path of [
+      COPILOT_RUNTIME_URL,
+      `${COPILOT_RUNTIME_URL}/info`,
+      `${COPILOT_RUNTIME_URL}/agent/chat/run`,
+    ]) {
+      expect(covered(path), path).toBe(false)
+    }
+    expect(covered(`${COPILOT_RUNTIME_URL}-history`)).toBe(true)
   })
 
   test("lets every page of the (auth) route group through without a session", () => {

@@ -32,6 +32,11 @@ export function isUnauthorized(error: unknown): boolean {
   return (error as HttpFailure | null)?.status === 401
 }
 
+// Returns the HTTP status a run was refused with, from the code of the error that reported it.
+export function refusalStatus(code: string | undefined): number | undefined {
+  return code && /^\d{3}$/.test(code) ? Number(code) : undefined
+}
+
 // Returns whether the API turned a run down, as opposed to the connection failing.
 export function isRejection(error: unknown): boolean {
   return typeof (error as HttpFailure | null)?.status === "number"

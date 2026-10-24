@@ -6,6 +6,8 @@ from pydantic import Field as PydanticField
 from sqlmodel import Field, SQLModel
 
 MAX_MESSAGE_CHARS = 4000
+MAX_TOOL_RESULT_CHARS = 2000
+MAX_CLIENT_TOOLS = 10
 
 
 class ConversationPublic(SQLModel):
@@ -23,6 +25,11 @@ class ConversationsPublic(SQLModel):
 class ChatRunMessage(SQLModel):
     role: str
     content: Any = None
+    tool_call_id: str | None = Field(default=None, alias="toolCallId")
+
+
+class ChatRunTool(SQLModel):
+    name: str
 
 
 ChatRunMessages = Annotated[
@@ -35,6 +42,9 @@ class ChatRun(SQLModel):
     thread_id: str = Field(alias="threadId")
     run_id: str = Field(alias="runId")
     messages: ChatRunMessages
+    tools: Annotated[list[ChatRunTool], PydanticField(max_length=MAX_CLIENT_TOOLS)] = (
+        Field(default_factory=list)
+    )
 
 
 class ChatMessagePublic(SQLModel):

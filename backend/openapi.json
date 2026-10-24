@@ -88,6 +88,14 @@
           "threadId": {
             "title": "Threadid",
             "type": "string"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ChatRunTool"
+            },
+            "maxItems": 10,
+            "title": "Tools",
+            "type": "array"
           }
         },
         "required": [
@@ -106,12 +114,36 @@
           "role": {
             "title": "Role",
             "type": "string"
+          },
+          "toolCallId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toolcallid"
           }
         },
         "required": [
           "role"
         ],
         "title": "ChatRunMessage",
+        "type": "object"
+      },
+      "ChatRunTool": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ChatRunTool",
         "type": "object"
       },
       "ConversationPublic": {

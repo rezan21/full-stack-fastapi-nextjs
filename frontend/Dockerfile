@@ -8,6 +8,7 @@ RUN bun install --frozen-lockfile
 FROM oven/bun:1 AS dev
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV COPILOTKIT_TELEMETRY_DISABLED=true
 ENV NODE_ENV=development
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -18,6 +19,7 @@ CMD ["bun", "run", "dev"]
 FROM oven/bun:1 AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV COPILOTKIT_TELEMETRY_DISABLED=true
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
@@ -27,6 +29,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV COPILOTKIT_TELEMETRY_DISABLED=true
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 COPY --from=builder --chown=node:node /app/.next/standalone ./

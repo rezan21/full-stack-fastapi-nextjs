@@ -1,13 +1,19 @@
 from typing import Any
 
 import pytest
+from ag_ui.core import ToolMessage
+from ag_ui_langgraph import LangGraphAgent
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.agent import frontend_tools as agent_frontend_tools
+from src.agent import streaming as agent_streaming
 from src.chat import service as chat_service
-from src.chat.exceptions import InvalidChatInput
-from src.chat.models import Conversation
-from src.chat.schemas import MAX_MESSAGE_CHARS
-from tests.utils.chat import client_input
+from src.chat.exceptions import InvalidChatInput, InvalidToolResult, NoPendingToolCall
+from src.chat.models import ChatUsage, Conversation
+from src.chat.schemas import MAX_MESSAGE_CHARS, MAX_TOOL_RESULT_CHARS
+from tests.utils.agent import CONTEXT, agent_for, collect, flying_to_london, replying
+from tests.utils.chat import client_input, tool_result_input
 from tests.utils.user import create_random_user
 
 
@@ -17,6 +23,19 @@ async def conversation(db: AsyncSession) -> Conversation:
     db.add(created)
     await db.commit()
     return created
+
+
+@pytest.fixture
+def agent() -> LangGraphAgent:
+    return agent_for(replying())
+
+
+async def agent_waiting_on_the_browser(conversation: Conversation) -> LangGraphAgent:
+    waiting = agent_for(flying_to_london("Now showing London."))
+    tools = agent_frontend_tools.offered(["fly_to"])
+    first = agent_streaming.build_run_input(str(conversation.id), "r1", "go", tools)
+    await collect(agent_streaming.stream_events(waiting, first, CONTEXT))
+    return waiting
 
 
 def one_message(text: str) -> Any:
@@ -59,17 +78,17 @@ def test_a_message_at_the_length_limit_is_accepted_and_one_over_is_not() -> None
 
 
 async def test_a_run_belongs_to_the_conversation_and_not_the_thread_the_client_names(
-    db: AsyncSession, conversation: Conversation
+    db: AsyncSession, conversation: Conversation, agent: LangGraphAgent
 ) -> None:
-    run_input = await chat_service.start_run(db, conversation, client_input())
+    run_input = await chat_service.start_run(db, conversation, client_input(), agent)
 
     assert run_input.thread_id == str(conversation.id)
 
 
 async def test_a_run_answers_only_the_newest_user_message(
-    db: AsyncSession, conversation: Conversation
+    db: AsyncSession, conversation: Conversation, agent: LangGraphAgent
 ) -> None:
-    run_input = await chat_service.start_run(db, conversation, client_input())
+    run_input = await chat_service.start_run(db, conversation, client_input(), agent)
 
     assert [(m.role, m.content) for m in run_input.messages] == [
         ("user", "newest question")
@@ -77,12 +96,97 @@ async def test_a_run_answers_only_the_newest_user_message(
 
 
 async def test_everything_the_client_could_steer_the_run_with_is_dropped(
-    db: AsyncSession, conversation: Conversation
+    db: AsyncSession, conversation: Conversation, agent: LangGraphAgent
 ) -> None:
-    run_input = await chat_service.start_run(db, conversation, client_input())
+    run_input = await chat_service.start_run(db, conversation, client_input(), agent)
 
     assert not run_input.state
     assert not run_input.tools
     assert not run_input.context
     assert not run_input.forwarded_props
     assert not run_input.resume
+
+
+async def test_a_browser_tool_the_server_defines_is_offered_and_others_are_not(
+    db: AsyncSession, conversation: Conversation, agent: LangGraphAgent
+) -> None:
+    body = client_input(tools=[{"name": "fly_to"}, {"name": "steal"}])
+
+    run_input = await chat_service.start_run(db, conversation, body, agent)
+
+    assert [tool.name for tool in run_input.tools] == ["fly_to"]
+
+
+async def test_a_browser_tools_answer_becomes_the_runs_only_message(
+    db: AsyncSession, conversation: Conversation
+) -> None:
+    waiting = await agent_waiting_on_the_browser(conversation)
+    body = tool_result_input(tools=[{"name": "fly_to"}])
+
+    run_input = await chat_service.start_run(db, conversation, body, waiting)
+
+    (message,) = run_input.messages
+    assert isinstance(message, ToolMessage)
+    assert message.content == "The map now shows London."
+    assert message.tool_call_id == "call-1"
+    assert [tool.name for tool in run_input.tools] == ["fly_to"]
+
+
+async def test_a_browser_tools_answer_is_not_a_message_in_the_transcript(
+    db: AsyncSession, conversation: Conversation
+) -> None:
+    waiting = await agent_waiting_on_the_browser(conversation)
+
+    await chat_service.start_run(db, conversation, tool_result_input(), waiting)
+
+    messages, count = await chat_service.read_messages(db, conversation.id, limit=10)
+    assert (list(messages), count) == ([], 0)
+
+
+async def test_a_browser_tools_answer_counts_as_a_run(
+    db: AsyncSession, conversation: Conversation
+) -> None:
+    waiting = await agent_waiting_on_the_browser(conversation)
+
+    await chat_service.start_run(db, conversation, tool_result_input(), waiting)
+
+    usage = (
+        await db.exec(
+            select(ChatUsage).where(ChatUsage.owner_id == conversation.owner_id)
+        )
+    ).one()
+    assert usage.runs == 1
+
+
+async def test_an_answer_to_a_call_nobody_made_is_refused(
+    db: AsyncSession, conversation: Conversation, agent: LangGraphAgent
+) -> None:
+    with pytest.raises(NoPendingToolCall):
+        await chat_service.start_run(db, conversation, tool_result_input(), agent)
+
+
+async def test_a_call_can_only_be_answered_once(
+    db: AsyncSession, conversation: Conversation
+) -> None:
+    waiting = await agent_waiting_on_the_browser(conversation)
+    answered = await chat_service.start_run(
+        db, conversation, tool_result_input(), waiting
+    )
+    await collect(agent_streaming.stream_events(waiting, answered, CONTEXT))
+
+    with pytest.raises(NoPendingToolCall):
+        await chat_service.start_run(db, conversation, tool_result_input(), waiting)
+
+
+@pytest.mark.parametrize(
+    "content", [None, 7, ["not text"], "x" * (MAX_TOOL_RESULT_CHARS + 1)]
+)
+async def test_an_answer_that_is_not_short_text_is_refused(
+    db: AsyncSession, conversation: Conversation, content: Any
+) -> None:
+    waiting = await agent_waiting_on_the_browser(conversation)
+
+    with pytest.raises(InvalidToolResult):
+        await chat_service.start_run(
+            db, conversation, tool_result_input(content), waiting
+        )

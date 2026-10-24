@@ -108,6 +108,27 @@ class ScriptedModel(BaseChatModel):
         return ChatResult(generations=[ChatGeneration(message=self.replies.pop(0))])
 
 
+class StreamingScriptedModel(ScriptedModel):
+    def _stream(
+        self, messages: list[BaseMessage], *args: Any, **kwargs: Any
+    ) -> Iterator[ChatGenerationChunk]:
+        reply = self.replies.pop(0)
+        chunk = AIMessageChunk(content=reply.content, tool_calls=reply.tool_calls)
+        yield ChatGenerationChunk(message=chunk)
+
+
+def flying_to_london(*texts: str) -> StreamingScriptedModel:
+    call = {
+        "name": "fly_to",
+        "args": {"place": "London", "lat": 51.5, "lng": -0.12},
+        "id": "call-1",
+    }
+    replies = [AIMessage(content="", tool_calls=[call])]
+    return StreamingScriptedModel(
+        replies=[*replies, *(AIMessage(content=t) for t in texts)]
+    )
+
+
 class BlockingModel(BaseChatModel):
     started: Any = Field(default_factory=asyncio.Event)
     release: Any = Field(default_factory=asyncio.Event)

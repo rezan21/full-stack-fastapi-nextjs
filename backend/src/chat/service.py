@@ -5,13 +5,14 @@ from datetime import datetime, timedelta
 from math import ceil
 from typing import Any
 
-from ag_ui.core import RunAgentInput
+from ag_ui.core import RunAgentInput, Tool
 from ag_ui_langgraph import LangGraphAgent
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import col, delete, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.agent import frontend_tools as agent_frontend_tools
 from src.agent import streaming as agent_streaming
 from src.agent import threads as agent_threads
 from src.agent.schemas import AgentMessage
@@ -20,7 +21,9 @@ from src.chat.exceptions import (
     ChatQuotaExceeded,
     ConversationNotFound,
     EmptyMessage,
+    InvalidToolResult,
     MessageTooLong,
+    NoPendingToolCall,
     NoUserMessage,
 )
 from src.chat.models import (
@@ -29,7 +32,7 @@ from src.chat.models import (
     ChatUsage,
     Conversation,
 )
-from src.chat.schemas import MAX_MESSAGE_CHARS, ChatRun
+from src.chat.schemas import MAX_MESSAGE_CHARS, MAX_TOOL_RESULT_CHARS, ChatRun
 from src.database import SessionFactory
 from src.models import get_datetime_utc
 from src.pagination import Pagination
@@ -200,12 +203,30 @@ async def count_run(
 
 
 async def start_run(
-    session: AsyncSession, conversation: Conversation, body: ChatRun
+    session: AsyncSession,
+    conversation: Conversation,
+    body: ChatRun,
+    agent: LangGraphAgent,
 ) -> RunAgentInput:
-    """Count a run against the owner's quota and store its user message, returning the agent's input."""
+    """Count a run against the owner's quota, returning the agent's input."""
+    tools = agent_frontend_tools.offered(tool.name for tool in body.tools)
+    if body.messages and body.messages[-1].role == "tool":
+        return await start_tool_result_run(session, conversation, body, agent, tools)
+    return await start_message_run(session, conversation, body, tools)
+
+
+async def start_message_run(
+    session: AsyncSession,
+    conversation: Conversation,
+    body: ChatRun,
+    tools: list[Tool],
+) -> RunAgentInput:
+    """Store the user's message of a run, returning the agent's input."""
     text = newest_user_text(body)
     await count_run(session, conversation.owner_id)
-    run_input = agent_streaming.build_run_input(str(conversation.id), body.run_id, text)
+    run_input = agent_streaming.build_run_input(
+        str(conversation.id), body.run_id, text, tools
+    )
     message = run_input.messages[0]
     await add_messages(
         session,
@@ -220,8 +241,32 @@ async def start_run(
     return run_input
 
 
+async def start_tool_result_run(
+    session: AsyncSession,
+    conversation: Conversation,
+    body: ChatRun,
+    agent: LangGraphAgent,
+    tools: list[Tool],
+) -> RunAgentInput:
+    """Return the input of a run that hands the agent what a browser tool answered."""
+    message = body.messages[-1]
+    content = message.content
+    if not isinstance(content, str) or len(content) > MAX_TOOL_RESULT_CHARS:
+        raise InvalidToolResult(MAX_TOOL_RESULT_CHARS)
+    pending = await agent_threads.pending_tool_call_ids(agent, str(conversation.id))
+    if message.tool_call_id not in pending:
+        raise NoPendingToolCall()
+    await count_run(session, conversation.owner_id)
+    conversation.updated_at = get_datetime_utc()
+    session.add(conversation)
+    await session.commit()
+    return agent_streaming.build_tool_result_input(
+        str(conversation.id), body.run_id, message.tool_call_id, content, tools
+    )
+
+
 def replies_after(
-    history: list[AgentMessage], user_message_id: str
+    history: list[AgentMessage], user_message_id: str | None
 ) -> list[AgentMessage]:
     """Return what the assistant said after the user message with the id."""
     ids = [message.id for message in history]
@@ -239,9 +284,20 @@ async def save_replies(conversation_id: uuid.UUID, replies: list[AgentMessage]) 
         await session.commit()
 
 
+def answered_message_id(
+    run_input: RunAgentInput, history: list[AgentMessage]
+) -> str | None:
+    """Return the id of the user message the run answers, which a tool result run takes from the history."""
+    first = run_input.messages[0]
+    if first.role == "user":
+        return first.id
+    users = [message for message in history if message.role == "user"]
+    return users[-1].id if users else None
+
+
 async def record_replies(agent: LangGraphAgent, run_input: RunAgentInput) -> None:
     """Add the assistant's answers to a run's message to the conversation's transcript."""
     conversation_id = uuid.UUID(run_input.thread_id)
     history = await agent_threads.read_history(agent, run_input.thread_id)
-    replies = replies_after(history, run_input.messages[0].id)
+    replies = replies_after(history, answered_message_id(run_input, history))
     await save_replies(conversation_id, replies)

@@ -24,6 +24,13 @@ def client_input(**overrides: Any) -> ChatRun:
     return ChatRun.model_validate({**payload, **overrides})
 
 
+def tool_result_input(
+    content: Any = "The map now shows London.", **overrides: Any
+) -> ChatRun:
+    message = {"id": "m9", "role": "tool", "toolCallId": "call-1", "content": content}
+    return client_input(messages=[message], **overrides)
+
+
 def sse_events(response: Response) -> list[dict[str, Any]]:
     return [
         json.loads(line.removeprefix("data: "))

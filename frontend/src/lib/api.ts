@@ -200,7 +200,7 @@ export function getConversationMessages(id: string) {
 // Starts a chat run and returns the API's response, a live stream when it succeeds.
 export async function streamChat(
   body: ChatRun,
-  signal: AbortSignal,
+  signal?: AbortSignal,
 ): Promise<Response> {
   const { error, response } = await client.post({
     url: CHAT_RUN_PATH,
