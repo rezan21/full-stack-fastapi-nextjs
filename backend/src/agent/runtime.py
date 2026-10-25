@@ -53,7 +53,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         api_key = agent_settings.OPENAI_API_KEY
         agent = (
             agent_factory.build_agent(
-                agent_factory.build_model(api_key, agent_settings.CHAT_MODEL),
+                agent_factory.build_model(
+                    api_key,
+                    agent_settings.CHAT_MODEL,
+                    agent_settings.CHAT_REASONING_EFFORT,
+                ),
                 checkpointer,
             )
             if api_key

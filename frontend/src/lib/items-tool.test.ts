@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
-  itemFormDefaults,
+  itemChangeFailure,
+  itemProblem,
   parseItemChange,
   parseItemsResult,
 } from "@/lib/items-tool"
@@ -62,36 +63,45 @@ describe("parseItemChange", () => {
   })
 })
 
-describe("itemFormDefaults", () => {
-  test("starts the form with the title and description the assistant was given", () => {
-    const schema = {
-      properties: {
-        title: { default: "test" },
-        description: { default: "testing" },
-      },
-    }
+describe("itemChangeFailure", () => {
+  test("has no failure for a change that changed the item", () => {
+    const change = parseItemChange(
+      JSON.stringify({ changed: true, message: "Added “Milk”.", item: ITEM }),
+    )
 
-    expect(itemFormDefaults(schema)).toEqual({
-      title: "test",
-      description: "testing",
-    })
+    expect(itemChangeFailure(change)).toBeUndefined()
   })
 
-  test("keeps the title when the description has no default", () => {
-    const schema = {
-      properties: {
-        title: { default: "Milk" },
-        description: { default: null },
-      },
-    }
+  test("says why a change did nothing", () => {
+    const change = parseItemChange(
+      JSON.stringify({
+        changed: false,
+        message: "Cancelled. Nothing was added.",
+        item: null,
+      }),
+    )
 
-    expect(itemFormDefaults(schema)).toEqual({ title: "Milk", description: "" })
+    expect(itemChangeFailure(change)).toBe("Cancelled. Nothing was added.")
   })
 
-  test("starts the form empty when the assistant gave nothing", () => {
-    const schema = { properties: { title: {}, description: {} } }
+  test("says the item could not be changed when the result is not a change", () => {
+    expect(itemChangeFailure(parseItemChange("not json"))).toBe(
+      "The item could not be changed.",
+    )
+  })
+})
 
-    expect(itemFormDefaults(schema)).toEqual({ title: "", description: "" })
-    expect(itemFormDefaults(undefined)).toEqual({ title: "", description: "" })
+describe("itemProblem", () => {
+  test("accepts an item with a title", () => {
+    expect(itemProblem({ title: "Milk", description: "" })).toBeUndefined()
+  })
+
+  test("says what is wrong with an item that breaks the contract's rules", () => {
+    expect(itemProblem({ title: "", description: "" })).toBe(
+      "Title is required",
+    )
+    expect(itemProblem({ title: "x".repeat(256), description: "" })).toBe(
+      "Title must be at most 255 characters",
+    )
   })
 })

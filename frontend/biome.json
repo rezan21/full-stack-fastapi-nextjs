@@ -35,6 +35,20 @@
         "useSelfClosingElements": "error",
         "noUselessElse": "error",
         "noDefaultExport": "error",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "radix-ui": "The app uses Base UI (@base-ui/react), not Radix."
+            },
+            "patterns": [
+              {
+                "group": ["@radix-ui/*", "radix-ui/*"],
+                "message": "The app uses Base UI (@base-ui/react), not Radix."
+              }
+            ]
+          }
+        },
         "useFilenamingConvention": {
           "level": "error",
           "options": { "filenameCases": ["kebab-case"] }

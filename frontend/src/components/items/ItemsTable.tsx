@@ -14,8 +14,7 @@ import { ITEM_COLUMNS, type ItemColumnId } from "./item-columns"
 
 // Copyable item id.
 function CopyId({ id }: { id: string }) {
-  const [copiedText, copy] = useCopyToClipboard()
-  const isCopied = copiedText === id
+  const { isCopied, copyToClipboard } = useCopyToClipboard()
 
   return (
     <div className="flex items-center gap-1.5 group">
@@ -24,7 +23,7 @@ function CopyId({ id }: { id: string }) {
         variant="ghost"
         size="icon-xs"
         className="opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={() => copy(id)}
+        onClick={() => copyToClipboard(id)}
       >
         {isCopied ? <Check className="text-primary" /> : <Copy />}
         <span className="sr-only">Copy ID</span>

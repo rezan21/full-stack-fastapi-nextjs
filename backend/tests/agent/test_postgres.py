@@ -4,6 +4,7 @@ import pytest
 from ag_ui.core import EventType
 from ag_ui_langgraph import LangGraphAgent
 from fastapi import FastAPI
+from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import SecretStr
 
@@ -11,7 +12,7 @@ from src.agent import factory as agent_factory
 from src.agent import runtime as agent_runtime
 from src.agent import streaming as agent_streaming
 from src.agent import threads as agent_threads
-from src.agent.config import agent_settings
+from src.agent.config import ReasoningEffort, agent_settings
 from src.main import app
 from tests.utils.agent import CONTEXT, replying, run_input
 
@@ -40,6 +41,25 @@ def test_the_openai_model_is_bounded_and_keeps_nothing_at_the_provider() -> None
     assert model.request_timeout == agent_factory.MODEL_TIMEOUT_SECONDS
     assert model.store is False
     assert model.use_responses_api is False
+    assert "sk-test-key" not in repr(model)
+
+
+def test_the_openai_model_shows_no_reasoning_unless_asked_to() -> None:
+    model = agent_factory.build_model(SecretStr("sk-test-key"), "gpt-test")
+
+    assert model.reasoning is None
+    assert model.use_responses_api is False
+
+
+def test_the_openai_model_asks_for_a_reasoning_summary_when_given_an_effort() -> None:
+    model = agent_factory.build_model(SecretStr("sk-test-key"), "gpt-test", "low")
+
+    assert model.use_responses_api is True
+    assert model.output_version == "responses/v1"
+    assert model.reasoning == {"effort": "low", "summary": "auto"}
+    assert model.include == ["reasoning.encrypted_content"]
+    assert model.store is False
+    assert model.model_kwargs == {"parallel_tool_calls": False}
     assert "sk-test-key" not in repr(model)
 
 
@@ -76,6 +96,30 @@ async def test_the_agent_is_configured_with_an_openai_key(
             return app.state.agent_runtime
 
     assert (await open_runtime()).agent is not None
+
+
+async def test_the_configured_reasoning_effort_reaches_the_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    built: list[tuple[str, ReasoningEffort | None]] = []
+    build_model = agent_factory.build_model
+
+    def spy(
+        api_key: SecretStr, name: str, reasoning_effort: ReasoningEffort | None = None
+    ) -> ChatOpenAI:
+        built.append((name, reasoning_effort))
+        return build_model(api_key, name, reasoning_effort)
+
+    monkeypatch.setattr(agent_factory, "build_model", spy)
+    monkeypatch.setattr(agent_settings, "OPENAI_API_KEY", SecretStr("sk-test-key"))
+    monkeypatch.setattr(agent_settings, "CHAT_MODEL", "gpt-test")
+    monkeypatch.setattr(agent_settings, "CHAT_REASONING_EFFORT", "high")
+    app = FastAPI()
+
+    async with agent_runtime.lifespan(app):
+        pass
+
+    assert built == [("gpt-test", "high")]
 
 
 async def test_threads_persist_in_postgres_stay_apart_and_can_be_deleted(

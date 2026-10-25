@@ -14,6 +14,7 @@ from pydantic import SecretStr
 
 from src.agent import interrupts as agent_interrupts
 from src.agent.browser import BrowserToolsMiddleware
+from src.agent.config import ReasoningEffort
 from src.agent.context import AgentContext
 from src.agent.notes import NOTES_PROMPT
 from src.agent.tools.registry import SERVER_TOOLS
@@ -22,7 +23,12 @@ MAX_OUTPUT_TOKENS = 8192
 MODEL_TIMEOUT_SECONDS = 60
 MODEL_MAX_RETRIES = 2
 RECURSION_LIMIT = 30
-SYSTEM_PROMPT = f"You are a helpful assistant. Keep answers concise. {NOTES_PROMPT}"
+SYSTEM_PROMPT = (
+    "You are a helpful assistant. Keep answers concise. "
+    f"{NOTES_PROMPT} "
+    "When a tool says the app asks the user for details itself, "
+    "call the tool and let the app ask; do not ask for those details in chat."
+)
 
 
 class ChatAgent(LangGraphAGUIAgent):
@@ -58,17 +64,27 @@ class ChatAgent(LangGraphAGUIAgent):
         )
 
 
-def build_model(api_key: SecretStr, name: str) -> ChatOpenAI:
+def build_model(
+    api_key: SecretStr, name: str, reasoning_effort: ReasoningEffort | None = None
+) -> ChatOpenAI:
     """Build the OpenAI chat model with bounded output, time and retries, calling one tool at a time."""
+    options: dict[str, Any] = {"use_responses_api": False}
+    if reasoning_effort:
+        options = {
+            "use_responses_api": True,
+            "output_version": "responses/v1",
+            "reasoning": {"effort": reasoning_effort, "summary": "auto"},
+            "include": ["reasoning.encrypted_content"],
+        }
     return ChatOpenAI(
         model=name,
         api_key=api_key,
         max_completion_tokens=MAX_OUTPUT_TOKENS,
         timeout=MODEL_TIMEOUT_SECONDS,
         max_retries=MODEL_MAX_RETRIES,
-        use_responses_api=False,
         store=False,
         model_kwargs={"parallel_tool_calls": False},
+        **options,
     )
 
 

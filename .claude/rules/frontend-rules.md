@@ -33,6 +33,12 @@ paths:
 - Never copy-paste a component with small tweaks; add a prop or composition slot instead.
 - Form fields use the shared form-field component, not a hand-written `Controller`.
 
+## UI Primitives
+
+- The shadcn style is `base-nova`, so UI primitives are Base UI (`@base-ui/react`). App code never imports Radix; Biome fails a `radix-ui` or `@radix-ui/*` import.
+- Compose a component into a primitive with the `render` prop, never `asChild`; a pre-commit hook fails an `asChild` prop. `@assistant-ui/react` accepts both because it is built on Radix internally, and that stays inside the library.
+- Add shadcn and assistant-ui registry components with the shadcn CLI, whose style-aware registry returns the Base UI flavor. Vendored registry code under `components/ui` and `components/assistant-ui` keeps what the registry ships and is outside Biome.
+
 ## Naming & Exports
 
 - Directories are lowercase, and a component directory groups by feature, not by component.

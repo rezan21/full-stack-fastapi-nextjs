@@ -119,7 +119,7 @@ async def create_item(
         str | None, Field(description="The description the user gave, if they gave one")
     ] = None,
 ) -> str:
-    """Add an item to the signed-in user's items. Call it as soon as the user asks for one, passing the title and description they gave; when the title is missing, the app asks the user for the details in a form."""
+    """Add an item to the signed-in user's items. When the user asks to add one, call this right away, even if they gave no title or description: the app then asks the user for the details in a form, so never ask for them in chat. Pass the title and description when the user gave them."""
     if title:
         payload: dict[str, Any] = {"title": title, "description": description}
     else:
@@ -155,7 +155,7 @@ async def update_item(
         ),
     ] = None,
 ) -> str:
-    """Change the title or the description of one of the signed-in user's items. Without either, the user edits them in a form that starts with the current values."""
+    """Change the title or the description of one of the signed-in user's items. When the user asks to edit an item without saying what to change, call this right away with only the item id: the app shows the user a form that starts with the current values, so never ask them in chat what to change."""
     changes: dict[str, Any] = {
         field: value
         for field, value in (("title", title), ("description", description))

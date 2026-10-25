@@ -1,32 +1,54 @@
-import { useState } from "react"
+"use client"
 
-type CopiedValue = string | null
+import { useEffect, useRef, useState } from "react"
 
-type CopyFn = (text: string) => Promise<boolean>
+export type UseCopyToClipboardOptions = {
+  copiedDuration?: number
+}
 
-// Copies text to the clipboard.
-export function useCopyToClipboard(): [CopiedValue, CopyFn] {
-  const [copiedText, setCopiedText] = useState<CopiedValue>(null)
+export const useCopyToClipboard = ({
+  copiedDuration = 3000,
+}: UseCopyToClipboardOptions = {}) => {
+  const [isCopied, setIsCopied] = useState<boolean>(false)
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  )
+  const scopeGenerationRef = useRef(0)
 
-  const copy: CopyFn = async (text) => {
-    if (!navigator?.clipboard) {
-      console.warn("Clipboard not supported")
-      return false
+  useEffect(
+    () => () => {
+      scopeGenerationRef.current += 1
+      if (copiedTimerRef.current === undefined) return
+
+      clearTimeout(copiedTimerRef.current)
+      copiedTimerRef.current = undefined
+      setIsCopied(false)
+    },
+    [],
+  )
+
+  const copyToClipboard = (value: string) => {
+    if (!value || typeof navigator === "undefined" || !navigator.clipboard) {
+      return
     }
 
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedText(text)
+    const scopeGeneration = scopeGenerationRef.current
+    navigator.clipboard.writeText(value).then(
+      () => {
+        if (scopeGeneration !== scopeGenerationRef.current) return
 
-      setTimeout(() => setCopiedText(null), 2000)
-
-      return true
-    } catch (error) {
-      console.warn("Copy failed", error)
-      setCopiedText(null)
-      return false
-    }
+        if (copiedTimerRef.current !== undefined) {
+          clearTimeout(copiedTimerRef.current)
+        }
+        setIsCopied(true)
+        copiedTimerRef.current = setTimeout(() => {
+          copiedTimerRef.current = undefined
+          setIsCopied(false)
+        }, copiedDuration)
+      },
+      () => {},
+    )
   }
 
-  return [copiedText, copy]
+  return { isCopied, copyToClipboard }
 }

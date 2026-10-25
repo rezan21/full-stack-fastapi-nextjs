@@ -1,24 +1,52 @@
-import type { ToolCallMessagePartStatus } from "@assistant-ui/react"
-import type { ReactNode } from "react"
-import { ShimmerLabel } from "@/components/assistant-ui/elements/surfaces"
+"use client"
 
-// A one-line status for a tool call: what it is doing, then what it did.
+import type { ToolCallMessagePartStatus } from "@assistant-ui/react"
+import { CircleAlert } from "lucide-react"
+import { useState } from "react"
+import { ToolCall } from "@/components/assistant-ui/elements/tool-call"
+
+const NO_QUERY = "…"
+
+// A tool call's line: what it is doing, then what it did, or why it did nothing.
 export function ToolNote({
   status,
   running,
   done,
-  icon,
+  query,
+  request,
+  result,
+  failure,
 }: {
   status: ToolCallMessagePartStatus
   running: string
   done: string
-  icon?: ReactNode
+  query?: string
+  request: string
+  result: string
+  failure?: string
 }) {
-  const settled = status.type === "complete" || status.type === "incomplete"
+  const [open, setOpen] = useState(false)
+  const problem =
+    status.type === "incomplete" ? `${running} (didn't finish)` : failure
+
+  if (problem) {
+    return (
+      <span className="flex items-center gap-2 py-1 text-[13.5px] text-muted-foreground">
+        <CircleAlert className="size-3.5 shrink-0 text-destructive" />
+        {problem}
+      </span>
+    )
+  }
   return (
-    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-      {icon}
-      <ShimmerLabel active={!settled}>{settled ? done : running}</ShimmerLabel>
-    </span>
+    <ToolCall
+      label={done}
+      activeLabel={running}
+      query={query || NO_QUERY}
+      request={request}
+      result={result}
+      running={status.type !== "complete"}
+      open={open}
+      onOpenChange={setOpen}
+    />
   )
 }

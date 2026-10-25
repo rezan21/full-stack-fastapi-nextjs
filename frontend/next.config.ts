@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["frontend"],
   agentRules: false,
   poweredByHeader: false,
+  transpilePackages: ["shiki"],
   headers: async () => [
     { source: "/(.*)", headers: securityHeaders },
     {

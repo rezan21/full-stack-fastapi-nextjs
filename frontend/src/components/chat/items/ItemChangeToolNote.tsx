@@ -1,61 +1,49 @@
 "use client"
 
 import type { ToolCallMessagePartProps } from "@assistant-ui/react"
-import {
-  useAgUiInterrupts,
-  useAgUiSubmitInterruptResponses,
-} from "@assistant-ui/react-ag-ui"
+import { useAgUiInterrupts } from "@assistant-ui/react-ag-ui"
+import { InterruptForm } from "@/components/chat/InterruptForm"
 import { ToolNote } from "@/components/chat/ToolNote"
 import {
   CREATE_ITEM_TOOL,
-  itemFormDefaults,
+  itemChangeFailure,
+  itemProblem,
   parseItemChange,
   UPDATE_ITEM_TOOL,
 } from "@/lib/items-tool"
-import { ItemForm } from "./ItemForm"
 
-const RUNNING_LABELS: Record<string, string> = {
-  [CREATE_ITEM_TOOL]: "Adding an item",
-  [UPDATE_ITEM_TOOL]: "Updating an item",
+const LABELS: Record<string, { running: string; done: string }> = {
+  [CREATE_ITEM_TOOL]: { running: "Adding an item", done: "Added an item" },
+  [UPDATE_ITEM_TOOL]: { running: "Updating an item", done: "Updated an item" },
 }
 
 // What the assistant is doing to an item: the form it needs filled in, then what it did.
 export function ItemChangeToolNote({
   toolName,
   toolCallId,
+  args,
+  argsText,
   status,
   result,
 }: Pick<
-  ToolCallMessagePartProps,
-  "toolName" | "toolCallId" | "status" | "result"
+  ToolCallMessagePartProps<{ title?: string }>,
+  "toolName" | "toolCallId" | "args" | "argsText" | "status" | "result"
 >) {
   const interrupt = useAgUiInterrupts().find((i) => i.toolCallId === toolCallId)
-  const submitInterruptResponses = useAgUiSubmitInterruptResponses()
 
-  if (interrupt) {
-    return (
-      <ItemForm
-        heading={interrupt.message ?? "Item details"}
-        defaultValues={itemFormDefaults(interrupt.responseSchema)}
-        onSubmit={(payload) =>
-          submitInterruptResponses([
-            { interruptId: interrupt.id, status: "resolved", payload },
-          ])
-        }
-        onCancel={() =>
-          submitInterruptResponses([
-            { interruptId: interrupt.id, status: "cancelled" },
-          ])
-        }
-      />
-    )
-  }
+  if (interrupt)
+    return <InterruptForm interrupt={interrupt} problem={itemProblem} />
+  const change = parseItemChange(result)
   return (
     <ToolNote
       status={status}
-      running={RUNNING_LABELS[toolName]}
-      done={
-        parseItemChange(result)?.message ?? "The item could not be changed."
+      running={LABELS[toolName].running}
+      done={LABELS[toolName].done}
+      query={change?.item?.title ?? args.title}
+      request={argsText}
+      result={change?.message ?? ""}
+      failure={
+        status.type === "complete" ? itemChangeFailure(change) : undefined
       }
     />
   )

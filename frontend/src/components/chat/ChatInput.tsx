@@ -1,14 +1,16 @@
 "use client"
 
+import { ComposerPrimitive, useAui, useAuiState } from "@assistant-ui/react"
 import { ArrowUp, Square } from "lucide-react"
-import { type FormEvent, type KeyboardEvent, useState } from "react"
+import type { FormEvent } from "react"
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupText,
-  InputGroupTextarea,
-} from "@/components/ui/input-group"
+  iconSwap,
+  iconSwapIn,
+  iconSwapOut,
+  inkButton,
+  mono,
+  paper,
+} from "@/components/assistant-ui/elements/surfaces"
 import { CHAT_MESSAGE_MAX_LENGTH } from "@/lib/config"
 import { chatMessageSchema } from "@/lib/schemas"
 import { cn } from "@/lib/utils"
@@ -25,7 +27,8 @@ export function ChatInput({
   onSend: (text: string) => Promise<boolean>
   onStop: () => void
 }) {
-  const [text, setText] = useState("")
+  const aui = useAui()
+  const text = useAuiState((s) => s.composer.text)
   const length = text.trim().length
   const isTooLong = length > CHAT_MESSAGE_MAX_LENGTH
   const showCounter = length >= CHAT_MESSAGE_MAX_LENGTH * COUNTER_FROM
@@ -34,9 +37,11 @@ export function ChatInput({
   const submit = async () => {
     const message = chatMessageSchema.safeParse(text)
     if (!message.success || isRunning) return
-    setText("")
+    aui.composer().setText("")
     const accepted = await onSend(message.data)
-    if (!accepted) setText((current) => current || message.data)
+    if (!accepted && !aui.composer().getState().text) {
+      aui.composer().setText(message.data)
+    }
   }
 
   const onSubmit = (event: FormEvent) => {
@@ -44,62 +49,60 @@ export function ChatInput({
     submit()
   }
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (
-      event.key === "Enter" &&
-      !event.shiftKey &&
-      !event.nativeEvent.isComposing
-    ) {
-      event.preventDefault()
-      submit()
-    }
-  }
-
   return (
-    <form onSubmit={onSubmit}>
-      <InputGroup>
-        <InputGroupTextarea
-          aria-label="Message"
-          className="min-h-10 max-h-48 min-w-0 overflow-y-auto wrap-anywhere"
-          aria-invalid={isTooLong}
-          placeholder="Ask anything"
-          rows={1}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          onKeyDown={onKeyDown}
-        />
-        <InputGroupAddon align="block-end">
-          {showCounter && (
-            <InputGroupText className={cn(isTooLong && "text-destructive")}>
-              {length.toLocaleString("en-US")} /{" "}
-              {CHAT_MESSAGE_MAX_LENGTH.toLocaleString("en-US")}
-            </InputGroupText>
+    <ComposerPrimitive.Root
+      onSubmit={onSubmit}
+      className={cn(
+        paper,
+        "flex w-full flex-col gap-2 rounded-[24px] p-2.5 focus-within:ring-1 focus-within:ring-ring has-[[aria-invalid=true]]:border-destructive",
+      )}
+    >
+      <ComposerPrimitive.Input
+        aria-label="Message"
+        aria-invalid={isTooLong}
+        placeholder="Ask anything"
+        rows={1}
+        className="placeholder:text-muted-foreground max-h-48 min-h-11 w-full min-w-0 resize-none overflow-y-auto bg-transparent px-3 text-[15px] outline-none wrap-anywhere"
+      />
+      <div className="flex items-center">
+        {showCounter && (
+          <span
+            className={cn(
+              mono,
+              "text-muted-foreground tabular-nums",
+              isTooLong && "text-destructive",
+            )}
+          >
+            {length.toLocaleString("en-US")} /{" "}
+            {CHAT_MESSAGE_MAX_LENGTH.toLocaleString("en-US")}
+          </span>
+        )}
+        <button
+          type={isRunning ? "button" : "submit"}
+          aria-label={isRunning ? "Stop" : "Send"}
+          disabled={!isRunning && !canSend}
+          onClick={isRunning ? onStop : undefined}
+          className={cn(
+            inkButton,
+            "ms-auto grid size-8 place-items-center rounded-full disabled:pointer-events-none disabled:opacity-40",
           )}
-          {isRunning ? (
-            <InputGroupButton
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              className="ml-auto"
-              aria-label="Stop"
-              onClick={onStop}
-            >
-              <Square />
-            </InputGroupButton>
-          ) : (
-            <InputGroupButton
-              type="submit"
-              variant="default"
-              size="icon-sm"
-              className="ml-auto"
-              aria-label="Send"
-              disabled={!canSend}
-            >
-              <ArrowUp />
-            </InputGroupButton>
-          )}
-        </InputGroupAddon>
-      </InputGroup>
-    </form>
+        >
+          <ArrowUp
+            className={cn(
+              iconSwap,
+              "size-4",
+              isRunning ? iconSwapOut : iconSwapIn,
+            )}
+          />
+          <Square
+            className={cn(
+              iconSwap,
+              "size-3 fill-current",
+              isRunning ? iconSwapIn : iconSwapOut,
+            )}
+          />
+        </button>
+      </div>
+    </ComposerPrimitive.Root>
   )
 }

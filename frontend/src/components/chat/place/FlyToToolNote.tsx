@@ -1,5 +1,4 @@
 import type { ToolCallMessagePartProps } from "@assistant-ui/react"
-import { MapPin } from "lucide-react"
 import { ToolNote } from "@/components/chat/ToolNote"
 import type { Place } from "@/lib/place-tool"
 
@@ -7,14 +6,20 @@ import type { Place } from "@/lib/place-tool"
 export function FlyToToolNote({
   status,
   args,
-}: Pick<ToolCallMessagePartProps<Partial<Place>>, "status" | "args">) {
-  const name = args.place ?? "the place"
+  argsText,
+  result,
+}: Pick<
+  ToolCallMessagePartProps<Partial<Place>>,
+  "status" | "args" | "argsText" | "result"
+>) {
   return (
     <ToolNote
       status={status}
-      icon={<MapPin className="size-3.5" />}
-      running={`Moving the map to ${name}`}
-      done={`Moved the map to ${name}`}
+      running="Moving the map"
+      done="Moved the map"
+      query={args.place}
+      request={argsText}
+      result={typeof result === "string" ? result : ""}
     />
   )
 }

@@ -1,6 +1,7 @@
-import { z } from "zod"
+import type { z } from "zod"
 import { zAgentItemChange, zAgentItems, zToolName } from "@/client/zod.gen"
-import type { ItemFormData } from "@/lib/schemas"
+import { formError } from "@/lib/form-errors"
+import { itemFormSchema } from "@/lib/schemas"
 import { parseJson } from "@/lib/utils"
 
 export const LIST_ITEMS_TOOL = zToolName.enum.list_items
@@ -9,6 +10,7 @@ export const UPDATE_ITEM_TOOL = zToolName.enum.update_item
 export const DELETE_ITEM_TOOL = zToolName.enum.delete_item
 
 export type ItemsResult = z.infer<typeof zAgentItems>
+export type ItemChange = z.infer<typeof zAgentItemChange>
 
 // Returns a tool's result in the schema's shape, or undefined when it is missing or not that shape.
 function parseResult<Schema extends z.ZodType>(
@@ -31,21 +33,16 @@ export function parseItemChange(result: unknown) {
   return parseResult(zAgentItemChange, result)
 }
 
-const formDefaultsSchema = z.object({
-  properties: z.object({
-    title: z.object({ default: z.string().nullish() }).optional(),
-    description: z.object({ default: z.string().nullish() }).optional(),
-  }),
-})
+// Returns why a finished create or update changed nothing, or undefined when it changed the item.
+export function itemChangeFailure(
+  change: ItemChange | undefined,
+): string | undefined {
+  if (!change) return "The item could not be changed."
+  return change.changed ? undefined : change.message
+}
 
-// Returns the values an item form starts with, taken from the interrupt's form schema.
-export function itemFormDefaults(
-  responseSchema: Record<string, unknown> | undefined,
-): ItemFormData {
-  const form = formDefaultsSchema.safeParse(responseSchema)
-  const properties = form.success ? form.data.properties : undefined
-  return {
-    title: properties?.title?.default ?? "",
-    description: properties?.description?.default ?? "",
-  }
+// Returns why an answer is not a valid item, or undefined when it is one.
+export function itemProblem(answer: unknown): string | undefined {
+  const item = itemFormSchema.safeParse(answer, { error: formError })
+  return item.success ? undefined : item.error.issues[0]?.message
 }
