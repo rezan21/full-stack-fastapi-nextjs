@@ -108,6 +108,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## IMPORTANT RULES
 
 - never git commit nor push automatically, unless explicitly asked. confirm with user.
+- when asked to commit or push, work on `main` directly. This is a solo boilerplate project: do not create branches.
 - do not create documentation or markdown files unless explicitly asked.
 - Never read or write Claude memory (`~/.claude/projects/*/memory`). Durable guidance lives in the repo.
 - Code comments, docs, rules and this file state what is true now. Leave out history, rejected alternatives and dismissed ideas; those belong in commit messages.
